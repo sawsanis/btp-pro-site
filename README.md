@@ -1,0 +1,3788 @@
+[index.html](https://github.com/user-attachments/files/22991651/index.html)
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTP Pro Maroc - Plateforme Professionnelle BTP Marocaine</title>
+    
+    <!-- CDN Links -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0a5cb8;
+            --secondary-color: #ff7710;
+            --dark-color: #2d3a4a;
+            --light-color: #f8f9fa;
+            --text-color: #333333;
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: #1e88e5;
+            --secondary-color: #ff9800;
+            --dark-color: #121212;
+            --light-color: #1e1e1e;
+            --text-color: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            color: var(--text-color);
+            padding-top: 80px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar {
+            background-color: var(--light-color) !important;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .nav-link {
+            color: var(--text-color) !important;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-link.active {
+            color: var(--primary-color) !important;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .hero-banner {
+            background: 
+                linear-gradient(135deg, var(--primary-color), var(--secondary-color)),
+                url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background-blend-mode: overlay;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .section-content {
+            display: none;
+        }
+        
+        .section-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .message-alert {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1060;
+            display: none;
+            min-width: 300px;
+        }
+        
+        .card {
+            background-color: var(--light-color);
+            color: var(--text-color);
+            border: 1px solid #dee2e6;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: 4rem;
+        }
+        
+        .footer a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        [data-theme="dark"] .navbar {
+            background-color: var(--dark-color) !important;
+            border-bottom: 1px solid #444;
+        }
+        
+        [data-theme="dark"] .card {
+            background-color: var(--dark-color);
+            border-color: #444;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .admin-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .global-search-container {
+            position: relative;
+            width: 700px;
+            margin: 0 20px;
+        }
+
+        .global-search-container .input-group {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .global-search-container .form-control {
+            border-radius: 50px 0 0 50px;
+            padding: 12px 25px;
+            border: 2px solid var(--primary-color);
+            border-right: none;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .global-search-container .btn {
+            border-radius: 0 50px 50px 0;
+            padding: 12px 30px;
+            background: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            min-width: 120px;
+            cursor: pointer;
+        }
+
+        .btn {
+            cursor: pointer;
+        }
+
+        .favorite-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .favorite-btn.active {
+            color: #ff4757;
+        }
+
+        /* Messagerie améliorée */
+        .messaging-container {
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            width: 400px;
+            height: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            border: 1px solid #dee2e6;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.received {
+            background-color: #e9ecef;
+            color: var(--text-color);
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* Liste des contacts */
+        .contacts-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .contact-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .contact-item:hover {
+            background: #f8f9fa;
+        }
+
+        .contact-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Section construction */
+        .construction-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .construction-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Pub Adsense */
+        .adsense-container {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .adsense-placeholder {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Admin */
+        .admin-stats-card {
+            transition: transform 0.3s ease;
+        }
+
+        .admin-stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .admin-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Newsletter */
+        .newsletter-template {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .newsletter-template:hover {
+            border-color: var(--primary-color);
+            background: #f8f9fa;
+        }
+
+        .newsletter-template.active {
+            border-color: var(--primary-color);
+            background: #e3f2fd;
+        }
+
+        /* Forum */
+        .forum-category {
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .forum-topic {
+            border-bottom: 1px solid #eee;
+            padding: 1rem 0;
+            transition: background 0.2s ease;
+        }
+
+        .forum-topic:hover {
+            background: #f8f9fa;
+        }
+
+        .topic-badge {
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+
+        .premium-card {
+            border: 2px solid var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Upload photos */
+        .photo-upload-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .photo-upload-container:hover {
+            border-color: var(--primary-color);
+            background: #e3f2fd;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .photo-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Premium badge */
+        .premium-badge {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 1200px) {
+            .global-search-container {
+                width: 500px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .global-search-container {
+                width: 400px;
+                margin: 10px 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-banner {
+                padding: 60px 0;
+            }
+            
+            .hero-banner h1 {
+                font-size: 2rem;
+            }
+            
+            .global-search-container {
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            .messaging-container {
+                width: 95vw;
+                height: 70vh;
+                bottom: 20px;
+                right: 2.5vw;
+            }
+
+            .premium-card {
+                transform: none;
+                margin-bottom: 1rem;
+            }
+
+            .navbar-nav {
+                text-align: center;
+            }
+
+            .nav-link {
+                padding: 10px 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Overlay de chargement -->
+    <div class="loading-overlay">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#" onclick="goToSection('home')">
+                <i class="fas fa-hard-hat me-2"></i>BTP Pro <span>🇲🇦</span>
+            </a>
+            
+            <!-- Barre de recherche -->
+            <div class="global-search-container d-none d-lg-block">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="🔍 Rechercher des matériaux, emplois, professionnels..." id="globalSearch">
+                    <button class="btn btn-primary" type="button" onclick="performGlobalSearch()">
+                        <i class="fas fa-search me-2"></i>Rechercher
+                    </button>
+                </div>
+            </div>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#" onclick="goToSection('home')">Accueil</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('marketplace')">Marketplace</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('realestate')">Immobilier</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('jobs')">Emploi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('freelancers')">Freelancers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('professionals')">Professionnels</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('forum')">Forum</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('ai')">Assistant IA</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('faq')">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('premium')">Premium</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('my_announces')">Mes Annonces</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('favorites')">Favoris</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToPublish()"><i class="fas fa-plus-circle me-1"></i>Publier</a></li>
+                    <li class="nav-item d-none" id="admin-nav-item"><a class="nav-link" href="#" onclick="goToSection('admin')">Admin</a></li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <!-- Bouton Messagerie -->
+                    <button class="btn btn-outline-primary me-2 position-relative" type="button" onclick="toggleMessaging()" id="messagingBtn">
+                        <i class="fas fa-comments"></i>
+                    </button>
+
+                    <div class="dropdown me-3">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-palette"></i> Thème
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="changeTheme('light')">Clair</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeTheme('dark')">Sombre</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex" id="auth-buttons">
+                        <button class="btn btn-outline-primary me-2" type="button" onclick="showLoginModal()">Connexion</button>
+                        <button class="btn btn-primary" type="button" onclick="showRegisterModal()">Inscription</button>
+                    </div>
+
+                    <div class="d-flex align-items-center d-none" id="user-menu">
+                        <div class="user-avatar me-2 position-relative">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                <span id="user-initials">MA</span>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="user-name">Utilisateur</span>
+                                <span id="admin-badge" class="admin-badge d-none">ADMIN</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="goToSection('my_announces')"><i class="fas fa-bullhorn me-2"></i>Mes annonces</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="goToSection('favorites')"><i class="fas fa-heart me-2"></i>Mes favoris</a></li>
+                                <li id="admin-menu-item" class="d-none"><a class="dropdown-item" href="#" onclick="goToSection('admin')"><i class="fas fa-cog me-2"></i>Administration</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Message Alert -->
+    <div class="alert alert-success message-alert">
+        <i class="fas fa-check-circle me-2"></i> <span class="alert-message">Opération réussie!</span>
+    </div>
+
+    <!-- Messagerie améliorée -->
+    <div class="messaging-container" id="messagingContainer">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-comments me-2"></i>Messagerie
+            </h6>
+            <button class="btn btn-sm btn-light" type="button" onclick="toggleMessaging()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Liste des contacts -->
+        <div class="p-3 border-bottom">
+            <h6 class="mb-2">Contacts</h6>
+            <div class="contacts-list" id="contactsList">
+                <!-- Contacts chargés dynamiquement -->
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                Sélectionnez un contact pour commencer à discuter
+            </div>
+        </div>
+        <div class="chat-input">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Tapez votre message..." id="messageInput" disabled>
+                <button class="btn btn-primary" type="button" onclick="sendMessage()" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Connexion -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required placeholder="votre@email.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="loginPassword" required placeholder="Votre mot de passe">
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="handleLogin()">
+                            <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-2">Vous n'avez pas de compte ?</p>
+                        <button type="button" class="btn btn-outline-primary" onclick="switchToRegister()">
+                            Créer un compte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'Inscription -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Inscription
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="registerPrenom" class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="registerPrenom" required placeholder="Votre prénom">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="registerNom" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="registerNom" required placeholder="Votre nom">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required placeholder="votre@email.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPhone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="registerPhone" placeholder="+212 XX XX XX XX">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="registerPassword" required placeholder="Minimum 8 caractères">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Confirmer le mot de passe</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword" required placeholder="Confirmez votre mot de passe">
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="handleRegister()">
+                            <i class="fas fa-user-plus me-2"></i>Créer mon compte
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-2">Vous avez déjà un compte ?</p>
+                        <button type="button" class="btn btn-outline-primary" onclick="switchToLogin()">
+                            Se connecter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="container main-content">
+        
+        <!-- SECTION ACCUEIL -->
+        <section id="home-section" class="section-content active">
+            <div class="hero-banner">
+                <div class="container">
+                    <h1 class="display-3 fw-bold mb-4">BTP Pro <span>🇲🇦</span></h1>
+                    <p class="lead mb-4">La plateforme de référence des professionnels du BTP marocain</p>
+                    
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <button class="btn btn-light btn-lg" type="button" onclick="goToSection('marketplace')">
+                            <i class="fas fa-shopping-cart me-2"></i>Découvrir la Marketplace
+                        </button>
+                        <button class="btn btn-outline-light btn-lg" type="button" onclick="goToSection('jobs')">
+                            <i class="fas fa-briefcase me-2"></i>Voir les offres d'emploi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Nos Services au Maroc</h2>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('marketplace')">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">Marketplace BTP</h5>
+                                <p class="text-muted">Matériaux, équipements et fournitures</p>
+                                <button class="btn btn-outline-primary btn-sm mt-2" type="button" onclick="goToSection('marketplace')">Accéder</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('realestate')">
+                            <div class="card-body">
+                                <i class="fas fa-home fa-3x text-success mb-3"></i>
+                                <h5 class="card-title">Immobilier</h5>
+                                <p class="text-muted">Biens, terrains et projets</p>
+                                <button class="btn btn-outline-success btn-sm mt-2" type="button" onclick="goToSection('realestate')">Explorer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('jobs')">
+                            <div class="card-body">
+                                <i class="fas fa-briefcase fa-3x text-warning mb-3"></i>
+                                <h5 class="card-title">Emploi & Carrière</h5>
+                                <p class="text-muted">Offres d'emploi et recrutement</p>
+                                <button class="btn btn-outline-warning btn-sm mt-2" type="button" onclick="goToSection('jobs')">Voir les offres</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('freelancers')">
+                            <div class="card-body">
+                                <i class="fas fa-palette fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">Freelancers</h5>
+                                <p class="text-muted">Talents créatifs et techniques</p>
+                                <button class="btn btn-outline-info btn-sm mt-2" type="button" onclick="goToSection('freelancers')">Découvrir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pub Adsense -->
+            <div class="adsense-container">
+                <div class="adsense-placeholder">
+                    <i class="fas fa-ad fa-3x mb-3"></i>
+                    <h5>Espace Publicitaire BTP</h5>
+                    <p>Votre annonce pour les professionnels du bâtiment</p>
+                    <small>Code Adsense à intégrer depuis le panel admin</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION MARKETPLACE -->
+        <section id="marketplace-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Marketplace BTP</h2>
+                    <button class="btn btn-primary" type="button" onclick="checkAuthAndGo('publish', 'marketplace')">
+                        <i class="fas fa-plus me-2"></i>Publier un produit
+                    </button>
+                </div>
+                
+                <!-- Filtres et recherche -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceCategoryFilter" onchange="filterMarketplace()">
+                            <option value="">Toutes les catégories</option>
+                            <!-- Catégories chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceCityFilter" onchange="filterMarketplace()">
+                            <option value="">Toutes les villes</option>
+                            <option value="casablanca">Casablanca</option>
+                            <option value="rabat">Rabat</option>
+                            <option value="marrakech">Marrakech</option>
+                            <option value="fes">Fès</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceSort" onchange="filterMarketplace()">
+                            <option value="newest">Plus récent</option>
+                            <option value="price_asc">Prix croissant</option>
+                            <option value="price_desc">Prix décroissant</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="marketplace-container">
+                    <!-- Produits chargés dynamiquement -->
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="marketplace-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION IMMOBILIER -->
+        <section id="realestate-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Immobilier au Maroc</h2>
+                    <button class="btn btn-success" type="button" onclick="checkAuthAndGo('publish', 'immobilier')">
+                        <i class="fas fa-plus me-2"></i>Publier une annonce
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateTypeFilter" onchange="filterRealEstate()">
+                            <option value="">Tous les types</option>
+                            <option value="villa">Villa</option>
+                            <option value="appartement">Appartement</option>
+                            <option value="terrain">Terrain</option>
+                            <option value="local">Local commercial</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateCityFilter" onchange="filterRealEstate()">
+                            <option value="">Toutes les villes</option>
+                            <option value="casablanca">Casablanca</option>
+                            <option value="rabat">Rabat</option>
+                            <option value="marrakech">Marrakech</option>
+                            <option value="fes">Fès</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestatePriceFilter" onchange="filterRealEstate()">
+                            <option value="">Tous les prix</option>
+                            <option value="0-500000">Moins de 500K MAD</option>
+                            <option value="500000-1000000">500K - 1M MAD</option>
+                            <option value="1000000-2000000">1M - 2M MAD</option>
+                            <option value="2000000+">Plus de 2M MAD</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateSort" onchange="filterRealEstate()">
+                            <option value="newest">Plus récent</option>
+                            <option value="price_asc">Prix croissant</option>
+                            <option value="price_desc">Prix décroissant</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="realestate-container">
+                    <!-- Biens chargés dynamiquement -->
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="realestate-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION EMPLOI -->
+        <section id="jobs-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Emploi BTP</h2>
+                    <button class="btn btn-warning" type="button" onclick="checkAuthAndGo('publish', 'emploi')">
+                        <i class="fas fa-plus me-2"></i>Publier une offre
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobTypeFilter" onchange="filterJobs()">
+                            <option value="">Tous les contrats</option>
+                            <option value="cdi">CDI</option>
+                            <option value="cdd">CDD</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="stage">Stage</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobCityFilter" onchange="filterJobs()">
+                            <option value="">Toutes les villes</option>
+                            <option value="casablanca">Casablanca</option>
+                            <option value="rabat">Rabat</option>
+                            <option value="marrakech">Marrakech</option>
+                            <option value="fes">Fès</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobExperienceFilter" onchange="filterJobs()">
+                            <option value="">Toutes expériences</option>
+                            <option value="0-2">0-2 ans</option>
+                            <option value="2-5">2-5 ans</option>
+                            <option value="5-10">5-10 ans</option>
+                            <option value="10+">10+ ans</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobSort" onchange="filterJobs()">
+                            <option value="newest">Plus récent</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="jobs-container">
+                    <!-- Offres chargées dynamiquement -->
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="jobs-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FREELANCERS -->
+        <section id="freelancers-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Freelancers BTP</h2>
+                    <button class="btn btn-info" type="button" onclick="checkAuthAndGo('publish', 'freelance')">
+                        <i class="fas fa-plus me-2"></i>Proposer mes services
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerSpecialtyFilter" onchange="filterFreelancers()">
+                            <option value="">Toutes les spécialités</option>
+                            <option value="infographie">Infographie 3D</option>
+                            <option value="photographie">Photographie</option>
+                            <option value="dessin">Dessin technique</option>
+                            <option value="conception">Conception</option>
+                            <option value="architecture">Architecture</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerCityFilter" onchange="filterFreelancers()">
+                            <option value="">Toutes les villes</option>
+                            <option value="casablanca">Casablanca</option>
+                            <option value="rabat">Rabat</option>
+                            <option value="marrakech">Marrakech</option>
+                            <option value="fes">Fès</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerSort" onchange="filterFreelancers()">
+                            <option value="newest">Plus récent</option>
+                            <option value="rating">Meilleures notes</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="freelancers-container">
+                    <!-- Freelancers chargés dynamiquement -->
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="freelancers-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PROFESSIONNELS -->
+        <section id="professionals-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-5">
+                    <h2 class="mb-0">Annuaire des Professionnels BTP</h2>
+                    <button class="btn btn-primary" type="button" onclick="showProfessionalModal()">
+                        <i class="fas fa-user-plus me-2"></i>Devenir Professionnel
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="filterSpecialty" onchange="filterProfessionals()">
+                            <option value="">Toutes les spécialités</option>
+                            <option value="maçonnerie">Maçonnerie</option>
+                            <option value="electricite">Électricité</option>
+                            <option value="plomberie">Plomberie</option>
+                            <option value="charpente">Charpente</option>
+                            <option value="revetement">Revêtement</option>
+                            <option value="peinture">Peinture</option>
+                            <option value="etancheite">Étanchéité</option>
+                            <option value="menuiserie">Menuiserie</option>
+                            <option value="lustrerie">Lustrerie</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="filterCity" onchange="filterProfessionals()">
+                            <option value="">Toutes les villes</option>
+                            <option value="casablanca">Casablanca</option>
+                            <option value="rabat">Rabat</option>
+                            <option value="marrakech">Marrakech</option>
+                            <option value="fes">Fès</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="filterExperience" onchange="filterProfessionals()">
+                            <option value="">Toutes expériences</option>
+                            <option value="5">5+ ans</option>
+                            <option value="10">10+ ans</option>
+                            <option value="15">15+ ans</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="professionals-container">
+                    <!-- Professionnels chargés dynamiquement -->
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="professionals-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FORUM OPÉRATIONNEL -->
+        <section id="forum-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Forum BTP</h2>
+                    <button class="btn btn-primary" onclick="checkAuthAndGo('forum_create', 'forum')">
+                        <i class="fas fa-plus me-2"></i>Nouveau sujet
+                    </button>
+                </div>
+
+                <!-- Catégories du forum -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Catégories</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a class="list-group-item list-group-item-action active" onclick="filterForum('all')">
+                                    Tous les sujets
+                                </a>
+                                <a class="list-group-item list-group-item-action" onclick="filterForum('technique')">
+                                    Questions techniques
+                                </a>
+                                <a class="list-group-item list-group-item-action" onclick="filterForum('materiaux')">
+                                    Matériaux & Fournitures
+                                </a>
+                                <a class="list-group-item list-group-item-action" onclick="filterForum('reglementation')">
+                                    Réglementation & Normes
+                                </a>
+                                <a class="list-group-item list-group-item-action" onclick="filterForum('chantier')">
+                                    Gestion de chantier
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Rechercher dans le forum..." id="forumSearch">
+                                    <button class="btn btn-primary" onclick="searchForum()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="forum-topics-container">
+                                    <!-- Sujets chargés dynamiquement -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION ASSISTANT IA -->
+        <section id="ai-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="construction-section">
+                    <div class="construction-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Assistant IA en construction</h3>
+                    <p class="lead mb-4">Notre assistant IA spécialisé BTP arrive prochainement !</p>
+                    <p class="text-muted mb-4">Nous développons une intelligence artificielle capable de vous conseiller sur vos projets de construction, calculs de matériaux, et estimations de coûts.</p>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-calculator fa-2x text-primary mb-3"></i>
+                                    <h5>Calculs techniques</h5>
+                                    <p class="text-muted">Estimation des matériaux et coûts</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-lightbulb fa-2x text-warning mb-3"></i>
+                                    <h5>Conseils experts</h5>
+                                    <p class="text-muted">Recommandations personnalisées</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FAQ -->
+        <section id="faq-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Foire Aux Questions</h2>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Comment publier une annonce ?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cliquez sur "Publier" dans le menu, choisissez le type d'annonce et remplissez le formulaire. Vos annonces seront visibles après modération.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Comment contacter un professionnel ?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Rendez-vous dans la section "Professionnels", trouvez l'artisan qui vous intéresse et cliquez sur "Contacter". Vous pourrez ensuite discuter via notre messagerie sécurisée.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PREMIUM AMÉLIORÉE -->
+        <section id="premium-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Avantages Premium</h2>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">Basique</h5>
+                                <p class="card-text display-6 fw-bold text-primary">Gratuit</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ 3 annonces actives</li>
+                                    <li>✅ 5 photos par annonce</li>
+                                    <li>✅ Support standard</li>
+                                    <li>❌ Statistiques basiques</li>
+                                    <li>❌ Mise en avant</li>
+                                    <li>❌ Messagerie avancée</li>
+                                </ul>
+                                <button class="btn btn-outline-primary" type="button" onclick="selectSubscription('Basique')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-primary premium-card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Pro</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text display-6 fw-bold text-primary">49 MAD/mois</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ Annonces illimitées</li>
+                                    <li>✅ 20 photos HD par annonce</li>
+                                    <li>✅ Support prioritaire</li>
+                                    <li>✅ Statistiques détaillées</li>
+                                    <li>✅ Mise en avant 1 annonce</li>
+                                    <li>✅ Messagerie illimitée</li>
+                                </ul>
+                                <button class="btn btn-primary" type="button" onclick="selectSubscription('Pro')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">Entreprise</h5>
+                                <p class="card-text display-6 fw-bold text-primary">149 MAD/mois</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ Tous les avantages Pro</li>
+                                    <li>✅ Multi-utilisateurs</li>
+                                    <li>✅ API d'intégration</li>
+                                    <li>✅ Formation incluse</li>
+                                    <li>✅ Mise en avant illimitée</li>
+                                    <li>✅ Certificat vérifié</li>
+                                </ul>
+                                <button class="btn btn-outline-primary" type="button" onclick="selectSubscription('Entreprise')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Avantages Premium détaillés -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Pourquoi passer Premium ?</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-chart-line text-primary me-2"></i>Statistiques avancées</h6>
+                                        <p class="text-muted">Suivez les performances de vos annonces avec des données détaillées.</p>
+                                        
+                                        <h6><i class="fas fa-star text-warning me-2"></i>Mise en avant</h6>
+                                        <p class="text-muted">Vos annonces apparaissent en tête des résultats de recherche.</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-bolt text-success me-2"></i>Support prioritaire</h6>
+                                        <p class="text-muted">Réponses rapides et assistance dédiée pour vos questions.</p>
+                                        
+                                        <h6><i class="fas fa-shield-alt text-danger me-2"></i>Certification</h6>
+                                        <p class="text-muted">Badge vérifié qui renforce la confiance de vos clients.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION MES ANNONCES -->
+        <section id="my_announces-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Mes Annonces</h2>
+                
+                <div id="user-announces-container">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Gérez ici toutes vos annonces publiées sur la plateforme.
+                    </div>
+                    <div class="text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                        <h4>Vous n'avez pas encore publié d'annonces</h4>
+                        <p class="text-muted">Commencez par publier votre première annonce</p>
+                        <button class="btn btn-primary mt-3" onclick="goToPublish()">
+                            <i class="fas fa-plus me-2"></i>Publier une annonce
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FAVORIS -->
+        <section id="favorites-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Mes Favoris</h2>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                                <h4>Vos favoris apparaîtront ici</h4>
+                                <p class="text-muted">Ajoutez des éléments en cliquant sur le cœur</p>
+                                <button class="btn btn-primary mt-3" onclick="goToSection('marketplace')">
+                                    <i class="fas fa-shopping-cart me-2"></i>Parcourir la Marketplace
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PUBLICATION -->
+        <section id="publish-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Publier une annonce</h2>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="list-group">
+                            <a class="list-group-item list-group-item-action active" onclick="showPublishForm('marketplace')">
+                                <i class="fas fa-shopping-cart me-2"></i>Marketplace
+                            </a>
+                            <a class="list-group-item list-group-item-action" onclick="showPublishForm('immobilier')">
+                                <i class="fas fa-home me-2"></i>Immobilier
+                            </a>
+                            <a class="list-group-item list-group-item-action" onclick="showPublishForm('emploi')">
+                                <i class="fas fa-briefcase me-2"></i>Offre d'emploi
+                            </a>
+                            <a class="list-group-item list-group-item-action" onclick="showPublishForm('freelance')">
+                                <i class="fas fa-palette me-2"></i>Service Freelance
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Formulaire Marketplace -->
+                        <div id="marketplace-form" class="publish-form">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Nouveau produit Marketplace</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishMarketplace(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre du produit *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Ciment CPJ45 50kg">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Catégorie *</label>
+                                                <select class="form-select" name="category" required id="marketplaceCategorySelect">
+                                                    <!-- Catégories chargées dynamiquement -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Prix (MAD) *</label>
+                                                <input type="number" class="form-control" name="price" required placeholder="Ex: 85">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Unité</label>
+                                                <select class="form-select" name="unit">
+                                                    <option value="sac">Sac</option>
+                                                    <option value="m2">m²</option>
+                                                    <option value="m3">m³</option>
+                                                    <option value="unite">Unité</option>
+                                                    <option value="lot">Lot</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <select class="form-select" name="city" required>
+                                                    <option value="">Choisir une ville</option>
+                                                    <option value="casablanca">Casablanca</option>
+                                                    <option value="rabat">Rabat</option>
+                                                    <option value="marrakech">Marrakech</option>
+                                                    <option value="fes">Fès</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description détaillée *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre produit..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone de contact *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Photos (max 5)</label>
+                                            <div class="photo-upload-container" onclick="document.getElementById('marketplacePhotos').click()">
+                                                <i class="fas fa-cloud-upload-alt fa-2x mb-3"></i>
+                                                <h5>Cliquez pour ajouter des photos</h5>
+                                                <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
+                                                <small class="text-muted">Maximum 5 photos, 2MB par photo</small>
+                                            </div>
+                                            <input type="file" id="marketplacePhotos" multiple accept="image/*" style="display: none" onchange="handlePhotoUpload(this, 'marketplace')">
+                                            <div class="photo-preview" id="marketplacePhotoPreview"></div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Immobilier -->
+                        <div id="immobilier-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-home me-2"></i>Nouvelle annonce Immobilier</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishRealEstate(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre de l'annonce *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Villa Moderne 220m² - Marrakech">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Type de bien *</label>
+                                                <select class="form-select" name="type" required>
+                                                    <option value="">Choisir un type</option>
+                                                    <option value="villa">Villa</option>
+                                                    <option value="appartement">Appartement</option>
+                                                    <option value="terrain">Terrain</option>
+                                                    <option value="local">Local commercial</option>
+                                                    <option value="bureau">Bureau</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Prix (MAD) *</label>
+                                                <input type="number" class="form-control" name="price" required placeholder="Ex: 2800000">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Surface (m²)</label>
+                                                <input type="number" class="form-control" name="surface" placeholder="Ex: 220">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Nombre de pièces</label>
+                                                <input type="number" class="form-control" name="rooms" placeholder="Ex: 4">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Adresse *</label>
+                                            <input type="text" class="form-control" name="address" required placeholder="Ex: Gueliz, Marrakech">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description détaillée *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre bien..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone de contact *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Photos (max 5)</label>
+                                            <div class="photo-upload-container" onclick="document.getElementById('realestatePhotos').click()">
+                                                <i class="fas fa-cloud-upload-alt fa-2x mb-3"></i>
+                                                <h5>Cliquez pour ajouter des photos</h5>
+                                                <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
+                                                <small class="text-muted">Maximum 5 photos, 2MB par photo</small>
+                                            </div>
+                                            <input type="file" id="realestatePhotos" multiple accept="image/*" style="display: none" onchange="handlePhotoUpload(this, 'realestate')">
+                                            <div class="photo-preview" id="realestatePhotoPreview"></div>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Emploi -->
+                        <div id="emploi-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>Nouvelle offre d'emploi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishJob(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Poste *</label>
+                                                <input type="text" class="form-control" name="poste" required placeholder="Ex: Chef de Chantier BTP">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Type de contrat *</label>
+                                                <select class="form-select" name="contrat" required>
+                                                    <option value="">Choisir un contrat</option>
+                                                    <option value="cdi">CDI</option>
+                                                    <option value="cdd">CDD</option>
+                                                    <option value="freelance">Freelance</option>
+                                                    <option value="stage">Stage</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Salaire *</label>
+                                                <input type="text" class="form-control" name="salaire" required placeholder="Ex: 15 000 - 18 000 MAD/mois">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Expérience requise</label>
+                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 5+ ans">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description du poste *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez le poste et les missions..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone de contact *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'offre
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Freelance -->
+                        <div id="freelance-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Nouveau service Freelance</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishFreelance(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre du service *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Infographiste 3D BTP">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Spécialité *</label>
+                                                <select class="form-select" name="specialty" required>
+                                                    <option value="">Choisir une spécialité</option>
+                                                    <option value="infographie">Infographie 3D</option>
+                                                    <option value="photographie">Photographie</option>
+                                                    <option value="dessin">Dessin technique</option>
+                                                    <option value="conception">Conception</option>
+                                                    <option value="architecture">Architecture</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Tarif (MAD)</label>
+                                                <input type="text" class="form-control" name="tarif" placeholder="Ex: 500-1000 MAD/jour">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Expérience</label>
+                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 3+ ans">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description du service *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez vos compétences et services..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Portfolio/Lien</label>
+                                            <input type="url" class="form-control" name="portfolio" placeholder="Ex: https://votre-portfolio.com">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone de contact *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <button type="submit" class="btn btn-info">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier le service
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION ADMINISTRATION -->
+        <section id="admin-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>Administration BTP Pro
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" type="button" onclick="goToSection('home')">
+                                    <i class="fas fa-arrow-left me-2"></i>Retour
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <h3 id="stats-users">0</h3>
+                                <p class="text-muted mb-0">Utilisateurs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
+                                <h3 id="stats-marketplace">0</h3>
+                                <p class="text-muted mb-0">Produits</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-home fa-2x text-warning mb-2"></i>
+                                <h3 id="stats-realestate">0</h3>
+                                <p class="text-muted mb-0">Biens immo</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-briefcase fa-2x text-info mb-2"></i>
+                                <h3 id="stats-jobs">0</h3>
+                                <p class="text-muted mb-0">Offres emploi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion Adsense -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-ad me-2"></i>
+                            Gestion des Publicités Adsense
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="adsense-slots-container">
+                            <!-- Emplacements Adsense chargés dynamiquement -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion Newsletter -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-newspaper me-2"></i>
+                            Newsletter Automatisée
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Sélectionnez un modèle</label>
+                            <div class="newsletter-template" onclick="selectNewsletterTemplate('maintenance')">
+                                <h6>Maintenance du site</h6>
+                                <p class="small text-muted mb-0">Informe les utilisateurs d'une maintenance planifiée</p>
+                            </div>
+                            <div class="newsletter-template" onclick="selectNewsletterTemplate('nouveautes')">
+                                <h6>Nouvelles fonctionnalités</h6>
+                                <p class="small text-muted mb-0">Présente les nouvelles fonctionnalités du site</p>
+                            </div>
+                            <div class="newsletter-template" onclick="selectNewsletterTemplate('promotions')">
+                                <h6>Promotions spéciales</h6>
+                                <p class="small text-muted mb-0">Annonce les promotions et offres spéciales</p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contenu du message</label>
+                            <textarea class="form-control" rows="4" id="newsletterContent" placeholder="Contenu de votre newsletter..."></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary w-100" onclick="sendNewsletter()">
+                                    <i class="fas fa-paper-plane me-2"></i>Envoyer maintenant
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-secondary w-100" onclick="scheduleNewsletter()">
+                                    <i class="fas fa-clock me-2"></i>Programmer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion Utilisateurs -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users-cog me-2"></i>
+                            Gestion des Utilisateurs
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Date d'inscription</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Utilisateurs chargés dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modération des annonces -->
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Modération des Annonces
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Type</th>
+                                        <th>Auteur</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moderation-table-body">
+                                    <!-- Annonces à modérer chargées dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5>BTP Pro <span>🇲🇦</span></h5>
+                    <p>La plateforme de référence des professionnels du BTP marocain</p>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Services</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" onclick="goToSection('marketplace')">Marketplace</a></li>
+                        <li class="mb-2"><a href="#" onclick="goToSection('realestate')">Immobilier</a></li>
+                        <li class="mb-2"><a href="#" onclick="goToSection('jobs')">Emploi</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; 2024 BTP Pro Maroc. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // ========== CONFIGURATION ==========
+        const ANNOUNCE_STATUS = {
+            PENDING: 'en_attente',
+            APPROVED: 'approuve',
+            REJECTED: 'rejete',
+            REPORTED: 'signale'
+        };
+
+        const ITEMS_PER_PAGE = 8;
+
+        // ========== BASE DE DONNÉES ==========
+        class BTPDatabase {
+            constructor() {
+                this.localStorageKey = 'btp_pro_local_db';
+                this.init();
+            }
+
+            init() {
+                if (!localStorage.getItem(this.localStorageKey)) {
+                    this.initializeLocalData();
+                }
+            }
+
+            initializeLocalData() {
+                const initialData = {
+                    users: [
+                        {
+                            id: 1,
+                            prenom: "Admin",
+                            nom: "BTP",
+                            email: "admin@btp.ma",
+                            password: "admin123",
+                            phone: "+212 6 00 00 00 00",
+                            role: "admin",
+                            isVerified: true,
+                            isBlocked: false,
+                            hasPremium: true,
+                            createdAt: new Date().toISOString()
+                        },
+                        {
+                            id: 2,
+                            prenom: "Ahmed",
+                            nom: "Benali",
+                            email: "ahmed@example.com",
+                            password: "user123",
+                            phone: "+212 6 12 34 56 78",
+                            role: "user",
+                            isVerified: true,
+                            isBlocked: false,
+                            hasPremium: false,
+                            createdAt: new Date().toISOString()
+                        },
+                        {
+                            id: 3,
+                            prenom: "Fatima",
+                            nom: "Zahra",
+                            email: "fatima@example.com",
+                            password: "user123",
+                            phone: "+212 6 23 45 67 89",
+                            role: "user",
+                            isVerified: true,
+                            isBlocked: false,
+                            hasPremium: false,
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    marketplace_posts: [
+                        {
+                            id: 1,
+                            title: "Ciment CPJ45 Lafarge",
+                            description: "Sac de 50kg - Qualité Premium",
+                            price: 85,
+                            unit: "sac",
+                            category: "ciment",
+                            city: "casablanca",
+                            phone: "+212 6 12 34 56 78",
+                            status: ANNOUNCE_STATUS.APPROVED,
+                            userId: 1,
+                            userName: "Admin BTP",
+                            isPremium: true,
+                            photos: [],
+                            createdAt: new Date().toISOString()
+                        },
+                        {
+                            id: 2,
+                            title: "Carreaux Céramique 30x30",
+                            description: "Marque Céragrès - Lot de 10m²",
+                            price: 120,
+                            unit: "m2",
+                            category: "revetement",
+                            city: "rabat",
+                            phone: "+212 6 87 65 43 21",
+                            status: ANNOUNCE_STATUS.APPROVED,
+                            userId: 1,
+                            userName: "Admin BTP",
+                            isPremium: false,
+                            photos: [],
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    realestate_posts: [
+                        {
+                            id: 1,
+                            title: "Villa Moderne 220m² - Marrakech",
+                            description: "Villa moderne avec 4 chambres, 3 salles de bain, garage",
+                            price: 2800000,
+                            type: "villa",
+                            transaction: "vente",
+                            surface: 220,
+                            rooms: 4,
+                            address: "Gueliz, Marrakech",
+                            phone: "+212 6 12 34 56 78",
+                            status: ANNOUNCE_STATUS.APPROVED,
+                            userId: 1,
+                            userName: "Admin BTP",
+                            isPremium: true,
+                            photos: [],
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    job_posts: [
+                        {
+                            id: 1,
+                            poste: "Chef de Chantier BTP",
+                            description: "Management d'équipe, suivi de chantier, respect des délais",
+                            salaire: "15 000 - 18 000 MAD/mois",
+                            contrat: "cdi",
+                            ville: "casablanca",
+                            experience: "5+ ans",
+                            phone: "+212 6 12 34 56 78",
+                            status: ANNOUNCE_STATUS.APPROVED,
+                            userId: 1,
+                            userName: "Admin BTP",
+                            isPremium: true,
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    freelancers: [
+                        {
+                            id: 1,
+                            title: "Infographiste 3D BTP",
+                            description: "Création de rendus 3D photoréalistes pour projets BTP",
+                            specialty: "infographie",
+                            tarif: "500-1000 MAD/jour",
+                            ville: "casablanca",
+                            experience: "3+ ans",
+                            portfolio: "https://portfolio-example.com",
+                            phone: "+212 6 12 34 56 78",
+                            status: ANNOUNCE_STATUS.APPROVED,
+                            userId: 2,
+                            userName: "Ahmed Benali",
+                            rating: 4.8,
+                            reviewCount: 12,
+                            isPremium: false,
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    professionals: [
+                        {
+                            id: 1,
+                            company: "Maçonnerie Ahmed & Fils",
+                            specialty: "maçonnerie",
+                            experience: 15,
+                            city: "casablanca",
+                            description: "Spécialiste en gros œuvre et fondations",
+                            phone: "+212 6 12 34 56 78",
+                            rating: 4.8,
+                            reviewCount: 124,
+                            userId: 2
+                        },
+                        {
+                            id: 2,
+                            company: "Électricité BTP Pro",
+                            specialty: "electricite",
+                            experience: 8,
+                            city: "rabat",
+                            description: "Installation électrique complète, mise aux normes",
+                            phone: "+212 6 87 65 43 21",
+                            rating: 4.9,
+                            reviewCount: 89,
+                            userId: 3
+                        }
+                    ],
+                    messages: [],
+                    user_announces: [],
+                    favorites: [],
+                    adsense_slots: [
+                        {
+                            id: 'header_ad',
+                            name: 'Bannière en-tête',
+                            code: '',
+                            position: 'header'
+                        },
+                        {
+                            id: 'sidebar_ad',
+                            name: 'Panneau latéral',
+                            code: '',
+                            position: 'sidebar'
+                        },
+                        {
+                            id: 'footer_ad',
+                            name: 'Pied de page',
+                            code: '',
+                            position: 'footer'
+                        }
+                    ],
+                    newsletter_templates: {
+                        maintenance: "Cher adhérent,\n\nNous vous informons que le site BTP Pro Maroc sera momentanément en maintenance le [date] de [heure] à [heure].\n\nNous nous excusons pour la gêne occasionnée.\n\nL'équipe BTP Pro",
+                        nouveautes: "Cher adhérent,\n\nDécouvrez les nouvelles fonctionnalités de BTP Pro !\n\n- [Nouvelle fonctionnalité 1]\n- [Nouvelle fonctionnalité 2]\n- [Nouvelle fonctionnalité 3]\n\nL'équipe BTP Pro",
+                        promotions: "Cher adhérent,\n\nProfitez de nos promotions exceptionnelles ce mois-ci !\n\n- [Promotion 1]\n- [Promotion 2]\n- [Promotion 3]\n\nL'équipe BTP Pro"
+                    },
+                    forum_categories: [
+                        {
+                            id: 1,
+                            name: 'Questions techniques',
+                            description: 'Discussions techniques sur les méthodes de construction',
+                            topicCount: 0,
+                            lastActivity: null
+                        },
+                        {
+                            id: 2,
+                            name: 'Matériaux & Fournitures',
+                            description: 'Échanges sur les matériaux de construction',
+                            topicCount: 0,
+                            lastActivity: null
+                        },
+                        {
+                            id: 3,
+                            name: 'Réglementation & Normes',
+                            description: 'Informations sur la réglementation BTP au Maroc',
+                            topicCount: 0,
+                            lastActivity: null
+                        },
+                        {
+                            id: 4,
+                            name: 'Gestion de chantier',
+                            description: 'Conseils et retours d\'expérience sur la gestion de chantier',
+                            topicCount: 0,
+                            lastActivity: null
+                        }
+                    ],
+                    forum_topics: [],
+                    premium_features: [
+                        {
+                            id: 'stats_advanced',
+                            name: 'Statistiques avancées',
+                            description: 'Accès aux données détaillées de performance'
+                        },
+                        {
+                            id: 'priority_support',
+                            name: 'Support prioritaire',
+                            description: 'Réponses rapides de notre équipe'
+                        },
+                        {
+                            id: 'unlimited_announces',
+                            name: 'Annonces illimitées',
+                            description: 'Publiez autant d\'annonces que vous voulez'
+                        }
+                    ]
+                };
+                
+                this.saveLocalData(initialData);
+            }
+
+            async get(collection) {
+                const localData = this.getLocalData();
+                return localData[collection] || [];
+            }
+
+            async post(collection, data) {
+                const item = {
+                    id: Date.now(),
+                    createdAt: new Date().toISOString(),
+                    ...data
+                };
+
+                const localData = this.getLocalData();
+                if (!localData[collection]) localData[collection] = [];
+                localData[collection].push(item);
+                this.saveLocalData(localData);
+
+                return item;
+            }
+
+            async put(collection, id, data) {
+                const localData = this.getLocalData();
+                const index = localData[collection].findIndex(item => item.id === id);
+                
+                if (index !== -1) {
+                    localData[collection][index] = { ...localData[collection][index], ...data };
+                    this.saveLocalData(localData);
+                    return localData[collection][index];
+                }
+                
+                return null;
+            }
+
+            getLocalData() {
+                return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
+            }
+
+            saveLocalData(data) {
+                localStorage.setItem(this.localStorageKey, JSON.stringify(data));
+            }
+
+            async authenticateUser(email, password) {
+                const users = await this.get('users');
+                const user = users.find(u => u.email === email && u.password === password);
+                return user || null;
+            }
+
+            async registerUser(userData) {
+                const users = await this.get('users');
+                
+                if (users.find(u => u.email === userData.email)) {
+                    throw new Error('Cet email est déjà utilisé');
+                }
+
+                const newUser = {
+                    id: Date.now(),
+                    ...userData,
+                    role: 'user',
+                    isVerified: false,
+                    isBlocked: false,
+                    hasPremium: false
+                };
+
+                const localData = this.getLocalData();
+                localData.users.push(newUser);
+                this.saveLocalData(localData);
+
+                return newUser;
+            }
+
+            async getAdsenseSlots() {
+                const localData = this.getLocalData();
+                return localData.adsense_slots || [];
+            }
+
+            async saveAdsenseSlot(slotId, code) {
+                const localData = this.getLocalData();
+                const slotIndex = localData.adsense_slots.findIndex(slot => slot.id === slotId);
+                
+                if (slotIndex !== -1) {
+                    localData.adsense_slots[slotIndex].code = code;
+                    this.saveLocalData(localData);
+                    return localData.adsense_slots[slotIndex];
+                }
+                
+                return null;
+            }
+
+            async getNewsletterTemplate(name) {
+                const localData = this.getLocalData();
+                return localData.newsletter_templates?.[name] || "";
+            }
+        }
+
+        // ========== INITIALISATION ==========
+        const btpDB = new BTPDatabase();
+        let loginModal, registerModal;
+
+        const appState = {
+            currentUser: null,
+            currentSection: 'home',
+            isAdmin: false,
+            theme: 'light',
+            currentPage: {
+                marketplace: 1,
+                realestate: 1,
+                jobs: 1,
+                freelancers: 1,
+                professionals: 1
+            }
+        };
+
+        // ========== FONCTIONS PRINCIPALES ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            initializeModals();
+            loadMarketplaceCategories();
+            loadApprovedAnnounces();
+            loadProfessionals();
+            loadFreelancers();
+            loadAdminStats();
+            loadForumTopics();
+            console.log('✅ Application initialisée !');
+        }
+
+        function initializeModals() {
+            loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+        }
+
+        // ========== FONCTIONS DE NAVIGATION ==========
+        function goToSection(section) {
+            document.querySelectorAll('.section-content').forEach(s => {
+                s.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-link').forEach(l => {
+                l.classList.remove('active');
+            });
+            
+            const targetSection = document.getElementById(section + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+                appState.currentSection = section;
+                
+                // Mettre à jour la navigation active
+                const activeLinks = document.querySelectorAll(`[onclick="goToSection('${section}')"]`);
+                if (activeLinks.length > 0) {
+                    activeLinks[0].classList.add('active');
+                }
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToPublish() {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour publier du contenu sur BTP Pro', 'warning');
+                showLoginModal();
+                return;
+            }
+            goToSection('publish');
+        }
+
+        function checkAuthAndGo(section, context) {
+            if (!appState.currentUser) {
+                const messages = {
+                    'marketplace': '🛒 Connectez-vous pour publier vos produits',
+                    'immobilier': '🏠 Connectez-vous pour publier vos annonces immobilières', 
+                    'emploi': '💼 Connectez-vous pour publier vos offres d\'emploi',
+                    'forum': '💬 Connectez-vous pour participer au forum',
+                    'freelance': '🎨 Connectez-vous pour proposer vos services'
+                };
+                showAlert(messages[context] || '🔐 Connectez-vous pour continuer', 'warning');
+                showLoginModal();
+                return;
+            }
+            goToSection(section);
+        }
+
+        // ========== FONCTIONS D'AUTHENTIFICATION ==========
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showAlert('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const user = await btpDB.authenticateUser(email, password);
+                console.log('🔐 Tentative de connexion:', { email, user });
+
+                if (user) {
+                    if (user.isBlocked) {
+                        showAlert('❌ Votre compte a été bloqué. Contactez l\'administrateur.', 'error');
+                        return;
+                    }
+
+                    appState.currentUser = user;
+                    appState.isAdmin = user.role === 'admin';
+                    updateUserUI();
+                    
+                    loginModal.hide();
+                    showAlert(`Connexion réussie ! Bienvenue ${user.prenom}`, 'success');
+                    
+                    // Recharger les données si admin
+                    if (appState.isAdmin) {
+                        loadAdminStats();
+                    }
+                } else {
+                    showAlert('Email ou mot de passe incorrect', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur de connexion:', error);
+                showAlert('Erreur de connexion', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister() {
+            const prenom = document.getElementById('registerPrenom').value;
+            const nom = document.getElementById('registerNom').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+            if (!prenom || !nom || !email || !password) {
+                showAlert('Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const newUser = await btpDB.registerUser({
+                    prenom,
+                    nom,
+                    email,
+                    password
+                });
+
+                appState.currentUser = newUser;
+                appState.isAdmin = false;
+                updateUserUI();
+                
+                registerModal.hide();
+                showAlert('Inscription réussie ! Bienvenue sur BTP Pro', 'success');
+                
+            } catch (error) {
+                showAlert(error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function updateUserUI() {
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const adminBadge = document.getElementById('admin-badge');
+            const adminMenuItem = document.getElementById('admin-menu-item');
+            const adminNavItem = document.getElementById('admin-nav-item');
+            
+            if (appState.currentUser) {
+                authButtons.classList.add('d-none');
+                userMenu.classList.remove('d-none');
+                document.getElementById('user-name').textContent = appState.currentUser.prenom;
+                document.getElementById('user-initials').textContent = 
+                    appState.currentUser.prenom.charAt(0) + appState.currentUser.nom.charAt(0);
+                
+                if (appState.isAdmin) {
+                    adminBadge.classList.remove('d-none');
+                    adminMenuItem.classList.remove('d-none');
+                    adminNavItem.classList.remove('d-none');
+                } else {
+                    adminBadge.classList.add('d-none');
+                    adminMenuItem.classList.add('d-none');
+                    adminNavItem.classList.add('d-none');
+                }
+            } else {
+                authButtons.classList.remove('d-none');
+                userMenu.classList.add('d-none');
+                adminNavItem.classList.add('d-none');
+            }
+        }
+
+        function logout() {
+            appState.currentUser = null;
+            appState.isAdmin = false;
+            updateUserUI();
+            showAlert('Déconnexion réussie', 'info');
+            goToSection('home');
+        }
+
+        // ========== CATÉGORIES MARKETPLACE ==========
+        const marketplaceCategories = [
+            "Agrégats & Sables",
+            "Béton Prêt à l'Emploi", 
+            "Ciments & Mortiers",
+            "Charpente Métallique",
+            "Charpente Bois",
+            "Clôtures & Grilles",
+            "Échafaudages & Équipements",
+            "Électricité",
+            "Étanchéité",
+            "Isolation",
+            "Lustrerie",
+            "Menuiserie",
+            "Mobilier de Jardin",
+            "Outillage & Machines",
+            "Parpaings & Agglomérés",
+            "Peinture & Revêtements",
+            "Plantes & Végétation",
+            "Plomberie & Sanitaires",
+            "Signalétique",
+            "Équipements de Sécurité"
+        ].sort();
+
+        function loadMarketplaceCategories() {
+            const select = document.getElementById('marketplaceCategorySelect');
+            const filter = document.getElementById('marketplaceCategoryFilter');
+            
+            let html = '<option value="">Choisir une catégorie</option>';
+            marketplaceCategories.forEach(category => {
+                const value = category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_');
+                html += `<option value="${value}">${category}</option>`;
+            });
+            
+            if (select) select.innerHTML = html;
+            if (filter) filter.innerHTML = html;
+        }
+
+        // ========== FONCTIONS DES SECTIONS AVEC PAGINATION ==========
+        async function loadApprovedAnnounces() {
+            try {
+                const [marketplace, realestate, jobs, freelancers] = await Promise.all([
+                    btpDB.get('marketplace_posts'),
+                    btpDB.get('realestate_posts'),
+                    btpDB.get('job_posts'),
+                    btpDB.get('freelancers')
+                ]);
+
+                displayMarketplaceAnnounces(marketplace);
+                displayRealestateAnnounces(realestate);
+                displayJobsAnnounces(jobs);
+                displayFreelancers(freelancers);
+                
+            } catch (error) {
+                console.error('Erreur chargement annonces:', error);
+            }
+        }
+
+        function displayMarketplaceAnnounces(posts, page = 1) {
+            const container = document.getElementById('marketplace-container');
+            const pagination = document.getElementById('marketplace-pagination');
+            if (!container) return;
+
+            // Filtrer et trier
+            let filteredPosts = posts.filter(post => post.status === ANNOUNCE_STATUS.APPROVED);
+            
+            // Appliquer les filtres
+            const categoryFilter = document.getElementById('marketplaceCategoryFilter')?.value;
+            const cityFilter = document.getElementById('marketplaceCityFilter')?.value;
+            const sort = document.getElementById('marketplaceSort')?.value;
+
+            if (categoryFilter) {
+                filteredPosts = filteredPosts.filter(post => post.category === categoryFilter);
+            }
+            if (cityFilter) {
+                filteredPosts = filteredPosts.filter(post => post.city === cityFilter);
+            }
+
+            // Trier
+            if (sort === 'price_asc') {
+                filteredPosts.sort((a, b) => a.price - b.price);
+            } else if (sort === 'price_desc') {
+                filteredPosts.sort((a, b) => b.price - a.price);
+            } else if (sort === 'premium') {
+                filteredPosts.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+            } else {
+                filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const paginatedPosts = filteredPosts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paginatedPosts.length === 0) {
+                html = '<div class="col-12 text-center"><p class="text-muted">Aucun produit disponible pour le moment.</p></div>';
+            } else {
+                paginatedPosts.forEach((post) => {
+                    html += `
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 position-relative">
+                                ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
+                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <div class="card-body">
+                                    <h5 class="card-title">${post.title}</h5>
+                                    <p class="text-muted">${post.description}</p>
+                                    <p class="text-success fw-bold h5">${post.price} MAD/${post.unit}</p>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill" onclick="showContactInfo('${post.phone}', '${post.userName}')">
+                                            <i class="fas fa-phone me-2"></i>Contacter
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="startChat(${post.userId}, '${post.userName}')">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            generatePagination(pagination, page, totalPages, 'marketplace');
+        }
+
+        function displayRealestateAnnounces(posts, page = 1) {
+            const container = document.getElementById('realestate-container');
+            const pagination = document.getElementById('realestate-pagination');
+            if (!container) return;
+
+            let filteredPosts = posts.filter(post => post.status === ANNOUNCE_STATUS.APPROVED);
+            
+            // Appliquer les filtres
+            const typeFilter = document.getElementById('realestateTypeFilter')?.value;
+            const cityFilter = document.getElementById('realestateCityFilter')?.value;
+            const priceFilter = document.getElementById('realestatePriceFilter')?.value;
+            const sort = document.getElementById('realestateSort')?.value;
+
+            if (typeFilter) {
+                filteredPosts = filteredPosts.filter(post => post.type === typeFilter);
+            }
+            if (cityFilter) {
+                filteredPosts = filteredPosts.filter(post => post.city === cityFilter);
+            }
+            if (priceFilter) {
+                const [min, max] = priceFilter.split('-').map(p => p === '+' ? Infinity : parseInt(p));
+                filteredPosts = filteredPosts.filter(post => {
+                    if (max === Infinity) return post.price >= min;
+                    return post.price >= min && post.price <= max;
+                });
+            }
+
+            // Trier
+            if (sort === 'price_asc') {
+                filteredPosts.sort((a, b) => a.price - b.price);
+            } else if (sort === 'price_desc') {
+                filteredPosts.sort((a, b) => b.price - a.price);
+            } else if (sort === 'premium') {
+                filteredPosts.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+            } else {
+                filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const paginatedPosts = filteredPosts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paginatedPosts.length === 0) {
+                html = '<div class="col-12 text-center"><p class="text-muted">Aucun bien immobilier disponible pour le moment.</p></div>';
+            } else {
+                paginatedPosts.forEach((post) => {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="card h-100 position-relative">
+                                ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
+                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <div class="card-body">
+                                    <h5 class="card-title">${post.title}</h5>
+                                    <p class="text-muted">${post.description}</p>
+                                    <p class="text-success fw-bold h4">${post.price.toLocaleString()} MAD</p>
+                                    <p class="text-muted">${post.address}</p>
+                                    ${post.photos && post.photos.length > 0 ? 
+                                        `<div class="mb-2"><small class="text-muted"><i class="fas fa-camera me-1"></i>${post.photos.length} photo(s)</small></div>` : ''}
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill" onclick="showContactInfo('${post.phone}', '${post.userName}')">
+                                            <i class="fas fa-phone me-2"></i>Contacter
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="startChat(${post.userId}, '${post.userName}')">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            generatePagination(pagination, page, totalPages, 'realestate');
+        }
+
+        function displayJobsAnnounces(posts, page = 1) {
+            const container = document.getElementById('jobs-container');
+            const pagination = document.getElementById('jobs-pagination');
+            if (!container) return;
+
+            let filteredPosts = posts.filter(post => post.status === ANNOUNCE_STATUS.APPROVED);
+            
+            // Appliquer les filtres
+            const typeFilter = document.getElementById('jobTypeFilter')?.value;
+            const cityFilter = document.getElementById('jobCityFilter')?.value;
+            const experienceFilter = document.getElementById('jobExperienceFilter')?.value;
+            const sort = document.getElementById('jobSort')?.value;
+
+            if (typeFilter) {
+                filteredPosts = filteredPosts.filter(post => post.contrat === typeFilter);
+            }
+            if (cityFilter) {
+                filteredPosts = filteredPosts.filter(post => post.ville === cityFilter);
+            }
+            if (experienceFilter) {
+                // Filtre simplifié pour l'expérience
+                filteredPosts = filteredPosts.filter(post => {
+                    const exp = parseInt(post.experience) || 0;
+                    const [min, max] = experienceFilter.split('-').map(e => e === '+' ? Infinity : parseInt(e));
+                    if (max === Infinity) return exp >= min;
+                    return exp >= min && exp <= max;
+                });
+            }
+
+            // Trier
+            if (sort === 'premium') {
+                filteredPosts.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+            } else {
+                filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const paginatedPosts = filteredPosts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paginatedPosts.length === 0) {
+                html = '<div class="col-12 text-center"><p class="text-muted">Aucune offre d\'emploi disponible pour le moment.</p></div>';
+            } else {
+                paginatedPosts.forEach((post) => {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="card h-100 position-relative">
+                                ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
+                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <div class="card-body">
+                                    <h5 class="card-title">${post.poste}</h5>
+                                    <p class="text-muted">${post.description}</p>
+                                    <p class="text-success fw-bold h5">${post.salaire}</p>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill" onclick="showContactInfo('${post.phone}', '${post.userName}')">
+                                            <i class="fas fa-phone me-2"></i>Contacter
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="startChat(${post.userId}, '${post.userName}')">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            generatePagination(pagination, page, totalPages, 'jobs');
+        }
+
+        async function loadFreelancers() {
+            try {
+                const freelancers = await btpDB.get('freelancers');
+                displayFreelancers(freelancers);
+            } catch (error) {
+                console.error('Erreur chargement freelancers:', error);
+            }
+        }
+
+        function displayFreelancers(freelancers, page = 1) {
+            const container = document.getElementById('freelancers-container');
+            const pagination = document.getElementById('freelancers-pagination');
+            if (!container) return;
+
+            let filteredFreelancers = freelancers.filter(f => f.status === ANNOUNCE_STATUS.APPROVED);
+            
+            // Appliquer les filtres
+            const specialtyFilter = document.getElementById('freelancerSpecialtyFilter')?.value;
+            const cityFilter = document.getElementById('freelancerCityFilter')?.value;
+            const sort = document.getElementById('freelancerSort')?.value;
+
+            if (specialtyFilter) {
+                filteredFreelancers = filteredFreelancers.filter(f => f.specialty === specialtyFilter);
+            }
+            if (cityFilter) {
+                filteredFreelancers = filteredFreelancers.filter(f => f.ville === cityFilter);
+            }
+
+            // Trier
+            if (sort === 'rating') {
+                filteredFreelancers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else if (sort === 'premium') {
+                filteredFreelancers.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+            } else {
+                filteredFreelancers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(filteredFreelancers.length / ITEMS_PER_PAGE);
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const paginatedFreelancers = filteredFreelancers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paginatedFreelancers.length === 0) {
+                html = '<div class="col-12 text-center"><p class="text-muted">Aucun freelance disponible pour le moment.</p></div>';
+            } else {
+                paginatedFreelancers.forEach(freelancer => {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="card h-100 position-relative">
+                                ${freelancer.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
+                                <button class="favorite-btn" onclick="toggleFavorite(${freelancer.id})">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <div class="card-body">
+                                    <h5 class="card-title">${freelancer.title}</h5>
+                                    <p class="text-muted">${freelancer.description}</p>
+                                    <p class="text-success fw-bold h5">${freelancer.tarif}</p>
+                                    <div class="mb-2">
+                                        <small class="text-muted">📍 ${freelancer.ville} • ${freelancer.experience}</small>
+                                    </div>
+                                    ${freelancer.rating ? `
+                                        <div class="mb-2">
+                                            <small class="text-warning">
+                                                <i class="fas fa-star"></i> ${freelancer.rating}/5 (${freelancer.reviewCount} avis)
+                                            </small>
+                                        </div>
+                                    ` : ''}
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary flex-fill" onclick="showContactInfo('${freelancer.phone}', '${freelancer.userName}')">
+                                            <i class="fas fa-phone me-2"></i>Contacter
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="startChat(${freelancer.userId}, '${freelancer.userName}')">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            generatePagination(pagination, page, totalPages, 'freelancers');
+        }
+
+        async function loadProfessionals() {
+            try {
+                const professionals = await btpDB.get('professionals');
+                displayProfessionals(professionals);
+            } catch (error) {
+                console.error('Erreur chargement professionnels:', error);
+            }
+        }
+
+        function displayProfessionals(professionals, page = 1) {
+            const container = document.getElementById('professionals-container');
+            const pagination = document.getElementById('professionals-pagination');
+            if (!container) return;
+
+            let filteredProfessionals = [...professionals];
+            
+            // Appliquer les filtres
+            const specialtyFilter = document.getElementById('filterSpecialty')?.value;
+            const cityFilter = document.getElementById('filterCity')?.value;
+            const experienceFilter = document.getElementById('filterExperience')?.value;
+
+            if (specialtyFilter) {
+                filteredProfessionals = filteredProfessionals.filter(prof => prof.specialty === specialtyFilter);
+            }
+            if (cityFilter) {
+                filteredProfessionals = filteredProfessionals.filter(prof => prof.city === cityFilter);
+            }
+            if (experienceFilter) {
+                filteredProfessionals = filteredProfessionals.filter(prof => prof.experience >= parseInt(experienceFilter));
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(filteredProfessionals.length / ITEMS_PER_PAGE);
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const paginatedProfessionals = filteredProfessionals.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            let html = '';
+            if (paginatedProfessionals.length === 0) {
+                html = '<div class="col-12 text-center"><p class="text-muted">Aucun professionnel disponible pour le moment.</p></div>';
+            } else {
+                paginatedProfessionals.forEach(professional => {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="card professional-card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0">${professional.company}</h5>
+                                        <span class="badge bg-success">Certifié</span>
+                                    </div>
+                                    <p class="text-muted">📍 ${professional.city} • 🏆 ${professional.experience} ans d'expérience</p>
+                                    <p class="card-text">${professional.description}</p>
+                                    <div class="mb-3">
+                                        <small class="text-muted">📞 ${professional.phone}</small><br>
+                                        <small class="text-muted">⭐ ${professional.rating}/5 (${professional.reviewCount} avis)</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-primary flex-fill" onclick="showContactInfo('${professional.phone}', '${professional.company}')">
+                                            <i class="fas fa-phone me-2"></i>Appeler
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="startChat(${professional.userId}, '${professional.company}')">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            generatePagination(pagination, page, totalPages, 'professionals');
+        }
+
+        // ========== PAGINATION ==========
+        function generatePagination(container, currentPage, totalPages, section) {
+            if (!container || totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <nav aria-label="Pagination">
+                    <ul class="pagination">
+            `;
+
+            // Bouton précédent
+            if (currentPage > 1) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage('${section}', ${currentPage - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            // Pages
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage('${section}', ${i})">${i}</a>
+                        </li>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Bouton suivant
+            if (currentPage < totalPages) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage('${section}', ${currentPage + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            html += `
+                    </ul>
+                </nav>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function changePage(section, page) {
+            appState.currentPage[section] = page;
+            
+            switch(section) {
+                case 'marketplace':
+                    btpDB.get('marketplace_posts').then(posts => displayMarketplaceAnnounces(posts, page));
+                    break;
+                case 'realestate':
+                    btpDB.get('realestate_posts').then(posts => displayRealestateAnnounces(posts, page));
+                    break;
+                case 'jobs':
+                    btpDB.get('job_posts').then(posts => displayJobsAnnounces(posts, page));
+                    break;
+                case 'freelancers':
+                    btpDB.get('freelancers').then(freelancers => displayFreelancers(freelancers, page));
+                    break;
+                case 'professionals':
+                    btpDB.get('professionals').then(professionals => displayProfessionals(professionals, page));
+                    break;
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ========== FILTRES ==========
+        function filterMarketplace() {
+            btpDB.get('marketplace_posts').then(posts => {
+                displayMarketplaceAnnounces(posts, 1);
+            });
+        }
+
+        function filterRealEstate() {
+            btpDB.get('realestate_posts').then(posts => {
+                displayRealestateAnnounces(posts, 1);
+            });
+        }
+
+        function filterJobs() {
+            btpDB.get('job_posts').then(posts => {
+                displayJobsAnnounces(posts, 1);
+            });
+        }
+
+        function filterFreelancers() {
+            btpDB.get('freelancers').then(freelancers => {
+                displayFreelancers(freelancers, 1);
+            });
+        }
+
+        function filterProfessionals() {
+            btpDB.get('professionals').then(professionals => {
+                displayProfessionals(professionals, 1);
+            });
+        }
+
+        // ========== FORUM OPÉRATIONNEL ==========
+        async function loadForumTopics() {
+            try {
+                const topics = await btpDB.get('forum_topics');
+                displayForumTopics(topics);
+            } catch (error) {
+                console.error('Erreur chargement forum:', error);
+            }
+        }
+
+        function displayForumTopics(topics) {
+            const container = document.getElementById('forum-topics-container');
+            if (!container) return;
+
+            let html = '';
+            if (topics.length === 0) {
+                html = `
+                    <div class="text-center p-5">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <h4>Aucun sujet de discussion</h4>
+                        <p class="text-muted">Soyez le premier à lancer une discussion !</p>
+                        <button class="btn btn-primary mt-3" onclick="checkAuthAndGo('forum_create', 'forum')">
+                            <i class="fas fa-plus me-2"></i>Créer un sujet
+                        </button>
+                    </div>
+                `;
+            } else {
+                topics.forEach(topic => {
+                    html += `
+                        <div class="forum-topic p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">
+                                        <a href="#" onclick="viewForumTopic(${topic.id})" class="text-decoration-none">${topic.title}</a>
+                                        <span class="badge bg-secondary topic-badge">${topic.category}</span>
+                                    </h5>
+                                    <p class="text-muted mb-2">${topic.content.substring(0, 150)}...</p>
+                                    <div class="d-flex text-muted small">
+                                        <span class="me-3"><i class="fas fa-user me-1"></i>${topic.authorName}</span>
+                                        <span class="me-3"><i class="fas fa-clock me-1"></i>${new Date(topic.createdAt).toLocaleDateString()}</span>
+                                        <span><i class="fas fa-comment me-1"></i>${topic.replyCount || 0} réponses</span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary">${topic.viewCount || 0} vues</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        function filterForum(category) {
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.list-group-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Filtrer les sujets (implémentation simplifiée)
+            showAlert(`Filtrage des sujets par catégorie: ${category}`, 'info');
+        }
+
+        function searchForum() {
+            const searchTerm = document.getElementById('forumSearch').value;
+            if (searchTerm) {
+                showAlert(`Recherche dans le forum: "${searchTerm}"`, 'info');
+            }
+        }
+
+        function viewForumTopic(topicId) {
+            showAlert(`Ouverture du sujet #${topicId} - Fonctionnalité à venir!`, 'info');
+        }
+
+        // ========== UPLOAD PHOTOS ==========
+        function handlePhotoUpload(input, type) {
+            const files = Array.from(input.files);
+            const previewId = type + 'PhotoPreview';
+            const preview = document.getElementById(previewId);
+            
+            // Limiter à 5 photos
+            if (files.length > 5) {
+                showAlert('Maximum 5 photos autorisées', 'error');
+                files.splice(5);
+            }
+            
+            // Vérifier la taille des fichiers
+            const oversized = files.filter(file => file.size > 2 * 1024 * 1024);
+            if (oversized.length > 0) {
+                showAlert('Certains fichiers dépassent 2MB', 'error');
+                return;
+            }
+            
+            preview.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'photo-preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}">
+                        <button type="button" class="photo-remove" onclick="removePhoto(this, '${type}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    preview.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Réinitialiser l'input pour permettre la sélection des mêmes fichiers
+            input.value = '';
+        }
+
+        function removePhoto(button, type) {
+            const previewItem = button.parentElement;
+            previewItem.remove();
+        }
+
+        // ========== MESSAGERIE AMÉLIORÉE ==========
+        let currentChat = null;
+
+        function toggleMessaging() {
+            const container = document.getElementById('messagingContainer');
+            if (container.style.display === 'flex') {
+                container.style.display = 'none';
+            } else {
+                container.style.display = 'flex';
+                loadContactsList();
+            }
+        }
+
+        async function loadContactsList() {
+            const contactsList = document.getElementById('contactsList');
+            const users = await btpDB.get('users');
+            
+            let html = '';
+            users.forEach(user => {
+                if (user.id !== appState.currentUser?.id) {
+                    html += `
+                        <div class="contact-item" onclick="startChat(${user.id}, '${user.prenom} ${user.nom}')">
+                            <div class="d-flex align-items-center">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">
+                                    ${user.prenom.charAt(0)}${user.nom.charAt(0)}
+                                </div>
+                                <div>
+                                    <strong>${user.prenom} ${user.nom}</strong>
+                                    <div class="small text-muted">${user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            contactsList.innerHTML = html || '<div class="text-center p-3 text-muted">Aucun contact disponible</div>';
+        }
+
+        function startChat(userId, userName) {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour envoyer un message', 'warning');
+                showLoginModal();
+                return;
+            }
+
+            currentChat = { userId, userName };
+            const container = document.getElementById('messagingContainer');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = container.querySelector('.chat-input button');
+
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.placeholder = `Message à ${userName}...`;
+
+            loadChatMessages(userId);
+            
+            // Mettre en surbrillance le contact sélectionné
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.contact-item').classList.add('active');
+        }
+
+        async function loadChatMessages(userId) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messages = await btpDB.get('messages');
+            
+            const chatMessages = messages.filter(msg => 
+                (msg.senderId === appState.currentUser.id && msg.receiverId === userId) ||
+                (msg.senderId === userId && msg.receiverId === appState.currentUser.id)
+            );
+
+            let html = '';
+            if (chatMessages.length === 0) {
+                html = '<div class="text-center text-muted py-4">Aucun message échangé</div>';
+            } else {
+                chatMessages.forEach(msg => {
+                    const isSent = msg.senderId === appState.currentUser.id;
+                    html += `
+                        <div class="message ${isSent ? 'sent' : 'received'}">
+                            <div>${msg.content}</div>
+                            <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            messagesContainer.innerHTML = html;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            if (!currentChat || !appState.currentUser) return;
+
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+
+            if (!content) return;
+
+            await btpDB.post('messages', {
+                senderId: appState.currentUser.id,
+                senderName: appState.currentUser.prenom,
+                receiverId: currentChat.userId,
+                receiverName: currentChat.userName,
+                content: content
+            });
+
+            messageInput.value = '';
+            loadChatMessages(currentChat.userId);
+        }
+
+        // ========== FONCTIONS DE CONTACT ==========
+        function showContactInfo(phone, name) {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour voir les coordonnées', 'warning');
+                showLoginModal();
+                return;
+            }
+            
+            showAlert(`📞 Contact: ${name}<br> Téléphone: ${phone}`, 'info');
+        }
+
+        // ========== PUBLICATION ==========
+        function showPublishForm(type) {
+            document.querySelectorAll('.publish-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            const targetForm = document.getElementById(type + '-form');
+            if (targetForm) {
+                targetForm.style.display = 'block';
+            }
+            
+            document.querySelectorAll('.list-group-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        async function handlePublishMarketplace(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) {
+                showAlert('Veuillez vous connecter', 'error');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const announceData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                unit: formData.get('unit'),
+                category: formData.get('category'),
+                city: formData.get('city'),
+                phone: formData.get('phone'),
+                userId: appState.currentUser.id,
+                userName: appState.currentUser.prenom + ' ' + appState.currentUser.nom,
+                status: appState.isAdmin ? ANNOUNCE_STATUS.APPROVED : ANNOUNCE_STATUS.PENDING,
+                isPremium: appState.currentUser.hasPremium || false,
+                photos: [] // Les photos seraient uploadées vers un serveur en production
+            };
+
+            showLoading(true);
+
+            try {
+                await btpDB.post('marketplace_posts', announceData);
+                await btpDB.post('user_announces', announceData);
+                
+                showAlert(appState.isAdmin ? 
+                    '✅ Annonce publiée avec succès !' : 
+                    '✅ Votre annonce a été soumise ! Elle sera publiée après modération.', 
+                    'success'
+                );
+                
+                event.target.reset();
+                document.getElementById('marketplacePhotoPreview').innerHTML = '';
+                goToSection('my_announces');
+
+            } catch (error) {
+                showAlert('Erreur lors de la publication', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handlePublishRealEstate(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) {
+                showAlert('Veuillez vous connecter', 'error');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const announceData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                type: formData.get('type'),
+                surface: formData.get('surface') ? parseInt(formData.get('surface')) : null,
+                rooms: formData.get('rooms') ? parseInt(formData.get('rooms')) : null,
+                address: formData.get('address'),
+                phone: formData.get('phone'),
+                userId: appState.currentUser.id,
+                userName: appState.currentUser.prenom + ' ' + appState.currentUser.nom,
+                status: appState.isAdmin ? ANNOUNCE_STATUS.APPROVED : ANNOUNCE_STATUS.PENDING,
+                isPremium: appState.currentUser.hasPremium || false,
+                photos: [] // Les photos seraient uploadées vers un serveur en production
+            };
+
+            showLoading(true);
+
+            try {
+                await btpDB.post('realestate_posts', announceData);
+                await btpDB.post('user_announces', announceData);
+                
+                showAlert(appState.isAdmin ? 
+                    '✅ Annonce immobilière publiée avec succès !' : 
+                    '✅ Votre annonce immobilière a été soumise ! Elle sera publiée après modération.', 
+                    'success'
+                );
+                
+                event.target.reset();
+                document.getElementById('realestatePhotoPreview').innerHTML = '';
+                goToSection('my_announces');
+
+            } catch (error) {
+                showAlert('Erreur lors de la publication', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handlePublishJob(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) {
+                showAlert('Veuillez vous connecter', 'error');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const announceData = {
+                poste: formData.get('poste'),
+                description: formData.get('description'),
+                salaire: formData.get('salaire'),
+                contrat: formData.get('contrat'),
+                ville: formData.get('ville'),
+                experience: formData.get('experience'),
+                phone: formData.get('phone'),
+                userId: appState.currentUser.id,
+                userName: appState.currentUser.prenom + ' ' + appState.currentUser.nom,
+                status: appState.isAdmin ? ANNOUNCE_STATUS.APPROVED : ANNOUNCE_STATUS.PENDING,
+                isPremium: appState.currentUser.hasPremium || false
+            };
+
+            showLoading(true);
+
+            try {
+                await btpDB.post('job_posts', announceData);
+                await btpDB.post('user_announces', announceData);
+                
+                showAlert(appState.isAdmin ? 
+                    '✅ Offre d\'emploi publiée avec succès !' : 
+                    '✅ Votre offre d\'emploi a été soumise ! Elle sera publiée après modération.', 
+                    'success'
+                );
+                
+                event.target.reset();
+                goToSection('my_announces');
+
+            } catch (error) {
+                showAlert('Erreur lors de la publication', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handlePublishFreelance(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) {
+                showAlert('Veuillez vous connecter', 'error');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const announceData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                specialty: formData.get('specialty'),
+                tarif: formData.get('tarif'),
+                ville: formData.get('ville'),
+                experience: formData.get('experience'),
+                portfolio: formData.get('portfolio'),
+                phone: formData.get('phone'),
+                userId: appState.currentUser.id,
+                userName: appState.currentUser.prenom + ' ' + appState.currentUser.nom,
+                status: appState.isAdmin ? ANNOUNCE_STATUS.APPROVED : ANNOUNCE_STATUS.PENDING,
+                isPremium: appState.currentUser.hasPremium || false,
+                rating: 0,
+                reviewCount: 0
+            };
+
+            showLoading(true);
+
+            try {
+                await btpDB.post('freelancers', announceData);
+                await btpDB.post('user_announces', announceData);
+                
+                showAlert(appState.isAdmin ? 
+                    '✅ Service freelance publié avec succès !' : 
+                    '✅ Votre service freelance a été soumis ! Il sera publié après modération.', 
+                    'success'
+                );
+                
+                event.target.reset();
+                goToSection('my_announces');
+
+            } catch (error) {
+                showAlert('Erreur lors de la publication', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ========== ADMIN ==========
+        async function loadAdminStats() {
+            if (!appState.isAdmin) return;
+
+            const [users, marketplace, realestate, jobs, freelancers] = await Promise.all([
+                btpDB.get('users'),
+                btpDB.get('marketplace_posts'),
+                btpDB.get('realestate_posts'),
+                btpDB.get('job_posts'),
+                btpDB.get('freelancers')
+            ]);
+
+            document.getElementById('stats-users').textContent = users.length;
+            document.getElementById('stats-marketplace').textContent = marketplace.length;
+            document.getElementById('stats-realestate').textContent = realestate.length;
+            document.getElementById('stats-jobs').textContent = jobs.length;
+
+            // Charger les emplacements Adsense
+            loadAdsenseSlots();
+
+            // Charger les utilisateurs
+            loadUsersTable(users);
+            
+            // Charger les annonces à modérer
+            loadModerationTable([...marketplace, ...realestate, ...jobs, ...freelancers]);
+        }
+
+        async function loadAdsenseSlots() {
+            const slots = await btpDB.getAdsenseSlots();
+            const container = document.getElementById('adsense-slots-container');
+            
+            let html = '';
+            slots.forEach(slot => {
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">${slot.name}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Code Adsense</label>
+                                <textarea class="form-control adsense-slot" data-slot-id="${slot.id}" rows="4" placeholder="Collez votre code Adsense ici...">${slot.code || ''}</textarea>
+                            </div>
+                            <button class="btn btn-success btn-sm" onclick="saveAdsenseSlot('${slot.id}')">
+                                <i class="fas fa-save me-1"></i>Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        async function saveAdsenseSlot(slotId) {
+            const code = document.querySelector(`[data-slot-id="${slotId}"]`).value;
+            await btpDB.saveAdsenseSlot(slotId, code);
+            showAlert('Emplacement Adsense mis à jour', 'success');
+        }
+
+        function loadUsersTable(users) {
+            const tbody = document.getElementById('users-table-body');
+            let html = '';
+            
+            users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.prenom} ${user.nom}</td>
+                        <td>${user.email}</td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-success'}">
+                                ${user.role === 'admin' ? 'Admin' : 'Utilisateur'}
+                            </span>
+                            ${user.isBlocked ? '<span class="badge bg-warning ms-1">Bloqué</span>' : ''}
+                            ${user.hasPremium ? '<span class="badge bg-info ms-1">Premium</span>' : ''}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editUser(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn ${user.isBlocked ? 'btn-success' : 'btn-warning'}" 
+                                        onclick="toggleUserBlock(${user.id}, ${!user.isBlocked})">
+                                    <i class="fas ${user.isBlocked ? 'fa-unlock' : 'fa-lock'}"></i>
+                                </button>
+                                <button class="btn ${user.hasPremium ? 'btn-secondary' : 'btn-info'}" 
+                                        onclick="toggleUserPremium(${user.id}, ${!user.hasPremium})">
+                                    <i class="fas ${user.hasPremium ? 'fa-crown' : 'fa-star'}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        async function toggleUserBlock(userId, block) {
+            await btpDB.put('users', userId, { isBlocked: block });
+            showAlert(`Utilisateur ${block ? 'bloqué' : 'débloqué'}`, 'success');
+            loadAdminStats();
+        }
+
+        async function toggleUserPremium(userId, premium) {
+            await btpDB.put('users', userId, { hasPremium: premium });
+            showAlert(`Accès Premium ${premium ? 'accordé' : 'retiré'}`, 'success');
+            loadAdminStats();
+        }
+
+        function editUser(userId) {
+            showAlert(`Édition de l'utilisateur #${userId} - Fonctionnalité à venir!`, 'info');
+        }
+
+        function loadModerationTable(announces) {
+            const tbody = document.getElementById('moderation-table-body');
+            let html = '';
+            
+            const pendingAnnounces = announces.filter(announce => 
+                announce.status === ANNOUNCE_STATUS.PENDING || 
+                announce.status === ANNOUNCE_STATUS.REPORTED
+            );
+            
+            if (pendingAnnounces.length === 0) {
+                html = '<tr><td colspan="7" class="text-center">Aucune annonce à modérer</td></tr>';
+            } else {
+                pendingAnnounces.forEach(announce => {
+                    html += `
+                        <tr>
+                            <td>
+                                <strong>${announce.title || announce.poste}</strong>
+                                <br><small class="text-muted">${announce.description?.substring(0, 50)}...</small>
+                            </td>
+                            <td>
+                                <span class="badge ${getAnnounceTypeBadge(announce)}">
+                                    ${getAnnounceType(announce)}
+                                </span>
+                            </td>
+                            <td>${announce.userName}</td>
+                            <td>${new Date(announce.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                <span class="badge ${getStatusBadge(announce.status)}">
+                                    ${getStatusText(announce.status)}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewAnnounceDetails(${announce.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-success me-1" onclick="moderateAnnounce(${announce.id}, '${ANNOUNCE_STATUS.APPROVED}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning me-1" onclick="requestAnnounceEdit(${announce.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="moderateAnnounce(${announce.id}, '${ANNOUNCE_STATUS.REJECTED}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        function getAnnounceType(announce) {
+            if (announce.category) return 'Marketplace';
+            if (announce.type) return 'Immobilier';
+            if (announce.poste) return 'Emploi';
+            if (announce.specialty) return 'Freelance';
+            return 'Autre';
+        }
+
+        function getAnnounceTypeBadge(announce) {
+            if (announce.category) return 'bg-primary';
+            if (announce.type) return 'bg-success';
+            if (announce.poste) return 'bg-warning';
+            if (announce.specialty) return 'bg-info';
+            return 'bg-secondary';
+        }
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case ANNOUNCE_STATUS.APPROVED: return 'bg-success';
+                case ANNOUNCE_STATUS.PENDING: return 'bg-warning';
+                case ANNOUNCE_STATUS.REJECTED: return 'bg-danger';
+                case ANNOUNCE_STATUS.REPORTED: return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case ANNOUNCE_STATUS.APPROVED: return 'Approuvé';
+                case ANNOUNCE_STATUS.PENDING: return 'En attente';
+                case ANNOUNCE_STATUS.REJECTED: return 'Rejeté';
+                case ANNOUNCE_STATUS.REPORTED: return 'Signalé';
+                default: return status;
+            }
+        }
+
+        async function moderateAnnounce(announceId, status) {
+            // Chercher dans toutes les collections
+            const collections = ['marketplace_posts', 'realestate_posts', 'job_posts', 'freelancers'];
+            
+            for (const collection of collections) {
+                const items = await btpDB.get(collection);
+                const item = items.find(i => i.id === announceId);
+                
+                if (item) {
+                    await btpDB.put(collection, announceId, { status });
+                    showAlert(`Annonce ${status === ANNOUNCE_STATUS.APPROVED ? 'approuvée' : 'rejetée'}`, 'success');
+                    loadAdminStats();
+                    return;
+                }
+            }
+        }
+
+        function viewAnnounceDetails(announceId) {
+            showAlert(`Détails de l'annonce #${announceId} - Fonctionnalité à venir!`, 'info');
+        }
+
+        function requestAnnounceEdit(announceId) {
+            showAlert(`Demande de modification pour l'annonce #${announceId} - Fonctionnalité à venir!`, 'info');
+        }
+
+        // ========== NEWSLETTER ==========
+        function selectNewsletterTemplate(templateName) {
+            document.querySelectorAll('.newsletter-template').forEach(tpl => {
+                tpl.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            btpDB.getNewsletterTemplate(templateName).then(content => {
+                document.getElementById('newsletterContent').value = content;
+            });
+        }
+
+        async function sendNewsletter() {
+            if (!appState.isAdmin) return;
+
+            const content = document.getElementById('newsletterContent').value;
+            if (!content) {
+                showAlert('Veuillez saisir le contenu de la newsletter', 'error');
+                return;
+            }
+
+            showLoading(true);
+            
+            // Simuler l'envoi
+            setTimeout(() => {
+                showLoading(false);
+                showAlert('Newsletter envoyée à tous les adhérents !', 'success');
+            }, 2000);
+        }
+
+        function scheduleNewsletter() {
+            if (!appState.isAdmin) return;
+
+            const content = document.getElementById('newsletterContent').value;
+            if (!content) {
+                showAlert('Veuillez saisir le contenu de la newsletter', 'error');
+                return;
+            }
+
+            showAlert('Newsletter programmée pour envoi automatique', 'info');
+        }
+
+        // ========== FONCTIONS UTILITAIRES ==========
+        function showAlert(message, type = 'success') {
+            const alert = document.querySelector('.message-alert');
+            const alertMessage = alert.querySelector('.alert-message');
+            
+            alertMessage.innerHTML = message;
+            alert.className = `alert alert-${type === 'error' ? 'danger' : type} message-alert`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => alert.style.display = 'none', 4000);
+        }
+
+        function showLoading(show) {
+            document.querySelector('.loading-overlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showLoginModal() {
+            loginModal.show();
+        }
+
+        function showRegisterModal() {
+            registerModal.show();
+        }
+
+        function showProfessionalModal() {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour devenir professionnel certifié', 'warning');
+                showLoginModal();
+                return;
+            }
+            showAlert('Fonctionnalité "Devenir Professionnel" bientôt disponible!', 'info');
+        }
+
+        function switchToRegister() {
+            loginModal.hide();
+            setTimeout(() => registerModal.show(), 300);
+        }
+
+        function switchToLogin() {
+            registerModal.hide();
+            setTimeout(() => loginModal.show(), 300);
+        }
+
+        function changeTheme(theme) {
+            appState.theme = theme;
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            showAlert(`Thème ${theme} appliqué !`, 'info');
+        }
+
+        function performGlobalSearch() {
+            const searchTerm = document.getElementById('globalSearch').value;
+            if (searchTerm) {
+                showAlert(`Recherche pour: "${searchTerm}" - Fonctionnalité avancée à venir!`, 'info');
+            }
+        }
+
+        function toggleFavorite(itemId) {
+            showAlert('Ajouté aux favoris', 'success');
+        }
+
+        function selectSubscription(plan) {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour souscrire à un abonnement Premium', 'warning');
+                showLoginModal();
+                return;
+            }
+            showAlert(`Abonnement ${plan} sélectionné - Fonctionnalité de paiement à venir!`, 'success');
+        }
+
+        // ========== INITIALISATION DU THÈME ==========
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+        initializeTheme();
+
+    </script>
+</body>
+</html>
