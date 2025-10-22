@@ -462,6 +462,80 @@
             margin-left: 8px;
         }
 
+        /* Section Mon Compte */
+        .account-sidebar {
+            background: var(--light-color);
+            border-radius: 10px;
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .account-sidebar .nav-link {
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            color: var(--text-color);
+            border-radius: 0;
+        }
+
+        .account-sidebar .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .account-sidebar .nav-link:last-child {
+            border-bottom: none;
+        }
+
+        .account-content {
+            background: var(--light-color);
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .announce-status-badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d1edff;
+            color: #004085;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .account-section {
+            display: none;
+        }
+
+        .account-section.active {
+            display: block;
+        }
+
+        /* Logo en construction */
+        .construction-logo {
+            max-width: 200px;
+            margin: 0 auto 2rem;
+            display: block;
+        }
+
+        /* Optimisation de la barre de recherche */
+        .search-container-mobile {
+            display: none;
+            margin: 10px 0;
+        }
+
         @media (max-width: 1200px) {
             .global-search-container {
                 width: 500px;
@@ -485,8 +559,11 @@
             }
             
             .global-search-container {
-                width: 100%;
-                margin: 10px 0;
+                display: none;
+            }
+
+            .search-container-mobile {
+                display: block;
             }
 
             .messaging-container {
@@ -507,6 +584,10 @@
 
             .nav-link {
                 padding: 10px 0;
+            }
+
+            .account-sidebar {
+                margin-bottom: 2rem;
             }
         }
 
@@ -546,7 +627,17 @@
                 <i class="fas fa-hard-hat me-2"></i>BTP Pro <span>🇲🇦</span>
             </a>
             
-            <!-- Barre de recherche -->
+            <!-- Barre de recherche mobile -->
+            <div class="search-container-mobile d-lg-none">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="🔍 Rechercher..." id="globalSearchMobile">
+                    <button class="btn btn-primary" type="button" onclick="performGlobalSearch()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Barre de recherche desktop -->
             <div class="global-search-container d-none d-lg-block">
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="🔍 Rechercher des matériaux, emplois, professionnels..." id="globalSearch">
@@ -570,9 +661,7 @@
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('professionals')">Professionnels</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('forum')">Forum</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('ai')">Assistant IA</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('faq')">FAQ</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('premium')">Premium</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('my_announces')">Mes Annonces</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToSection('favorites')">Favoris</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="goToPublish()"><i class="fas fa-plus-circle me-1"></i>Publier</a></li>
                     <li class="nav-item d-none" id="admin-nav-item"><a class="nav-link" href="#" onclick="goToSection('admin')">Admin</a></li>
@@ -611,7 +700,7 @@
                                 <span id="admin-badge" class="admin-badge d-none">ADMIN</span>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="goToSection('my_announces')"><i class="fas fa-bullhorn me-2"></i>Mes annonces</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="goToSection('my_account')"><i class="fas fa-user me-2"></i>Mon Compte</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="goToSection('favorites')"><i class="fas fa-heart me-2"></i>Mes favoris</a></li>
                                 <li id="admin-menu-item" class="d-none"><a class="dropdown-item" href="#" onclick="goToSection('admin')"><i class="fas fa-cog me-2"></i>Administration</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -816,6 +905,50 @@
                                 <h5 class="card-title">Freelancers</h5>
                                 <p class="text-muted">Talents créatifs et techniques</p>
                                 <button class="btn btn-outline-info btn-sm mt-2" type="button" onclick="goToSection('freelancers')">Découvrir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ déplacée ici -->
+            <div class="container my-5">
+                <h2 class="text-center mb-5">Foire Aux Questions</h2>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Comment publier une annonce ?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cliquez sur "Publier" dans le menu, choisissez le type d'annonce et remplissez le formulaire. Vos annonces seront visibles après modération.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Comment contacter un professionnel ?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Rendez-vous dans la section "Professionnels", trouvez l'artisan qui vous intéresse et cliquez sur "Contacter". Vous pourrez ensuite discuter via notre messagerie sécurisée.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Comment devenir membre Premium ?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Rendez-vous dans la section "Premium" et choisissez l'abonnement qui vous convient. Les avantages Premium incluent la mise en avant de vos annonces et des statistiques détaillées.
                             </div>
                         </div>
                     </div>
@@ -1106,12 +1239,12 @@
             </div>
         </section>
 
-        <!-- SECTION FORUM OPÉRATIONNEL -->
+        <!-- SECTION FORUM -->
         <section id="forum-section" class="section-content">
             <div class="container my-5 py-5">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="mb-0">Forum BTP</h2>
-                    <button class="btn btn-primary" onclick="checkAuthAndGo('forum_create', 'forum')">
+                    <button class="btn btn-primary" onclick="showForumCreate()">
                         <i class="fas fa-plus me-2"></i>Nouveau sujet
                     </button>
                 </div>
@@ -1164,13 +1297,56 @@
             </div>
         </section>
 
+        <!-- SECTION CRÉATION DE SUJET FORUM -->
+        <section id="forum-create-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Créer un nouveau sujet</h2>
+                    <button class="btn btn-outline-primary" onclick="goToSection('forum')">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au forum
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form id="forumTopicForm" onsubmit="createForumTopic(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Titre du sujet *</label>
+                                <input type="text" class="form-control" id="forumTopicTitle" required placeholder="Donnez un titre clair à votre sujet">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Catégorie *</label>
+                                <select class="form-select" id="forumTopicCategory" required>
+                                    <option value="">Choisir une catégorie</option>
+                                    <option value="technique">Questions techniques</option>
+                                    <option value="materiaux">Matériaux & Fournitures</option>
+                                    <option value="reglementation">Réglementation & Normes</option>
+                                    <option value="chantier">Gestion de chantier</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contenu du message *</label>
+                                <textarea class="form-control" id="forumTopicContent" rows="8" required placeholder="Décrivez votre question ou sujet de discussion en détail..."></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Publier le sujet
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="goToSection('forum')">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- SECTION ASSISTANT IA -->
         <section id="ai-section" class="section-content">
             <div class="container my-5 py-5">
                 <div class="construction-section">
-                    <div class="construction-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiByeD0iMjAiIGZpbGw9IiNGOUY5RjkiLz4KPHBhdGggZD0iTTEwMCA1MEM5My4zNzIgNTAgODcuNDg0OSA1Mi44NDA3IDgzLjQzMTQgNTcuNDMxNEM3OS4zNzc5IDYyLjAyMjEgNzcuNSA2Ny45OTI5IDc3LjUgNzQuMzc1Qzc3LjUgODAuNzU3MSA3OS4zNzc5IDg2LjcyNzkgODMuNDMxNCA5MS4zMTg2Qzg3LjQ4NDkgOTUuOTA5MyA5My4zNzIgOTguNzUgMTAwIDk4Ljc1QzEwNi42MjggOTguNzUgMTEyLjUxNSA5NS45MDkzIDExNi41NjkgOTEuMzE4NkMxMjAuNjIyIDg2LjcyNzkgMTIyLjUgODAuNzU3MSAxMjIuNSA3NC4zNzVDMTIyLjUgNjcuOTkyOSAxMjAuNjIyIDYyLjAyMjEgMTE2LjU2OSA1Ny40MzE0QzExMi41MTUgNTIuODQwNyAxMDYuNjI4IDUwIDEwMCA1MFoiIGZpbGw9IiNGRjc3MTAiLz4KPHBhdGggZD0iTTEwMCA1MEM5My4zNzIgNTAgODcuNDg0OSA1Mi44NDA3IDgzLjQzMTQgNTcuNDMxNEM3OS4zNzc5IDYyLjAyMjEgNzcuNSA2Ny45OTI5IDc3LjUgNzQuMzc1Qzc3LjUgODAuNzU3MSA3OS4zNzc5IDg2LjcyNzkgODMuNDMxNCA5MS4zMTg2Qzg3LjQ4NDkgOTUuOTA5MyA5My4zNzIgOTguNzUgMTAwIDk4Ljc1QzEwNi42MjggOTguNzUgMTEyLjUxNSA5NS45MDkzIDExNi41NjkgOTEuMzE4NkMxMjAuNjIyIDg2LjcyNzkgMTIyLjUgODAuNzU3MSAxMjIuNSA3NC4zNzVDMTIyLjUgNjcuOTkyOSAxMjAuNjIyIDYyLjAyMjEgMTE2LjU2OSA1Ny40MzE0QzExMi41MTUgNTIuODQwNyAxMDYuNjI4IDUwIDEwMCA1MFoiIHN0cm9rZT0iIzJENEE0QSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxwYXRoIGQ9Ik03Ny41IDc0LjM3NUgxMjIuNSIgc3Ryb2tlPSIjMkQ0QTRBIiBzdHJva2Utd2lkdGg9IjQiLz4KPHBhdGggZD0iTTEwMCA1MFYyNSIgc3Ryb2tlPSIjMkQ0QTRBIiBzdHJva2Utd2lkdGg9IjQiLz4KPHBhdGggZD0iTTEwMCA5OC43NVYxMjUiIHN0cm9rZT0iIzJENEE0QSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxwYXRoIGQ9Ik03Ny41IDc0LjM3NUg1MCIgc3Ryb2tlPSIjMkQ0QTRBIiBzdHJva2Utd2lkdGg9IjQiLz4KPHBhdGggZD0iTTEyMi41IDc0LjM3NUgxNTAiIHN0cm9rZT0iIzJENEE0QSIgc3Ryb2tlLXdpZHRoPSI0Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMkQ0QTRBIj5FTiBDT05TVFJVQ1RJT048L3RleHQ+Cjwvc3ZnPgo=" alt="En construction" class="construction-logo">
                     <h3>Assistant IA en construction</h3>
                     <p class="lead mb-4">Notre assistant IA spécialisé BTP arrive prochainement !</p>
                     <p class="text-muted mb-4">Nous développons une intelligence artificielle capable de vous conseiller sur vos projets de construction, calculs de matériaux, et estimations de coûts.</p>
@@ -1198,41 +1374,7 @@
             </div>
         </section>
 
-        <!-- SECTION FAQ -->
-        <section id="faq-section" class="section-content">
-            <div class="container my-5 py-5">
-                <h2 class="text-center mb-5">Foire Aux Questions</h2>
-                
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                Comment publier une annonce ?
-                            </button>
-                        </h2>
-                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Cliquez sur "Publier" dans le menu, choisissez le type d'annonce et remplissez le formulaire. Vos annonces seront visibles après modération.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                Comment contacter un professionnel ?
-                            </button>
-                        </h2>
-                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Rendez-vous dans la section "Professionnels", trouvez l'artisan qui vous intéresse et cliquez sur "Contacter". Vous pourrez ensuite discuter via notre messagerie sécurisée.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION PREMIUM AMÉLIORÉE -->
+        <!-- SECTION PREMIUM -->
         <section id="premium-section" class="section-content">
             <div class="container my-5 py-5">
                 <h2 class="text-center mb-5">Avantages Premium</h2>
@@ -1319,28 +1461,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION MES ANNONCES -->
-        <section id="my_announces-section" class="section-content">
-            <div class="container my-5 py-5">
-                <h2 class="text-center mb-5">Mes Annonces</h2>
-                
-                <div id="user-announces-container">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Gérez ici toutes vos annonces publiées sur la plateforme.
-                    </div>
-                    <div class="text-center py-5">
-                        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
-                        <h4>Vous n'avez pas encore publié d'annonces</h4>
-                        <p class="text-muted">Commencez par publier votre première annonce</p>
-                        <button class="btn btn-primary mt-3" onclick="goToPublish()">
-                            <i class="fas fa-plus me-2"></i>Publier une annonce
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1443,8 +1563,8 @@
                                             <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre produit..."></textarea>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Téléphone de contact *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX" value="${appState.currentUser?.phone || ''}">
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Photos (max 5)</label>
@@ -1513,8 +1633,8 @@
                                             <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre bien..."></textarea>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Téléphone de contact *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX" value="${appState.currentUser?.phone || ''}">
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Photos (max 5)</label>
@@ -1578,8 +1698,8 @@
                                             <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez le poste et les missions..."></textarea>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Téléphone de contact *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX" value="${appState.currentUser?.phone || ''}">
                                         </div>
                                         <button type="submit" class="btn btn-warning">
                                             <i class="fas fa-paper-plane me-2"></i>Publier l'offre
@@ -1637,8 +1757,8 @@
                                             <input type="url" class="form-control" name="portfolio" placeholder="Ex: https://votre-portfolio.com">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Téléphone de contact *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX" value="${appState.currentUser?.phone || ''}">
                                         </div>
                                         <button type="submit" class="btn btn-info">
                                             <i class="fas fa-paper-plane me-2"></i>Publier le service
@@ -1827,6 +1947,231 @@
             </div>
         </section>
 
+        <!-- SECTION MON COMPTE (NOUVELLE SECTION) -->
+        <section id="my_account-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="row">
+                    <div class="col-md-3">
+                        <!-- Sidebar Navigation -->
+                        <div class="account-sidebar">
+                            <nav class="nav flex-column">
+                                <a class="nav-link active" href="#" onclick="showAccountSection('profile')">
+                                    <i class="fas fa-user me-2"></i>Mon Profil
+                                </a>
+                                <a class="nav-link" href="#" onclick="showAccountSection('announces')">
+                                    <i class="fas fa-bullhorn me-2"></i>Mes Annonces
+                                </a>
+                                <a class="nav-link" href="#" onclick="showAccountSection('favorites')">
+                                    <i class="fas fa-heart me-2"></i>Mes Favoris
+                                </a>
+                                <a class="nav-link" href="#" onclick="showAccountSection('settings')">
+                                    <i class="fas fa-cog me-2"></i>Paramètres
+                                </a>
+                                <a class="nav-link" href="#" onclick="showAccountSection('premium')">
+                                    <i class="fas fa-crown me-2"></i>Abonnement Premium
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Contenu du compte -->
+                        <div class="account-content">
+                            
+                            <!-- Section Profil -->
+                            <div id="account-profile" class="account-section active">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="mb-0">
+                                        <i class="fas fa-user me-2"></i>Mon Profil
+                                    </h3>
+                                    <button class="btn btn-outline-primary" onclick="toggleEditProfile()">
+                                        <i class="fas fa-edit me-2"></i>Modifier
+                                    </button>
+                                </div>
+                                
+                                <div id="profile-view">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Nom complet</label>
+                                                <p class="h5" id="profile-fullname">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Email</label>
+                                                <p class="h6" id="profile-email">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Téléphone</label>
+                                                <p class="h6" id="profile-phone">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Date d'inscription</label>
+                                                <p class="h6" id="profile-created">-</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <div class="user-avatar-large mb-3">
+                                                <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2rem; margin: 0 auto;">
+                                                    <span id="profile-initials">MA</span>
+                                                </div>
+                                            </div>
+                                            <div id="premium-status-badge" class="d-none">
+                                                <span class="premium-badge">⭐ ABONNÉ PREMIUM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="profile-edit" style="display: none;">
+                                    <form id="profile-form" onsubmit="updateProfile(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Prénom *</label>
+                                                <input type="text" class="form-control" id="edit-prenom" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Nom *</label>
+                                                <input type="text" class="form-control" id="edit-nom" required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Email *</label>
+                                            <input type="email" class="form-control" id="edit-email" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone</label>
+                                            <input type="tel" class="form-control" id="edit-phone" placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Enregistrer
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="toggleEditProfile()">
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Section Mes Annonces -->
+                            <div id="account-announces" class="account-section">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="mb-0">
+                                        <i class="fas fa-bullhorn me-2"></i>Mes Annonces
+                                    </h3>
+                                    <button class="btn btn-primary" onclick="goToPublish()">
+                                        <i class="fas fa-plus me-2"></i>Nouvelle Annonce
+                                    </button>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-primary" id="stats-total-announces">0</h4>
+                                                    <p class="text-muted mb-0">Total</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-success" id="stats-active-announces">0</h4>
+                                                    <p class="text-muted mb-0">Actives</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-warning" id="stats-pending-announces">0</h4>
+                                                    <p class="text-muted mb-0">En attente</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-danger" id="stats-rejected-announces">0</h4>
+                                                    <p class="text-muted mb-0">Rejetées</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="user-announces-list">
+                                    <!-- Annonces chargées dynamiquement -->
+                                </div>
+                            </div>
+                            
+                            <!-- Autres sections du compte -->
+                            <div id="account-favorites" class="account-section">
+                                <h3 class="mb-4">
+                                    <i class="fas fa-heart me-2"></i>Mes Favoris
+                                </h3>
+                                <div class="text-center py-5">
+                                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                                    <h4>Vos favoris apparaîtront ici</h4>
+                                    <p class="text-muted">Ajoutez des éléments en cliquant sur le cœur</p>
+                                    <button class="btn btn-primary mt-3" onclick="goToSection('marketplace')">
+                                        <i class="fas fa-shopping-cart me-2"></i>Parcourir la Marketplace
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="account-settings" class="account-section">
+                                <h3 class="mb-4">
+                                    <i class="fas fa-cog me-2"></i>Paramètres du Compte
+                                </h3>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Changer le mot de passe</h5>
+                                        <form onsubmit="changePassword(event)">
+                                            <div class="mb-3">
+                                                <label class="form-label">Mot de passe actuel</label>
+                                                <input type="password" class="form-control" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Nouveau mot de passe</label>
+                                                <input type="password" class="form-control" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Confirmer le nouveau mot de passe</label>
+                                                <input type="password" class="form-control" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-key me-2"></i>Changer le mot de passe
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="account-premium" class="account-section">
+                                <h3 class="mb-4">
+                                    <i class="fas fa-crown me-2"></i>Abonnement Premium
+                                </h3>
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-crown fa-3x text-warning mb-3"></i>
+                                        <h4>Passez à la version Premium</h4>
+                                        <p class="text-muted mb-4">Profitez d'avantages exclusifs pour booster votre activité</p>
+                                        <button class="btn btn-warning btn-lg" onclick="goToSection('premium')">
+                                            <i class="fas fa-star me-2"></i>Découvrir Premium
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -1897,28 +2242,27 @@
                         },
                         {
                             id: 2,
-                            prenom: "Ahmed",
-                            nom: "Benali",
-                            email: "ahmed@example.com",
-                            password: "user123",
-                            phone: "+212 6 12 34 56 78",
+                            prenom: "Abderrahmane",
+                            nom: "Lyaakobi",
+                            email: "lyaakobi@hotmail.com",
+                            password: "@nisawsan1",
+                            phone: "+212 6 63 06 62 25",
                             role: "user",
                             isVerified: true,
                             isBlocked: false,
-                            hasPremium: false,
+                            hasPremium: true,
                             createdAt: new Date().toISOString()
                         },
                         {
                             id: 3,
-                            prenom: "Fatima",
-                            nom: "Zahra",
-                            email: "fatima@example.com",
-                            password: "user123",
-                            phone: "+212 6 23 45 67 89",
+                            prenom: "Younes",
+                            nom: "Hachimi",
+                            email: "y.hachimi.yh@gmail.com",
+                            password: "@younes1",
                             role: "user",
                             isVerified: true,
                             isBlocked: false,
-                            hasPremium: false,
+                            hasPremium: true,
                             createdAt: new Date().toISOString()
                         }
                     ],
@@ -1931,11 +2275,11 @@
                             unit: "sac",
                             category: "ciment",
                             city: "casablanca",
-                            phone: "+212 6 12 34 56 78",
+                            phone: "+212 6 63 06 62 25",
                             status: ANNOUNCE_STATUS.APPROVED,
-                            userId: 1,
-                            userName: "Admin BTP",
-                            isPremium: true,
+                            userId: 2,
+                            userName: "Abderrahmane Lyaakobi",
+                            isPremium: false,
                             photos: [],
                             createdAt: new Date().toISOString()
                         },
@@ -1967,10 +2311,10 @@
                             surface: 220,
                             rooms: 4,
                             address: "Gueliz, Marrakech",
-                            phone: "+212 6 12 34 56 78",
+                            phone: "+212 6 63 06 62 25",
                             status: ANNOUNCE_STATUS.APPROVED,
-                            userId: 1,
-                            userName: "Admin BTP",
+                            userId: 2,
+                            userName: "Abderrahmane Lyaakobi",
                             isPremium: true,
                             photos: [],
                             createdAt: new Date().toISOString()
@@ -1985,10 +2329,10 @@
                             contrat: "cdi",
                             ville: "casablanca",
                             experience: "5+ ans",
-                            phone: "+212 6 12 34 56 78",
+                            phone: "+212 6 63 06 62 25",
                             status: ANNOUNCE_STATUS.APPROVED,
-                            userId: 1,
-                            userName: "Admin BTP",
+                            userId: 2,
+                            userName: "Abderrahmane Lyaakobi",
                             isPremium: true,
                             createdAt: new Date().toISOString()
                         }
@@ -1996,32 +2340,32 @@
                     freelancers: [
                         {
                             id: 1,
-                            title: "Infographiste 3D BTP",
-                            description: "Création de rendus 3D photoréalistes pour projets BTP",
+                            title: "Infographiste 3D BTP - Freelance",
+                            description: "Création de rendus 3D photoréalistes pour projets BTP, visualisations architecturales et conception de plans techniques",
                             specialty: "infographie",
                             tarif: "500-1000 MAD/jour",
                             ville: "casablanca",
-                            experience: "3+ ans",
-                            portfolio: "https://portfolio-example.com",
-                            phone: "+212 6 12 34 56 78",
+                            experience: "5+ ans",
+                            portfolio: "https://portfolio-lyaakobi.com",
+                            phone: "+212 6 63 06 62 25",
                             status: ANNOUNCE_STATUS.APPROVED,
                             userId: 2,
-                            userName: "Ahmed Benali",
+                            userName: "Abderrahmane Lyaakobi",
                             rating: 4.8,
                             reviewCount: 12,
-                            isPremium: false,
+                            isPremium: true,
                             createdAt: new Date().toISOString()
                         }
                     ],
                     professionals: [
                         {
                             id: 1,
-                            company: "Maçonnerie Ahmed & Fils",
+                            company: "Maçonnerie Lyaakobi",
                             specialty: "maçonnerie",
                             experience: 15,
                             city: "casablanca",
                             description: "Spécialiste en gros œuvre et fondations",
-                            phone: "+212 6 12 34 56 78",
+                            phone: "+212 6 63 06 62 25",
                             rating: 4.8,
                             reviewCount: 124,
                             userId: 2
@@ -2180,7 +2524,8 @@
                     role: 'user',
                     isVerified: false,
                     isBlocked: false,
-                    hasPremium: false
+                    hasPremium: false,
+                    createdAt: new Date().toISOString()
                 };
 
                 const localData = this.getLocalData();
@@ -2212,6 +2557,22 @@
                 const localData = this.getLocalData();
                 return localData.newsletter_templates?.[name] || "";
             }
+
+            async getUserAnnounces(userId) {
+                const collections = ['marketplace_posts', 'realestate_posts', 'job_posts', 'freelancers'];
+                let userAnnounces = [];
+                
+                for (const collection of collections) {
+                    const items = await this.get(collection);
+                    const userItems = items.filter(item => item.userId === userId);
+                    userAnnounces = userAnnounces.concat(userItems.map(item => ({
+                        ...item,
+                        type: collection.replace('_posts', '')
+                    })));
+                }
+                
+                return userAnnounces;
+            }
         }
 
         // ========== INITIALISATION ==========
@@ -2221,6 +2582,7 @@
         const appState = {
             currentUser: null,
             currentSection: 'home',
+            currentAccountSection: 'profile',
             isAdmin: false,
             theme: 'light',
             currentPage: {
@@ -2255,6 +2617,13 @@
 
         // ========== FONCTIONS DE NAVIGATION ==========
         function goToSection(section) {
+            // Vérifier l'accès aux sections privées
+            if ((section === 'my_account' || section === 'favorites') && !appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour accéder à cette section', 'warning');
+                showLoginModal();
+                return;
+            }
+
             document.querySelectorAll('.section-content').forEach(s => {
                 s.classList.remove('active');
             });
@@ -2272,6 +2641,34 @@
                 const activeLinks = document.querySelectorAll(`[onclick="goToSection('${section}')"]`);
                 if (activeLinks.length > 0) {
                     activeLinks[0].classList.add('active');
+                }
+
+                // Charger les données si section mon compte
+                if (section === 'my_account') {
+                    loadUserProfile();
+                    loadUserAnnounces();
+                }
+
+                // Charger les données spécifiques à chaque section
+                switch(section) {
+                    case 'marketplace':
+                        btpDB.get('marketplace_posts').then(posts => displayMarketplaceAnnounces(posts, 1));
+                        break;
+                    case 'realestate':
+                        btpDB.get('realestate_posts').then(posts => displayRealestateAnnounces(posts, 1));
+                        break;
+                    case 'jobs':
+                        btpDB.get('job_posts').then(posts => displayJobsAnnounces(posts, 1));
+                        break;
+                    case 'freelancers':
+                        btpDB.get('freelancers').then(freelancers => displayFreelancers(freelancers, 1));
+                        break;
+                    case 'professionals':
+                        btpDB.get('professionals').then(professionals => displayProfessionals(professionals, 1));
+                        break;
+                    case 'admin':
+                        if (appState.isAdmin) loadAdminStats();
+                        break;
                 }
             }
             
@@ -2303,6 +2700,233 @@
             goToSection(section);
         }
 
+        // ========== GESTION DU COMPTE UTILISATEUR ==========
+        function showAccountSection(section) {
+            appState.currentAccountSection = section;
+            
+            // Mettre à jour la navigation sidebar
+            document.querySelectorAll('.account-sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Afficher la section correspondante
+            document.querySelectorAll('.account-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('account-' + section).classList.add('active');
+            
+            // Charger les données si nécessaire
+            if (section === 'announces') {
+                loadUserAnnounces();
+            }
+        }
+
+        async function loadUserProfile() {
+            if (!appState.currentUser) return;
+
+            const user = appState.currentUser;
+            
+            // Mettre à jour l'affichage du profil
+            document.getElementById('profile-fullname').textContent = `${user.prenom} ${user.nom}`;
+            document.getElementById('profile-email').textContent = user.email;
+            document.getElementById('profile-phone').textContent = user.phone || 'Non renseigné';
+            document.getElementById('profile-created').textContent = new Date(user.createdAt).toLocaleDateString('fr-FR');
+            document.getElementById('profile-initials').textContent = user.prenom.charAt(0) + user.nom.charAt(0);
+            
+            // Mettre à jour le formulaire d'édition
+            document.getElementById('edit-prenom').value = user.prenom;
+            document.getElementById('edit-nom').value = user.nom;
+            document.getElementById('edit-email').value = user.email;
+            document.getElementById('edit-phone').value = user.phone || '';
+            
+            // Badge Premium
+            const premiumBadge = document.getElementById('premium-status-badge');
+            if (user.hasPremium) {
+                premiumBadge.classList.remove('d-none');
+            } else {
+                premiumBadge.classList.add('d-none');
+            }
+        }
+
+        function toggleEditProfile() {
+            const profileView = document.getElementById('profile-view');
+            const profileEdit = document.getElementById('profile-edit');
+            
+            if (profileEdit.style.display === 'none') {
+                profileView.style.display = 'none';
+                profileEdit.style.display = 'block';
+            } else {
+                profileView.style.display = 'block';
+                profileEdit.style.display = 'none';
+            }
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) return;
+
+            const updatedData = {
+                prenom: document.getElementById('edit-prenom').value,
+                nom: document.getElementById('edit-nom').value,
+                email: document.getElementById('edit-email').value,
+                phone: document.getElementById('edit-phone').value
+            };
+
+            try {
+                await btpDB.put('users', appState.currentUser.id, updatedData);
+                
+                // Mettre à jour l'utilisateur courant
+                appState.currentUser = { ...appState.currentUser, ...updatedData };
+                updateUserUI();
+                
+                showAlert('✅ Profil mis à jour avec succès !', 'success');
+                toggleEditProfile();
+                loadUserProfile();
+                
+            } catch (error) {
+                showAlert('❌ Erreur lors de la mise à jour du profil', 'error');
+            }
+        }
+
+        async function loadUserAnnounces() {
+            if (!appState.currentUser) return;
+
+            try {
+                const userAnnounces = await btpDB.getUserAnnounces(appState.currentUser.id);
+                displayUserAnnounces(userAnnounces);
+                updateAnnouncesStats(userAnnounces);
+                
+            } catch (error) {
+                console.error('Erreur chargement annonces utilisateur:', error);
+            }
+        }
+
+        function displayUserAnnounces(announces) {
+            const container = document.getElementById('user-announces-list');
+            if (!container) return;
+
+            let html = '';
+            
+            if (announces.length === 0) {
+                html = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                        <h4>Vous n'avez pas encore publié d'annonces</h4>
+                        <p class="text-muted">Commencez par publier votre première annonce</p>
+                        <button class="btn btn-primary mt-3" onclick="goToPublish()">
+                            <i class="fas fa-plus me-2"></i>Publier une annonce
+                        </button>
+                    </div>
+                `;
+            } else {
+                announces.forEach(announce => {
+                    const statusBadge = getAnnounceStatusBadge(announce.status);
+                    const typeLabel = getAnnounceTypeLabel(announce.type);
+                    
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">${announce.title || announce.poste}</h5>
+                                        <p class="text-muted mb-2">${announce.description}</p>
+                                        <div class="d-flex gap-3 mb-2">
+                                            <span class="badge bg-secondary">${typeLabel}</span>
+                                            <span class="announce-status-badge ${statusBadge.class}">
+                                                ${statusBadge.text}
+                                            </span>
+                                            ${announce.isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}
+                                        </div>
+                                        <small class="text-muted">
+                                            Publié le ${new Date(announce.createdAt).toLocaleDateString('fr-FR')}
+                                        </small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="editAnnounce(${announce.id}, '${announce.type}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce(${announce.id}, '${announce.type}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateAnnouncesStats(announces) {
+            const total = announces.length;
+            const active = announces.filter(a => a.status === ANNOUNCE_STATUS.APPROVED).length;
+            const pending = announces.filter(a => a.status === ANNOUNCE_STATUS.PENDING).length;
+            const rejected = announces.filter(a => a.status === ANNOUNCE_STATUS.REJECTED).length;
+
+            document.getElementById('stats-total-announces').textContent = total;
+            document.getElementById('stats-active-announces').textContent = active;
+            document.getElementById('stats-pending-announces').textContent = pending;
+            document.getElementById('stats-rejected-announces').textContent = rejected;
+        }
+
+        function getAnnounceStatusBadge(status) {
+            switch(status) {
+                case ANNOUNCE_STATUS.APPROVED:
+                    return { class: 'status-approved', text: '✅ Approuvée' };
+                case ANNOUNCE_STATUS.PENDING:
+                    return { class: 'status-pending', text: '⏳ En attente' };
+                case ANNOUNCE_STATUS.REJECTED:
+                    return { class: 'status-rejected', text: '❌ Rejetée' };
+                default:
+                    return { class: 'status-pending', text: '⏳ En attente' };
+            }
+        }
+
+        function getAnnounceTypeLabel(type) {
+            switch(type) {
+                case 'marketplace': return 'Marketplace';
+                case 'realestate': return 'Immobilier';
+                case 'job': return 'Emploi';
+                case 'freelancers': return 'Freelance';
+                default: return type;
+            }
+        }
+
+        function editAnnounce(announceId, type) {
+            showAlert(`Édition de l'annonce #${announceId} (${type}) - Fonctionnalité à venir!`, 'info');
+        }
+
+        async function deleteAnnounce(announceId, type) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) {
+                return;
+            }
+
+            try {
+                const collection = type === 'freelancers' ? 'freelancers' : type + '_posts';
+                const items = await btpDB.get(collection);
+                const updatedItems = items.filter(item => item.id !== announceId);
+                
+                const localData = btpDB.getLocalData();
+                localData[collection] = updatedItems;
+                btpDB.saveLocalData(localData);
+                
+                showAlert('✅ Annonce supprimée avec succès !', 'success');
+                loadUserAnnounces();
+                
+            } catch (error) {
+                showAlert('❌ Erreur lors de la suppression', 'error');
+            }
+        }
+
+        function changePassword(event) {
+            event.preventDefault();
+            showAlert('🔒 Fonctionnalité de changement de mot de passe à venir !', 'info');
+        }
+
         // ========== FONCTIONS D'AUTHENTIFICATION ==========
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value;
@@ -2330,18 +2954,18 @@
                     updateUserUI();
                     
                     loginModal.hide();
-                    showAlert(`Connexion réussie ! Bienvenue ${user.prenom}`, 'success');
+                    showAlert(`✅ Connexion réussie ! Bienvenue ${user.prenom}`, 'success');
                     
                     // Recharger les données si admin
                     if (appState.isAdmin) {
                         loadAdminStats();
                     }
                 } else {
-                    showAlert('Email ou mot de passe incorrect', 'error');
+                    showAlert('❌ Email ou mot de passe incorrect', 'error');
                 }
             } catch (error) {
                 console.error('Erreur de connexion:', error);
-                showAlert('Erreur de connexion', 'error');
+                showAlert('❌ Erreur de connexion', 'error');
             } finally {
                 showLoading(false);
             }
@@ -2371,7 +2995,8 @@
                     prenom,
                     nom,
                     email,
-                    password
+                    password,
+                    phone: document.getElementById('registerPhone').value
                 });
 
                 appState.currentUser = newUser;
@@ -2379,10 +3004,10 @@
                 updateUserUI();
                 
                 registerModal.hide();
-                showAlert('Inscription réussie ! Bienvenue sur BTP Pro', 'success');
+                showAlert('✅ Inscription réussie ! Bienvenue sur BTP Pro', 'success');
                 
             } catch (error) {
-                showAlert(error.message, 'error');
+                showAlert('❌ ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -2422,7 +3047,7 @@
             appState.currentUser = null;
             appState.isAdmin = false;
             updateUserUI();
-            showAlert('Déconnexion réussie', 'info');
+            showAlert('✅ Déconnexion réussie', 'info');
             goToSection('home');
         }
 
@@ -2983,7 +3608,7 @@
             });
         }
 
-        // ========== FORUM OPÉRATIONNEL ==========
+        // ========== FORUM ==========
         async function loadForumTopics() {
             try {
                 const topics = await btpDB.get('forum_topics');
@@ -3004,7 +3629,7 @@
                         <i class="fas fa-comments fa-3x text-muted mb-3"></i>
                         <h4>Aucun sujet de discussion</h4>
                         <p class="text-muted">Soyez le premier à lancer une discussion !</p>
-                        <button class="btn btn-primary mt-3" onclick="checkAuthAndGo('forum_create', 'forum')">
+                        <button class="btn btn-primary mt-3" onclick="showForumCreate()">
                             <i class="fas fa-plus me-2"></i>Créer un sujet
                         </button>
                     </div>
@@ -3060,6 +3685,62 @@
             showAlert(`Ouverture du sujet #${topicId} - Fonctionnalité à venir!`, 'info');
         }
 
+        function showForumCreate() {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour créer un sujet de discussion', 'warning');
+                showLoginModal();
+                return;
+            }
+            goToSection('forum-create');
+        }
+
+        async function createForumTopic(event) {
+            event.preventDefault();
+            
+            if (!appState.currentUser) {
+                showAlert('Veuillez vous connecter', 'error');
+                return;
+            }
+
+            const title = document.getElementById('forumTopicTitle').value;
+            const category = document.getElementById('forumTopicCategory').value;
+            const content = document.getElementById('forumTopicContent').value;
+
+            if (!title || !category || !content) {
+                showAlert('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const topicData = {
+                    title: title,
+                    category: category,
+                    content: content,
+                    authorId: appState.currentUser.id,
+                    authorName: appState.currentUser.prenom + ' ' + appState.currentUser.nom,
+                    replyCount: 0,
+                    viewCount: 0,
+                    status: ANNOUNCE_STATUS.APPROVED,
+                    createdAt: new Date().toISOString()
+                };
+
+                await btpDB.post('forum_topics', topicData);
+                
+                showAlert('✅ Votre sujet a été créé avec succès !', 'success');
+                
+                document.getElementById('forumTopicForm').reset();
+                goToSection('forum');
+                loadForumTopics();
+                
+            } catch (error) {
+                showAlert('Erreur lors de la création du sujet', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         // ========== UPLOAD PHOTOS ==========
         function handlePhotoUpload(input, type) {
             const files = Array.from(input.files);
@@ -3106,7 +3787,7 @@
             previewItem.remove();
         }
 
-        // ========== MESSAGERIE AMÉLIORÉE ==========
+        // ========== MESSAGERIE ==========
         let currentChat = null;
 
         function toggleMessaging() {
@@ -3284,7 +3965,7 @@
                 
                 event.target.reset();
                 document.getElementById('marketplacePhotoPreview').innerHTML = '';
-                goToSection('my_announces');
+                goToSection('my_account');
 
             } catch (error) {
                 showAlert('Erreur lors de la publication', 'error');
@@ -3332,7 +4013,7 @@
                 
                 event.target.reset();
                 document.getElementById('realestatePhotoPreview').innerHTML = '';
-                goToSection('my_announces');
+                goToSection('my_account');
 
             } catch (error) {
                 showAlert('Erreur lors de la publication', 'error');
@@ -3377,7 +4058,7 @@
                 );
                 
                 event.target.reset();
-                goToSection('my_announces');
+                goToSection('my_account');
 
             } catch (error) {
                 showAlert('Erreur lors de la publication', 'error');
@@ -3425,7 +4106,7 @@
                 );
                 
                 event.target.reset();
-                goToSection('my_announces');
+                goToSection('my_account');
 
             } catch (error) {
                 showAlert('Erreur lors de la publication', 'error');
@@ -3756,7 +4437,7 @@
         }
 
         function performGlobalSearch() {
-            const searchTerm = document.getElementById('globalSearch').value;
+            const searchTerm = document.getElementById('globalSearch').value || document.getElementById('globalSearchMobile').value;
             if (searchTerm) {
                 showAlert(`Recherche pour: "${searchTerm}" - Fonctionnalité avancée à venir!`, 'info');
             }
