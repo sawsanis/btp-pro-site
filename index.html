@@ -813,7 +813,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="registerEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="registerEmail" required placeholder="votre@email.com">
+                            <input type="email" class="form-control" id="registerEmail" required 
+                                   placeholder="votre@email.com" onblur="validateEmailField(this)">
+                            <div class="invalid-feedback" id="emailError">
+                                Format d'email invalide
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="registerPhone" class="form-label">Téléphone</label>
@@ -821,7 +825,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="registerPassword" class="form-label">Mot de passe</label>
-                            <input type="password" class="form-control" id="registerPassword" required placeholder="Minimum 8 caractères">
+                            <input type="password" class="form-control" id="registerPassword" required placeholder="Minimum 6 caractères">
                         </div>
                         <div class="mb-3">
                             <label for="registerConfirmPassword" class="form-label">Confirmer le mot de passe</label>
@@ -2514,6 +2518,7 @@
             async registerUser(userData) {
                 const users = await this.get('users');
                 
+                // Vérification email unique
                 if (users.find(u => u.email === userData.email)) {
                     throw new Error('Cet email est déjà utilisé');
                 }
@@ -2578,7 +2583,7 @@
         // ========== INITIALISATION ==========
         const btpDB = new BTPDatabase();
         let loginModal, registerModal;
-        let currentChat = null; // CORRECTION CRITIQUE
+        let currentChat = null;
 
         const appState = {
             currentUser: null,
@@ -2594,6 +2599,31 @@
                 professionals: 1
             }
         };
+
+        // ========== FONCTIONS DE VALIDATION EMAIL ==========
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validateEmailField(input) {
+            const email = input.value.trim();
+            const errorDiv = document.getElementById('emailError');
+            
+            if (!email) {
+                input.classList.remove('is-invalid');
+                return true;
+            }
+            
+            if (!validateEmail(email)) {
+                input.classList.add('is-invalid');
+                errorDiv.textContent = 'Format d\'email invalide';
+                return false;
+            } else {
+                input.classList.remove('is-invalid');
+                return true;
+            }
+        }
 
         // ========== FONCTIONS PRINCIPALES ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -2928,13 +2958,18 @@
             showAlert('🔒 Fonctionnalité de changement de mot de passe à venir !', 'info');
         }
 
-        // ========== FONCTIONS D'AUTHENTIFICATION ==========
+        // ========== FONCTIONS D'AUTHENTIFICATION CORRIGÉES ==========
         async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
             if (!email || !password) {
-                showAlert('Veuillez remplir tous les champs', 'error');
+                showAlert('❌ Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showAlert('❌ Format d\'email invalide', 'error');
                 return;
             }
 
@@ -2973,25 +3008,49 @@
         }
 
         async function handleRegister() {
-            const prenom = document.getElementById('registerPrenom').value;
-            const nom = document.getElementById('registerNom').value;
-            const email = document.getElementById('registerEmail').value;
+            const prenom = document.getElementById('registerPrenom').value.trim();
+            const nom = document.getElementById('registerNom').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
-            if (!prenom || !nom || !email || !password) {
-                showAlert('Veuillez remplir tous les champs obligatoires', 'error');
+            // Vérification des champs obligatoires
+            if (!prenom || !nom || !email || !password || !confirmPassword) {
+                showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
                 return;
             }
 
+            // Validation email
+            if (!validateEmail(email)) {
+                showAlert('❌ Format d\'email invalide', 'error');
+                return;
+            }
+
+            // Vérification correspondance mots de passe
             if (password !== confirmPassword) {
-                showAlert('Les mots de passe ne correspondent pas', 'error');
+                showAlert('❌ Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+
+            // Vérification longueur mot de passe
+            if (password.length < 6) {
+                showAlert('❌ Le mot de passe doit contenir au moins 6 caractères', 'error');
                 return;
             }
 
             showLoading(true);
 
             try {
+                // Vérifier si l'email existe déjà
+                const users = await btpDB.get('users');
+                const existingUser = users.find(u => u.email === email);
+                
+                if (existingUser) {
+                    showAlert('❌ Cet email est déjà utilisé', 'error');
+                    return;
+                }
+
+                // Créer le nouvel utilisateur
                 const newUser = await btpDB.registerUser({
                     prenom,
                     nom,
