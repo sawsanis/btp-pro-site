@@ -2578,6 +2578,7 @@
         // ========== INITIALISATION ==========
         const btpDB = new BTPDatabase();
         let loginModal, registerModal;
+        let currentChat = null; // CORRECTION CRITIQUE
 
         const appState = {
             currentUser: null,
@@ -3044,9 +3045,44 @@
         }
 
         function logout() {
+            // 1. Fermer la messagerie IMMÉDIATEMENT
+            const messagingContainer = document.getElementById('messagingContainer');
+            if (messagingContainer) {
+                messagingContainer.style.display = 'none';
+            }
+            
+            // 2. Réinitialiser la conversation en cours
+            currentChat = null;
+            
+            // 3. Vider et désactiver le champ de message
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.querySelector('.chat-input button');
+            if (messageInput) {
+                messageInput.value = '';
+                messageInput.disabled = true;
+                messageInput.placeholder = 'Tapez votre message...';
+            }
+            if (sendButton) {
+                sendButton.disabled = true;
+            }
+            
+            // 4. Vider les messages affichés
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.innerHTML = '<div class="alert alert-info text-center">' +
+                    '<i class="fas fa-info-circle me-2"></i>' +
+                    'Sélectionnez un contact pour commencer à discuter' +
+                    '</div>';
+            }
+            
+            // 5. Réinitialiser l'état de l'application
             appState.currentUser = null;
             appState.isAdmin = false;
+            
+            // 6. Mettre à jour l'interface utilisateur
             updateUserUI();
+            
+            // 7. Notifier et rediriger
             showAlert('✅ Déconnexion réussie', 'info');
             goToSection('home');
         }
@@ -3788,9 +3824,14 @@
         }
 
         // ========== MESSAGERIE ==========
-        let currentChat = null;
-
         function toggleMessaging() {
+            // VÉRIFIER si l'utilisateur est connecté
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour accéder à la messagerie', 'warning');
+                showLoginModal();
+                return;
+            }
+            
             const container = document.getElementById('messagingContainer');
             if (container.style.display === 'flex') {
                 container.style.display = 'none';
@@ -3827,6 +3868,7 @@
         }
 
         function startChat(userId, userName) {
+            // VÉRIFICATION DE SÉCURITÉ
             if (!appState.currentUser) {
                 showAlert('🔐 Connectez-vous pour envoyer un message', 'warning');
                 showLoginModal();
@@ -3836,11 +3878,21 @@
             currentChat = { userId, userName };
             const container = document.getElementById('messagingContainer');
             const messageInput = document.getElementById('messageInput');
-            const sendButton = container.querySelector('.chat-input button');
+            const sendButton = document.querySelector('.chat-input button');
 
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.placeholder = `Message à ${userName}...`;
+            // Activer la messagerie si fermée
+            if (container && container.style.display !== 'flex') {
+                container.style.display = 'flex';
+            }
+
+            if (messageInput) {
+                messageInput.disabled = false;
+                messageInput.placeholder = `Message à ${userName}...`;
+            }
+            
+            if (sendButton) {
+                sendButton.disabled = false;
+            }
 
             loadChatMessages(userId);
             
@@ -3848,7 +3900,14 @@
             document.querySelectorAll('.contact-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.closest('.contact-item').classList.add('active');
+            
+            // Trouver et activer le contact cliqué
+            const contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach(item => {
+                if (item.textContent.includes(userName)) {
+                    item.classList.add('active');
+                }
+            });
         }
 
         async function loadChatMessages(userId) {
