@@ -16,6 +16,9 @@
             --dark-color: #2d3a4a;
             --light-color: #f8f9fa;
             --text-color: #333333;
+            --morocco-red: #c1272d;
+            --morocco-green: #006233;
+            --morocco-gold: #d4af37;
         }
         
         [data-theme="dark"] {
@@ -515,6 +518,11 @@
             color: #721c24;
         }
 
+        .status-paused {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
         .account-section {
             display: none;
         }
@@ -534,6 +542,44 @@
         .search-container-mobile {
             display: none;
             margin: 10px 0;
+        }
+
+        /* Boutons admin */
+        .admin-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+        }
+
+        .card:hover .admin-actions {
+            display: block;
+        }
+
+        .admin-btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+
+        /* Classes utilitaires Maroc */
+        .text-morocco-red { color: var(--morocco-red); }
+        .text-morocco-green { color: var(--morocco-green); }
+        .bg-morocco-green { background-color: var(--morocco-green); }
+        .border-morocco-gold { border-color: var(--morocco-gold); }
+
+        /* Backup styles */
+        .backup-history-item {
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .backup-stats {
+            font-size: 0.9rem;
+            color: #6c757d;
         }
 
         @media (max-width: 1200px) {
@@ -588,6 +634,12 @@
 
             .account-sidebar {
                 margin-bottom: 2rem;
+            }
+
+            .admin-actions {
+                position: static;
+                display: block;
+                margin-top: 10px;
             }
         }
 
@@ -842,6 +894,93 @@
                             Se connecter
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Paramètres Sauvegarde -->
+    <div class="modal fade" id="backupSettingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-download me-2"></i>Paramètres de Sauvegarde Automatique
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="backupSettingsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Activer la sauvegarde automatique</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="backupEnabled">
+                                        <label class="form-check-label" for="backupEnabled">Sauvegarde automatique activée</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Fréquence d'envoi</label>
+                                    <select class="form-select" id="backupFrequency">
+                                        <option value="weekly">Hebdomadaire (chaque lundi)</option>
+                                        <option value="monthly">Mensuelle (1er du mois)</option>
+                                        <option value="daily">Quotidienne</option>
+                                        <option value="manual">Manuelle uniquement</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="backupEmail" class="form-label">Email de réception</label>
+                                    <input type="email" class="form-control" id="backupEmail" 
+                                           placeholder="admin@btp.ma" required>
+                                    <div class="form-text">L'adresse email où seront envoyées les sauvegardes</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeCoordinates" checked>
+                                        <label class="form-check-label" for="includeCoordinates">
+                                            Inclure les coordonnées complètes
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeVisits" checked>
+                                        <label class="form-check-label" for="includeVisits">
+                                            Inclure les statistiques de visites
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Prochaine sauvegarde automatique</label>
+                            <div class="alert alert-info" id="nextBackupInfo">
+                                Calcul en cours...
+                            </div>
+                        </div>
+                        
+                        <!-- Historique des sauvegardes -->
+                        <div class="mb-3">
+                            <label class="form-label">Historique des sauvegardes</label>
+                            <div id="backupHistoryList" class="backup-history-container">
+                                <!-- Historique chargé dynamiquement -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBackupSettings()">
+                        <i class="fas fa-save me-2"></i>Enregistrer les paramètres
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="createManualBackup()">
+                        <i class="fas fa-download me-2"></i>Sauvegarder maintenant
+                    </button>
                 </div>
             </div>
         </div>
@@ -1495,7 +1634,12 @@
         <!-- SECTION PUBLICATION -->
         <section id="publish-section" class="section-content">
             <div class="container my-5 py-5">
-                <h2 class="text-center mb-5">Publier une annonce</h2>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0" id="publish-title">Publier une annonce</h2>
+                    <button class="btn btn-outline-success" type="button" onclick="showNewAnnounceForm()" id="new-announce-btn" style="display: none;">
+                        <i class="fas fa-plus me-2"></i>Nouvelle annonce
+                    </button>
+                </div>
                 
                 <div class="row">
                     <div class="col-md-3">
@@ -1834,6 +1978,110 @@
                     </div>
                 </div>
 
+                <!-- Gestion des Utilisateurs et Sauvegarde -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users-cog me-2"></i>
+                            Gestion des Utilisateurs et Sauvegarde
+                        </h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" onclick="downloadUsersBackup()">
+                                <i class="fas fa-download me-1"></i>Télécharger Backup
+                            </button>
+                            <button class="btn btn-sm btn-info" onclick="showBackupSettings()">
+                                <i class="fas fa-cog me-1"></i>Paramètres
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Statistiques utilisateurs -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h4 class="text-primary" id="stats-total-users">0</h4>
+                                        <p class="text-muted mb-0">Total Utilisateurs</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h4 class="text-success" id="stats-active-users">0</h4>
+                                        <p class="text-muted mb-0">Utilisateurs Actifs</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h4 class="text-warning" id="stats-premium-users">0</h4>
+                                        <p class="text-muted mb-0">Abonnés Premium</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h4 class="text-info" id="stats-total-visits">0</h4>
+                                        <p class="text-muted mb-0">Visites Total</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tableau des utilisateurs avec statistiques de visites -->
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Utilisateur</th>
+                                        <th>Coordonnées</th>
+                                        <th>Statut</th>
+                                        <th>Inscription</th>
+                                        <th>Dernière visite</th>
+                                        <th>Nombre de visites</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Utilisateurs chargés dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion des annonces anciennes -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Gestion des Annonces Anciennes (+1 mois)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Type</th>
+                                        <th>Auteur</th>
+                                        <th>Date de création</th>
+                                        <th>Âge</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="old-announces-table-body">
+                                    <!-- Annonces anciennes chargées dynamiquement -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Gestion Adsense -->
                 <div class="card mb-4">
                     <div class="card-header bg-dark text-white">
@@ -1888,34 +2136,6 @@
                                     <i class="fas fa-clock me-2"></i>Programmer
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gestion Utilisateurs -->
-                <div class="card mb-4">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">
-                            <i class="fas fa-users-cog me-2"></i>
-                            Gestion des Utilisateurs
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="admin-table-container">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Nom</th>
-                                        <th>Email</th>
-                                        <th>Date d'inscription</th>
-                                        <th>Statut</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-table-body">
-                                    <!-- Utilisateurs chargés dynamiquement -->
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
@@ -2210,7 +2430,8 @@
             PENDING: 'en_attente',
             APPROVED: 'approuve',
             REJECTED: 'rejete',
-            REPORTED: 'signale'
+            REPORTED: 'signale',
+            PAUSED: 'en_pause'
         };
 
         const ITEMS_PER_PAGE = 8;
@@ -2236,12 +2457,14 @@
                             prenom: "Admin",
                             nom: "BTP",
                             email: "admin@btp.ma",
-                            password: "admin123",
+                            password: this.hashPassword("admin123"), // MOT DE PASSE HACHÉ
                             phone: "+212 6 00 00 00 00",
                             role: "admin",
                             isVerified: true,
                             isBlocked: false,
                             hasPremium: true,
+                            visitCount: 15,
+                            lastVisit: new Date().toISOString(),
                             createdAt: new Date().toISOString()
                         },
                         {
@@ -2249,12 +2472,14 @@
                             prenom: "Abderrahmane",
                             nom: "Lyaakobi",
                             email: "lyaakobi@hotmail.com",
-                            password: "@nisawsan1",
+                            password: this.hashPassword("@nisawsan1"), // MOT DE PASSE HACHÉ
                             phone: "+212 6 63 06 62 25",
                             role: "user",
                             isVerified: true,
                             isBlocked: false,
                             hasPremium: true,
+                            visitCount: 8,
+                            lastVisit: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
                             createdAt: new Date().toISOString()
                         },
                         {
@@ -2262,11 +2487,13 @@
                             prenom: "Younes",
                             nom: "Hachimi",
                             email: "y.hachimi.yh@gmail.com",
-                            password: "@younes1",
+                            password: this.hashPassword("@younes1"), // MOT DE PASSE HACHÉ
                             role: "user",
                             isVerified: true,
                             isBlocked: false,
                             hasPremium: true,
+                            visitCount: 12,
+                            lastVisit: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
                             createdAt: new Date().toISOString()
                         }
                     ],
@@ -2285,7 +2512,7 @@
                             userName: "Abderrahmane Lyaakobi",
                             isPremium: false,
                             photos: [],
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString() // 35 jours
                         },
                         {
                             id: 2,
@@ -2321,7 +2548,7 @@
                             userName: "Abderrahmane Lyaakobi",
                             isPremium: true,
                             photos: [],
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString() // 40 jours
                         }
                     ],
                     job_posts: [
@@ -2358,7 +2585,7 @@
                             rating: 4.8,
                             reviewCount: 12,
                             isPremium: true,
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString() // 45 jours
                         }
                     ],
                     professionals: [
@@ -2462,10 +2689,30 @@
                             name: 'Annonces illimitées',
                             description: 'Publiez autant d\'annonces que vous voulez'
                         }
-                    ]
+                    ],
+                    backupSettings: {
+                        enabled: false,
+                        frequency: 'weekly',
+                        email: 'admin@btp.ma',
+                        lastBackup: null,
+                        includeCoordinates: true,
+                        includeVisits: true
+                    },
+                    backupHistory: []
                 };
                 
                 this.saveLocalData(initialData);
+            }
+
+            // Hash simple pour les mots de passe (en production, utiliser bcrypt)
+            hashPassword(password) {
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash.toString();
             }
 
             async get(collection) {
@@ -2511,7 +2758,8 @@
 
             async authenticateUser(email, password) {
                 const users = await this.get('users');
-                const user = users.find(u => u.email === email && u.password === password);
+                const hashedPassword = this.hashPassword(password);
+                const user = users.find(u => u.email === email && u.password === hashedPassword);
                 return user || null;
             }
 
@@ -2526,10 +2774,13 @@
                 const newUser = {
                     id: Date.now(),
                     ...userData,
+                    password: this.hashPassword(userData.password),
                     role: 'user',
                     isVerified: false,
                     isBlocked: false,
                     hasPremium: false,
+                    visitCount: 0,
+                    lastVisit: new Date().toISOString(),
                     createdAt: new Date().toISOString()
                 };
 
@@ -2578,11 +2829,176 @@
                 
                 return userAnnounces;
             }
+
+            async getOldAnnounces() {
+                const collections = ['marketplace_posts', 'realestate_posts', 'job_posts', 'freelancers'];
+                let allAnnounces = [];
+                const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                
+                for (const collection of collections) {
+                    const items = await this.get(collection);
+                    const oldItems = items.filter(item => 
+                        new Date(item.createdAt) < oneMonthAgo && 
+                        item.status === ANNOUNCE_STATUS.APPROVED
+                    );
+                    allAnnounces = allAnnounces.concat(oldItems.map(item => ({
+                        ...item,
+                        type: collection.replace('_posts', '')
+                    })));
+                }
+                
+                return allAnnounces;
+            }
+
+            async toggleFavorite(userId, itemId, itemType) {
+                const favorites = await this.get('favorites');
+                const existingIndex = favorites.findIndex(fav => 
+                    fav.userId === userId && fav.itemId === itemId && fav.itemType === itemType
+                );
+
+                if (existingIndex !== -1) {
+                    // Retirer des favoris
+                    favorites.splice(existingIndex, 1);
+                } else {
+                    // Ajouter aux favoris
+                    favorites.push({
+                        id: Date.now(),
+                        userId,
+                        itemId,
+                        itemType,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+
+                const localData = this.getLocalData();
+                localData.favorites = favorites;
+                this.saveLocalData(localData);
+
+                return existingIndex === -1; // Retourne true si ajouté, false si retiré
+            }
+
+            async getUserFavorites(userId) {
+                const favorites = await this.get('favorites');
+                return favorites.filter(fav => fav.userId === userId);
+            }
+
+            async isItemFavorited(userId, itemId, itemType) {
+                const favorites = await this.get('favorites');
+                return favorites.some(fav => 
+                    fav.userId === userId && fav.itemId === itemId && fav.itemType === itemType
+                );
+            }
+
+            // NOUVELLES FONCTIONS POUR LA SAUVEGARDE
+            async getUserVisits(userId) {
+                const users = await this.get('users');
+                const user = users.find(u => u.id === userId);
+                return user?.visitCount || 0;
+            }
+
+            async incrementUserVisit(userId) {
+                const users = await this.get('users');
+                const userIndex = users.findIndex(u => u.id === userId);
+                
+                if (userIndex !== -1) {
+                    const currentVisits = users[userIndex].visitCount || 0;
+                    users[userIndex].visitCount = currentVisits + 1;
+                    users[userIndex].lastVisit = new Date().toISOString();
+                    
+                    const localData = this.getLocalData();
+                    localData.users = users;
+                    this.saveLocalData(localData);
+                    
+                    return users[userIndex].visitCount;
+                }
+                return 0;
+            }
+
+            async getAllUsersWithDetails() {
+                const users = await this.get('users');
+                return users.map(user => ({
+                    id: user.id,
+                    prenom: user.prenom,
+                    nom: user.nom,
+                    email: user.email,
+                    phone: user.phone || 'Non renseigné',
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    hasPremium: user.hasPremium || false,
+                    visitCount: user.visitCount || 0,
+                    lastVisit: user.lastVisit,
+                    createdAt: user.createdAt,
+                    isBlocked: user.isBlocked || false
+                }));
+            }
+
+            async saveBackupSettings(settings) {
+                const localData = this.getLocalData();
+                localData.backupSettings = {
+                    ...localData.backupSettings,
+                    ...settings,
+                    lastBackup: new Date().toISOString()
+                };
+                this.saveLocalData(localData);
+                return localData.backupSettings;
+            }
+
+            async getBackupSettings() {
+                const localData = this.getLocalData();
+                return localData.backupSettings || {
+                    enabled: false,
+                    frequency: 'weekly',
+                    email: '',
+                    lastBackup: null,
+                    includeCoordinates: true,
+                    includeVisits: true
+                };
+            }
+
+            async createBackup() {
+                const users = await this.getAllUsersWithDetails();
+                const settings = await this.getBackupSettings();
+                
+                const backupData = {
+                    timestamp: new Date().toISOString(),
+                    totalUsers: users.length,
+                    activeUsers: users.filter(u => !u.isBlocked).length,
+                    premiumUsers: users.filter(u => u.hasPremium).length,
+                    totalVisits: users.reduce((sum, user) => sum + (user.visitCount || 0), 0),
+                    users: users
+                };
+                
+                // Sauvegarder l'historique des backups
+                const localData = this.getLocalData();
+                if (!localData.backupHistory) {
+                    localData.backupHistory = [];
+                }
+                
+                localData.backupHistory.unshift({
+                    id: Date.now(),
+                    ...backupData,
+                    downloaded: false
+                });
+                
+                // Garder seulement les 10 derniers backups
+                if (localData.backupHistory.length > 10) {
+                    localData.backupHistory = localData.backupHistory.slice(0, 10);
+                }
+                
+                this.saveLocalData(localData);
+                
+                return backupData;
+            }
+
+            async getBackupHistory() {
+                const localData = this.getLocalData();
+                return localData.backupHistory || [];
+            }
         }
 
         // ========== INITIALISATION ==========
         const btpDB = new BTPDatabase();
-        let loginModal, registerModal;
+        let loginModal, registerModal, backupSettingsModal;
         let currentChat = null;
 
         const appState = {
@@ -2625,9 +3041,43 @@
             }
         }
 
+        // ========== FONCTIONS UTILITAIRES AMÉLIORÉES ==========
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        async function safeDBOperation(operation, errorMessage) {
+            try {
+                return await operation();
+            } catch (error) {
+                console.error(`${errorMessage}:`, error);
+                showAlert(`❌ ${errorMessage}`, 'error');
+                return null;
+            }
+        }
+
+        function sanitizeInput(input) {
+            const div = document.createElement('div');
+            div.textContent = input;
+            return div.innerHTML;
+        }
+
+        function safeInnerHTML(element, content) {
+            element.textContent = content;
+        }
+
         // ========== FONCTIONS PRINCIPALES ==========
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
+            trackUserVisit(); // Ajoutez cette ligne pour suivre les visites
         });
 
         function initializeApp() {
@@ -2638,12 +3088,31 @@
             loadFreelancers();
             loadAdminStats();
             loadForumTopics();
+            
+            // Initialiser la recherche avec debounce
+            const searchInput = document.getElementById('globalSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(performGlobalSearch, 300));
+            }
+            
+            // Gestionnaire d'erreurs global
+            window.addEventListener('error', (event) => {
+                console.error('Erreur globale:', event.error);
+                showAlert('Une erreur technique est survenue', 'error');
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                console.error('Promesse rejetée:', event.reason);
+                showAlert('Une erreur est survenue', 'error');
+            });
+            
             console.log('✅ Application initialisée !');
         }
 
         function initializeModals() {
             loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
             registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+            backupSettingsModal = new bootstrap.Modal(document.getElementById('backupSettingsModal'));
         }
 
         // ========== FONCTIONS DE NAVIGATION ==========
@@ -2700,6 +3169,9 @@
                     case 'admin':
                         if (appState.isAdmin) loadAdminStats();
                         break;
+                    case 'favorites':
+                        if (appState.currentUser) loadUserFavorites();
+                        break;
                 }
             }
             
@@ -2750,6 +3222,8 @@
             // Charger les données si nécessaire
             if (section === 'announces') {
                 loadUserAnnounces();
+            } else if (section === 'favorites') {
+                loadUserFavorites();
             }
         }
 
@@ -2863,22 +3337,27 @@
                                     <div class="flex-grow-1">
                                         <h5 class="card-title">${announce.title || announce.poste}</h5>
                                         <p class="text-muted mb-2">${announce.description}</p>
-                                        <div class="d-flex gap-3 mb-2">
+                                        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                             <span class="badge bg-secondary">${typeLabel}</span>
                                             <span class="announce-status-badge ${statusBadge.class}">
                                                 ${statusBadge.text}
                                             </span>
                                             ${announce.isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}
+                                            <small class="text-muted ms-2">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                ${new Date(announce.createdAt).toLocaleDateString('fr-FR')}
+                                            </small>
                                         </div>
-                                        <small class="text-muted">
-                                            Publié le ${new Date(announce.createdAt).toLocaleDateString('fr-FR')}
-                                        </small>
                                     </div>
-                                    <div class="btn-group">
-                                        <button class="btn btn-outline-primary btn-sm" onclick="editAnnounce(${announce.id}, '${announce.type}')">
+                                    <div class="btn-group ms-3">
+                                        <button class="btn btn-outline-primary btn-sm" 
+                                                onclick="editAnnounce(${announce.id}, '${announce.type}')"
+                                                title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce(${announce.id}, '${announce.type}')">
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="deleteAnnounce(${announce.id}, '${announce.type}')"
+                                                title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -2912,6 +3391,8 @@
                     return { class: 'status-pending', text: '⏳ En attente' };
                 case ANNOUNCE_STATUS.REJECTED:
                     return { class: 'status-rejected', text: '❌ Rejetée' };
+                case ANNOUNCE_STATUS.PAUSED:
+                    return { class: 'status-paused', text: '⏸️ En pause' };
                 default:
                     return { class: 'status-pending', text: '⏳ En attente' };
             }
@@ -2927,38 +3408,301 @@
             }
         }
 
-        function editAnnounce(announceId, type) {
-            showAlert(`Édition de l'annonce #${announceId} (${type}) - Fonctionnalité à venir!`, 'info');
+        // ========== GESTION DES FAVORIS ==========
+        async function toggleFavorite(itemId, itemType = 'marketplace') {
+            if (!appState.currentUser) {
+                showAlert('🔐 Connectez-vous pour ajouter aux favoris', 'warning');
+                showLoginModal();
+                return;
+            }
+
+            const wasAdded = await btpDB.toggleFavorite(
+                appState.currentUser.id, 
+                itemId, 
+                itemType
+            );
+
+            // Mettre à jour l'icône du bouton
+            const favoriteBtn = event.target.closest('.favorite-btn');
+            if (favoriteBtn) {
+                const icon = favoriteBtn.querySelector('i');
+                if (wasAdded) {
+                    icon.className = 'fas fa-heart';
+                    favoriteBtn.classList.add('active');
+                    showAlert('❤️ Ajouté aux favoris', 'success');
+                } else {
+                    icon.className = 'far fa-heart';
+                    favoriteBtn.classList.remove('active');
+                    showAlert('💔 Retiré des favoris', 'info');
+                }
+            }
+
+            // Recharger la section favoris si active
+            if (appState.currentSection === 'favorites') {
+                loadUserFavorites();
+            }
+        }
+
+        async function loadUserFavorites() {
+            if (!appState.currentUser) return;
+
+            try {
+                const favorites = await btpDB.getUserFavorites(appState.currentUser.id);
+                displayUserFavorites(favorites);
+            } catch (error) {
+                console.error('Erreur chargement favoris:', error);
+            }
+        }
+
+        async function displayUserFavorites(favorites) {
+            const container = document.getElementById('favorites-section');
+            if (!container) return;
+
+            let html = '';
+            
+            if (favorites.length === 0) {
+                html = `
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                                    <h4>Vous n'avez pas encore de favoris</h4>
+                                    <p class="text-muted">Ajoutez des éléments en cliquant sur le cœur</p>
+                                    <button class="btn btn-primary mt-3" onclick="goToSection('marketplace')">
+                                        <i class="fas fa-shopping-cart me-2"></i>Parcourir la Marketplace
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html = '<div class="row g-4">';
+                
+                for (const favorite of favorites) {
+                    let item;
+                    
+                    // Récupérer l'élément selon son type
+                    switch(favorite.itemType) {
+                        case 'marketplace':
+                            const marketplaceItems = await btpDB.get('marketplace_posts');
+                            item = marketplaceItems.find(i => i.id === favorite.itemId);
+                            break;
+                        case 'realestate':
+                            const realestateItems = await btpDB.get('realestate_posts');
+                            item = realestateItems.find(i => i.id === favorite.itemId);
+                            break;
+                        case 'job':
+                            const jobItems = await btpDB.get('job_posts');
+                            item = jobItems.find(i => i.id === favorite.itemId);
+                            break;
+                        case 'freelancers':
+                            const freelancerItems = await btpDB.get('freelancers');
+                            item = freelancerItems.find(i => i.id === favorite.itemId);
+                            break;
+                    }
+                    
+                    if (item) {
+                        html += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 position-relative">
+                                    <button class="favorite-btn active" onclick="toggleFavorite(${item.id}, '${favorite.itemType}')">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    <div class="card-body">
+                                        <h5 class="card-title">${item.title || item.poste}</h5>
+                                        <p class="text-muted">${item.description.substring(0, 100)}...</p>
+                                        ${item.price ? `<p class="text-success fw-bold h5">${item.price} MAD${item.unit ? '/' + item.unit : ''}</p>` : ''}
+                                        ${item.salaire ? `<p class="text-success fw-bold h5">${item.salaire}</p>` : ''}
+                                        <div class="d-flex gap-2 mt-3">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="showContactInfo('${item.phone}', '${item.userName}')">
+                                                <i class="fas fa-phone me-1"></i>Contacter
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="startChat(${item.userId}, '${item.userName}')">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += '</div>';
+            }
+
+            const favoritesContainer = container.querySelector('.container .row');
+            if (favoritesContainer) {
+                favoritesContainer.innerHTML = html;
+            }
+        }
+
+        // ========== GESTION DES ANNONCES ==========
+        async function editAnnounce(announceId, type) {
+            try {
+                const collection = getCollectionByType(type);
+                const items = await btpDB.get(collection);
+                const announce = items.find(item => item.id === announceId);
+                
+                if (!announce) {
+                    showAlert('Annonce non trouvée', 'error');
+                    return;
+                }
+                
+                // Vérifier que l'utilisateur est bien le propriétaire
+                if (announce.userId !== appState.currentUser.id && !appState.isAdmin) {
+                    showAlert('Vous n\'êtes pas autorisé à modifier cette annonce', 'error');
+                    return;
+                }
+                
+                // Rediriger vers le formulaire de publication pré-rempli
+                goToSection('publish');
+                
+                // Afficher le bon formulaire et pré-remplir les champs
+                setTimeout(() => {
+                    showPublishForm(type);
+                    fillEditForm(announce, type);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Erreur édition annonce:', error);
+                showAlert('Erreur lors du chargement de l\'annonce', 'error');
+            }
+        }
+
+        function getCollectionByType(type) {
+            switch(type) {
+                case 'marketplace': return 'marketplace_posts';
+                case 'realestate': return 'realestate_posts';
+                case 'job': return 'job_posts';
+                case 'freelancers': return 'freelancers';
+                default: return type + '_posts';
+            }
+        }
+
+        function fillEditForm(announce, type) {
+            // Stocker l'ID de l'annonce en cours d'édition
+            window.editingAnnounceId = announce.id;
+            window.editingAnnounceType = type;
+            
+            // Afficher le bouton "Nouvelle annonce"
+            document.getElementById('new-announce-btn').style.display = 'block';
+            
+            // Ajouter un indicateur d'édition
+            const formTitle = document.querySelector(`#${type}-form .card-header h5`);
+            if (formTitle) {
+                formTitle.innerHTML = `<i class="fas fa-edit me-2"></i>Modifier l'annonce`;
+            }
+            
+            // Pré-remplir selon le type d'annonce
+            switch(type) {
+                case 'marketplace':
+                    document.querySelector('#marketplace-form input[name="title"]').value = announce.title || '';
+                    document.querySelector('#marketplace-form input[name="price"]').value = announce.price || '';
+                    document.querySelector('#marketplace-form select[name="unit"]').value = announce.unit || 'sac';
+                    document.querySelector('#marketplace-form select[name="category"]').value = announce.category || '';
+                    document.querySelector('#marketplace-form select[name="city"]').value = announce.city || '';
+                    document.querySelector('#marketplace-form textarea[name="description"]').value = announce.description || '';
+                    document.querySelector('#marketplace-form input[name="phone"]').value = announce.phone || '';
+                    break;
+                    
+                case 'realestate':
+                    document.querySelector('#immobilier-form input[name="title"]').value = announce.title || '';
+                    document.querySelector('#immobilier-form input[name="price"]').value = announce.price || '';
+                    document.querySelector('#immobilier-form select[name="type"]').value = announce.type || '';
+                    document.querySelector('#immobilier-form input[name="surface"]').value = announce.surface || '';
+                    document.querySelector('#immobilier-form input[name="rooms"]').value = announce.rooms || '';
+                    document.querySelector('#immobilier-form input[name="address"]').value = announce.address || '';
+                    document.querySelector('#immobilier-form textarea[name="description"]').value = announce.description || '';
+                    document.querySelector('#immobilier-form input[name="phone"]').value = announce.phone || '';
+                    break;
+                    
+                case 'job':
+                    document.querySelector('#emploi-form input[name="poste"]').value = announce.poste || '';
+                    document.querySelector('#emploi-form input[name="salaire"]').value = announce.salaire || '';
+                    document.querySelector('#emploi-form select[name="contrat"]').value = announce.contrat || '';
+                    document.querySelector('#emploi-form input[name="ville"]').value = announce.ville || '';
+                    document.querySelector('#emploi-form input[name="experience"]').value = announce.experience || '';
+                    document.querySelector('#emploi-form textarea[name="description"]').value = announce.description || '';
+                    document.querySelector('#emploi-form input[name="phone"]').value = announce.phone || '';
+                    break;
+                    
+                case 'freelancers':
+                    document.querySelector('#freelance-form input[name="title"]').value = announce.title || '';
+                    document.querySelector('#freelance-form select[name="specialty"]').value = announce.specialty || '';
+                    document.querySelector('#freelance-form input[name="tarif"]').value = announce.tarif || '';
+                    document.querySelector('#freelance-form input[name="ville"]').value = announce.ville || '';
+                    document.querySelector('#freelance-form input[name="experience"]').value = announce.experience || '';
+                    document.querySelector('#freelance-form textarea[name="description"]').value = announce.description || '';
+                    document.querySelector('#freelance-form input[name="portfolio"]').value = announce.portfolio || '';
+                    document.querySelector('#freelance-form input[name="phone"]').value = announce.phone || '';
+                    break;
+            }
         }
 
         async function deleteAnnounce(announceId, type) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.')) {
                 return;
             }
 
             try {
-                const collection = type === 'freelancers' ? 'freelancers' : type + '_posts';
+                const collection = getCollectionByType(type);
                 const items = await btpDB.get(collection);
                 const updatedItems = items.filter(item => item.id !== announceId);
                 
+                // Sauvegarder les modifications
                 const localData = btpDB.getLocalData();
                 localData[collection] = updatedItems;
                 btpDB.saveLocalData(localData);
                 
                 showAlert('✅ Annonce supprimée avec succès !', 'success');
+                
+                // Recharger les annonces utilisateur
                 loadUserAnnounces();
                 
             } catch (error) {
+                console.error('Erreur suppression annonce:', error);
                 showAlert('❌ Erreur lors de la suppression', 'error');
             }
         }
 
-        function changePassword(event) {
-            event.preventDefault();
-            showAlert('🔒 Fonctionnalité de changement de mot de passe à venir !', 'info');
+        function showNewAnnounceForm() {
+            resetEditMode();
+            showPublishForm('marketplace'); // Par défaut, montrer marketplace
+            
+            // Réinitialiser tous les formulaires
+            document.querySelectorAll('.publish-form form').forEach(form => {
+                form.reset();
+            });
+            
+            document.querySelectorAll('.photo-preview').forEach(preview => {
+                preview.innerHTML = '';
+            });
         }
 
-        // ========== FONCTIONS D'AUTHENTIFICATION CORRIGÉES ==========
+        function resetEditMode() {
+            window.editingAnnounceId = null;
+            window.editingAnnounceType = null;
+            
+            // Cacher le bouton "Nouvelle annonce"
+            document.getElementById('new-announce-btn').style.display = 'none';
+            
+            // Réinitialiser les titres des formulaires
+            document.querySelectorAll('.publish-form .card-header h5').forEach(title => {
+                const type = title.closest('.publish-form').id.replace('-form', '');
+                const icons = {
+                    'marketplace': 'fa-shopping-cart',
+                    'immobilier': 'fa-home', 
+                    'emploi': 'fa-briefcase',
+                    'freelance': 'fa-palette'
+                };
+                title.innerHTML = `<i class="fas ${icons[type]} me-2"></i>Nouvelle annonce`;
+            });
+        }
+
+        // ========== FONCTIONS D'AUTHENTIFICATION ==========
         async function handleLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -3041,16 +3785,6 @@
             showLoading(true);
 
             try {
-                // Vérifier si l'email existe déjà
-                const users = await btpDB.get('users');
-                const existingUser = users.find(u => u.email === email);
-                
-                if (existingUser) {
-                    showAlert('❌ Cet email est déjà utilisé', 'error');
-                    return;
-                }
-
-                // Créer le nouvel utilisateur
                 const newUser = await btpDB.registerUser({
                     prenom,
                     nom,
@@ -3204,7 +3938,7 @@
             }
         }
 
-        function displayMarketplaceAnnounces(posts, page = 1) {
+        async function displayMarketplaceAnnounces(posts, page = 1) {
             const container = document.getElementById('marketplace-container');
             const pagination = document.getElementById('marketplace-pagination');
             if (!container) return;
@@ -3244,13 +3978,27 @@
             if (paginatedPosts.length === 0) {
                 html = '<div class="col-12 text-center"><p class="text-muted">Aucun produit disponible pour le moment.</p></div>';
             } else {
-                paginatedPosts.forEach((post) => {
+                for (const post of paginatedPosts) {
+                    const isOld = isAnnounceOld(post.createdAt);
+                    const isFavorited = appState.currentUser ? 
+                        await btpDB.isItemFavorited(appState.currentUser.id, post.id, 'marketplace') : false;
+                    
                     html += `
                         <div class="col-md-6 col-lg-3">
                             <div class="card h-100 position-relative">
                                 ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
-                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
-                                    <i class="far fa-heart"></i>
+                                ${isOld && appState.isAdmin ? `
+                                    <div class="admin-actions">
+                                        <button class="btn btn-warning btn-sm admin-btn" onclick="pauseAnnounce(${post.id}, 'marketplace')" title="Mettre en pause">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm admin-btn" onclick="deleteAnnounceAdmin(${post.id}, 'marketplace')" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                                <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="toggleFavorite(${post.id}, 'marketplace')">
+                                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
                                 </button>
                                 <div class="card-body">
                                     <h5 class="card-title">${post.title}</h5>
@@ -3268,14 +4016,14 @@
                             </div>
                         </div>
                     `;
-                });
+                }
             }
 
             container.innerHTML = html;
             generatePagination(pagination, page, totalPages, 'marketplace');
         }
 
-        function displayRealestateAnnounces(posts, page = 1) {
+        async function displayRealestateAnnounces(posts, page = 1) {
             const container = document.getElementById('realestate-container');
             const pagination = document.getElementById('realestate-pagination');
             if (!container) return;
@@ -3322,13 +4070,27 @@
             if (paginatedPosts.length === 0) {
                 html = '<div class="col-12 text-center"><p class="text-muted">Aucun bien immobilier disponible pour le moment.</p></div>';
             } else {
-                paginatedPosts.forEach((post) => {
+                for (const post of paginatedPosts) {
+                    const isOld = isAnnounceOld(post.createdAt);
+                    const isFavorited = appState.currentUser ? 
+                        await btpDB.isItemFavorited(appState.currentUser.id, post.id, 'realestate') : false;
+                    
                     html += `
                         <div class="col-md-6">
                             <div class="card h-100 position-relative">
                                 ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
-                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
-                                    <i class="far fa-heart"></i>
+                                ${isOld && appState.isAdmin ? `
+                                    <div class="admin-actions">
+                                        <button class="btn btn-warning btn-sm admin-btn" onclick="pauseAnnounce(${post.id}, 'realestate')" title="Mettre en pause">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm admin-btn" onclick="deleteAnnounceAdmin(${post.id}, 'realestate')" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                                <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="toggleFavorite(${post.id}, 'realestate')">
+                                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
                                 </button>
                                 <div class="card-body">
                                     <h5 class="card-title">${post.title}</h5>
@@ -3349,14 +4111,14 @@
                             </div>
                         </div>
                     `;
-                });
+                }
             }
 
             container.innerHTML = html;
             generatePagination(pagination, page, totalPages, 'realestate');
         }
 
-        function displayJobsAnnounces(posts, page = 1) {
+        async function displayJobsAnnounces(posts, page = 1) {
             const container = document.getElementById('jobs-container');
             const pagination = document.getElementById('jobs-pagination');
             if (!container) return;
@@ -3401,13 +4163,27 @@
             if (paginatedPosts.length === 0) {
                 html = '<div class="col-12 text-center"><p class="text-muted">Aucune offre d\'emploi disponible pour le moment.</p></div>';
             } else {
-                paginatedPosts.forEach((post) => {
+                for (const post of paginatedPosts) {
+                    const isOld = isAnnounceOld(post.createdAt);
+                    const isFavorited = appState.currentUser ? 
+                        await btpDB.isItemFavorited(appState.currentUser.id, post.id, 'job') : false;
+                    
                     html += `
                         <div class="col-md-6">
                             <div class="card h-100 position-relative">
                                 ${post.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
-                                <button class="favorite-btn" onclick="toggleFavorite(${post.id})">
-                                    <i class="far fa-heart"></i>
+                                ${isOld && appState.isAdmin ? `
+                                    <div class="admin-actions">
+                                        <button class="btn btn-warning btn-sm admin-btn" onclick="pauseAnnounce(${post.id}, 'job')" title="Mettre en pause">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm admin-btn" onclick="deleteAnnounceAdmin(${post.id}, 'job')" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                                <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="toggleFavorite(${post.id}, 'job')">
+                                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
                                 </button>
                                 <div class="card-body">
                                     <h5 class="card-title">${post.poste}</h5>
@@ -3425,7 +4201,7 @@
                             </div>
                         </div>
                     `;
-                });
+                }
             }
 
             container.innerHTML = html;
@@ -3441,7 +4217,7 @@
             }
         }
 
-        function displayFreelancers(freelancers, page = 1) {
+        async function displayFreelancers(freelancers, page = 1) {
             const container = document.getElementById('freelancers-container');
             const pagination = document.getElementById('freelancers-pagination');
             if (!container) return;
@@ -3478,13 +4254,27 @@
             if (paginatedFreelancers.length === 0) {
                 html = '<div class="col-12 text-center"><p class="text-muted">Aucun freelance disponible pour le moment.</p></div>';
             } else {
-                paginatedFreelancers.forEach(freelancer => {
+                for (const freelancer of paginatedFreelancers) {
+                    const isOld = isAnnounceOld(freelancer.createdAt);
+                    const isFavorited = appState.currentUser ? 
+                        await btpDB.isItemFavorited(appState.currentUser.id, freelancer.id, 'freelancers') : false;
+                    
                     html += `
                         <div class="col-md-6">
                             <div class="card h-100 position-relative">
                                 ${freelancer.isPremium ? '<span class="premium-badge">⭐ PREMIUM</span>' : ''}
-                                <button class="favorite-btn" onclick="toggleFavorite(${freelancer.id})">
-                                    <i class="far fa-heart"></i>
+                                ${isOld && appState.isAdmin ? `
+                                    <div class="admin-actions">
+                                        <button class="btn btn-warning btn-sm admin-btn" onclick="pauseAnnounce(${freelancer.id}, 'freelancers')" title="Mettre en pause">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm admin-btn" onclick="deleteAnnounceAdmin(${freelancer.id}, 'freelancers')" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                                <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="toggleFavorite(${freelancer.id}, 'freelancers')">
+                                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
                                 </button>
                                 <div class="card-body">
                                     <h5 class="card-title">${freelancer.title}</h5>
@@ -3512,7 +4302,7 @@
                             </div>
                         </div>
                     `;
-                });
+                }
             }
 
             container.innerHTML = html;
@@ -3591,6 +4381,93 @@
 
             container.innerHTML = html;
             generatePagination(pagination, page, totalPages, 'professionals');
+        }
+
+        // ========== FONCTIONS ADMIN POUR ANNONCES ANCIENNES ==========
+        function isAnnounceOld(createdAt) {
+            const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            return new Date(createdAt) < oneMonthAgo;
+        }
+
+        async function pauseAnnounce(announceId, type) {
+            if (!appState.isAdmin) return;
+
+            if (!confirm('Voulez-vous mettre cette annonce en pause ? Elle ne sera plus visible publiquement.')) {
+                return;
+            }
+
+            try {
+                const collection = getCollectionByType(type);
+                await btpDB.put(collection, announceId, { status: ANNOUNCE_STATUS.PAUSED });
+                showAlert('✅ Annonce mise en pause avec succès', 'success');
+                
+                // Recharger les annonces
+                switch(type) {
+                    case 'marketplace':
+                        btpDB.get('marketplace_posts').then(posts => displayMarketplaceAnnounces(posts, 1));
+                        break;
+                    case 'realestate':
+                        btpDB.get('realestate_posts').then(posts => displayRealestateAnnounces(posts, 1));
+                        break;
+                    case 'job':
+                        btpDB.get('job_posts').then(posts => displayJobsAnnounces(posts, 1));
+                        break;
+                    case 'freelancers':
+                        btpDB.get('freelancers').then(freelancers => displayFreelancers(freelancers, 1));
+                        break;
+                }
+
+                // Recharger les stats admin
+                loadAdminStats();
+                
+            } catch (error) {
+                console.error('Erreur mise en pause annonce:', error);
+                showAlert('❌ Erreur lors de la mise en pause', 'error');
+            }
+        }
+
+        async function deleteAnnounceAdmin(announceId, type) {
+            if (!appState.isAdmin) return;
+
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.')) {
+                return;
+            }
+
+            try {
+                const collection = getCollectionByType(type);
+                const items = await btpDB.get(collection);
+                const updatedItems = items.filter(item => item.id !== announceId);
+                
+                // Sauvegarder les modifications
+                const localData = btpDB.getLocalData();
+                localData[collection] = updatedItems;
+                btpDB.saveLocalData(localData);
+                
+                showAlert('✅ Annonce supprimée avec succès !', 'success');
+                
+                // Recharger les annonces
+                switch(type) {
+                    case 'marketplace':
+                        btpDB.get('marketplace_posts').then(posts => displayMarketplaceAnnounces(posts, 1));
+                        break;
+                    case 'realestate':
+                        btpDB.get('realestate_posts').then(posts => displayRealestateAnnounces(posts, 1));
+                        break;
+                    case 'job':
+                        btpDB.get('job_posts').then(posts => displayJobsAnnounces(posts, 1));
+                        break;
+                    case 'freelancers':
+                        btpDB.get('freelancers').then(freelancers => displayFreelancers(freelancers, 1));
+                        break;
+                }
+
+                // Recharger les stats admin
+                loadAdminStats();
+                
+            } catch (error) {
+                console.error('Erreur suppression annonce admin:', error);
+                showAlert('❌ Erreur lors de la suppression', 'error');
+            }
         }
 
         // ========== PAGINATION ==========
@@ -4072,17 +4949,29 @@
             showLoading(true);
 
             try {
-                await btpDB.post('marketplace_posts', announceData);
-                await btpDB.post('user_announces', announceData);
+                // Vérifier si on est en mode édition
+                if (window.editingAnnounceId) {
+                    // Mettre à jour l'annonce existante
+                    await btpDB.put('marketplace_posts', window.editingAnnounceId, announceData);
+                    showAlert('✅ Annonce modifiée avec succès !', 'success');
+                } else {
+                    // Créer une nouvelle annonce
+                    await btpDB.post('marketplace_posts', announceData);
+                    showAlert(appState.isAdmin ? 
+                        '✅ Annonce publiée avec succès !' : 
+                        '✅ Votre annonce a été soumise ! Elle sera publiée après modération.', 
+                        'success'
+                    );
+                }
                 
-                showAlert(appState.isAdmin ? 
-                    '✅ Annonce publiée avec succès !' : 
-                    '✅ Votre annonce a été soumise ! Elle sera publiée après modération.', 
-                    'success'
-                );
-                
+                // Réinitialiser le formulaire
                 event.target.reset();
                 document.getElementById('marketplacePhotoPreview').innerHTML = '';
+                
+                // Réinitialiser le mode édition
+                resetEditMode();
+                
+                // Rediriger vers le compte
                 goToSection('my_account');
 
             } catch (error) {
@@ -4120,17 +5009,29 @@
             showLoading(true);
 
             try {
-                await btpDB.post('realestate_posts', announceData);
-                await btpDB.post('user_announces', announceData);
+                // Vérifier si on est en mode édition
+                if (window.editingAnnounceId) {
+                    // Mettre à jour l'annonce existante
+                    await btpDB.put('realestate_posts', window.editingAnnounceId, announceData);
+                    showAlert('✅ Annonce immobilière modifiée avec succès !', 'success');
+                } else {
+                    // Créer une nouvelle annonce
+                    await btpDB.post('realestate_posts', announceData);
+                    showAlert(appState.isAdmin ? 
+                        '✅ Annonce immobilière publiée avec succès !' : 
+                        '✅ Votre annonce immobilière a été soumise ! Elle sera publiée après modération.', 
+                        'success'
+                    );
+                }
                 
-                showAlert(appState.isAdmin ? 
-                    '✅ Annonce immobilière publiée avec succès !' : 
-                    '✅ Votre annonce immobilière a été soumise ! Elle sera publiée après modération.', 
-                    'success'
-                );
-                
+                // Réinitialiser le formulaire
                 event.target.reset();
                 document.getElementById('realestatePhotoPreview').innerHTML = '';
+                
+                // Réinitialiser le mode édition
+                resetEditMode();
+                
+                // Rediriger vers le compte
                 goToSection('my_account');
 
             } catch (error) {
@@ -4166,16 +5067,28 @@
             showLoading(true);
 
             try {
-                await btpDB.post('job_posts', announceData);
-                await btpDB.post('user_announces', announceData);
+                // Vérifier si on est en mode édition
+                if (window.editingAnnounceId) {
+                    // Mettre à jour l'annonce existante
+                    await btpDB.put('job_posts', window.editingAnnounceId, announceData);
+                    showAlert('✅ Offre d\'emploi modifiée avec succès !', 'success');
+                } else {
+                    // Créer une nouvelle annonce
+                    await btpDB.post('job_posts', announceData);
+                    showAlert(appState.isAdmin ? 
+                        '✅ Offre d\'emploi publiée avec succès !' : 
+                        '✅ Votre offre d\'emploi a été soumise ! Elle sera publiée après modération.', 
+                        'success'
+                    );
+                }
                 
-                showAlert(appState.isAdmin ? 
-                    '✅ Offre d\'emploi publiée avec succès !' : 
-                    '✅ Votre offre d\'emploi a été soumise ! Elle sera publiée après modération.', 
-                    'success'
-                );
-                
+                // Réinitialiser le formulaire
                 event.target.reset();
+                
+                // Réinitialiser le mode édition
+                resetEditMode();
+                
+                // Rediriger vers le compte
                 goToSection('my_account');
 
             } catch (error) {
@@ -4214,16 +5127,28 @@
             showLoading(true);
 
             try {
-                await btpDB.post('freelancers', announceData);
-                await btpDB.post('user_announces', announceData);
+                // Vérifier si on est en mode édition
+                if (window.editingAnnounceId) {
+                    // Mettre à jour l'annonce existante
+                    await btpDB.put('freelancers', window.editingAnnounceId, announceData);
+                    showAlert('✅ Service freelance modifié avec succès !', 'success');
+                } else {
+                    // Créer une nouvelle annonce
+                    await btpDB.post('freelancers', announceData);
+                    showAlert(appState.isAdmin ? 
+                        '✅ Service freelance publié avec succès !' : 
+                        '✅ Votre service freelance a été soumis ! Il sera publié après modération.', 
+                        'success'
+                    );
+                }
                 
-                showAlert(appState.isAdmin ? 
-                    '✅ Service freelance publié avec succès !' : 
-                    '✅ Votre service freelance a été soumis ! Il sera publié après modération.', 
-                    'success'
-                );
-                
+                // Réinitialiser le formulaire
                 event.target.reset();
+                
+                // Réinitialiser le mode édition
+                resetEditMode();
+                
+                // Rediriger vers le compte
                 goToSection('my_account');
 
             } catch (error) {
@@ -4237,12 +5162,13 @@
         async function loadAdminStats() {
             if (!appState.isAdmin) return;
 
-            const [users, marketplace, realestate, jobs, freelancers] = await Promise.all([
+            const [users, marketplace, realestate, jobs, freelancers, oldAnnounces] = await Promise.all([
                 btpDB.get('users'),
                 btpDB.get('marketplace_posts'),
                 btpDB.get('realestate_posts'),
                 btpDB.get('job_posts'),
-                btpDB.get('freelancers')
+                btpDB.get('freelancers'),
+                btpDB.getOldAnnounces()
             ]);
 
             document.getElementById('stats-users').textContent = users.length;
@@ -4250,14 +5176,32 @@
             document.getElementById('stats-realestate').textContent = realestate.length;
             document.getElementById('stats-jobs').textContent = jobs.length;
 
+            // Charger les statistiques utilisateurs détaillées
+            await loadUsersStats(users);
+
             // Charger les emplacements Adsense
             loadAdsenseSlots();
 
             // Charger les utilisateurs
             loadUsersTable(users);
             
+            // Charger les annonces anciennes
+            loadOldAnnouncesTable(oldAnnounces);
+            
             // Charger les annonces à modérer
             loadModerationTable([...marketplace, ...realestate, ...jobs, ...freelancers]);
+        }
+
+        async function loadUsersStats(users) {
+            const totalUsers = users.length;
+            const activeUsers = users.filter(u => !u.isBlocked).length;
+            const premiumUsers = users.filter(u => u.hasPremium).length;
+            const totalVisits = users.reduce((sum, user) => sum + (user.visitCount || 0), 0);
+
+            document.getElementById('stats-total-users').textContent = totalUsers;
+            document.getElementById('stats-active-users').textContent = activeUsers;
+            document.getElementById('stats-premium-users').textContent = premiumUsers;
+            document.getElementById('stats-total-visits').textContent = totalVisits;
         }
 
         async function loadAdsenseSlots() {
@@ -4298,17 +5242,29 @@
             let html = '';
             
             users.forEach(user => {
+                const lastVisit = user.lastVisit ? new Date(user.lastVisit).toLocaleDateString('fr-FR') : 'Jamais';
+                const visitCount = user.visitCount || 0;
+                
                 html += `
                     <tr>
-                        <td>${user.prenom} ${user.nom}</td>
-                        <td>${user.email}</td>
-                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <strong>${user.prenom} ${user.nom}</strong>
+                            <br><small class="text-muted">${user.email}</small>
+                        </td>
+                        <td>
+                            <small>📞 ${user.phone || 'Non renseigné'}</small>
+                        </td>
                         <td>
                             <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-success'}">
                                 ${user.role === 'admin' ? 'Admin' : 'Utilisateur'}
                             </span>
                             ${user.isBlocked ? '<span class="badge bg-warning ms-1">Bloqué</span>' : ''}
                             ${user.hasPremium ? '<span class="badge bg-info ms-1">Premium</span>' : ''}
+                        </td>
+                        <td>${new Date(user.createdAt).toLocaleDateString('fr-FR')}</td>
+                        <td>${lastVisit}</td>
+                        <td>
+                            <span class="badge bg-primary">${visitCount} visites</span>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
@@ -4328,6 +5284,47 @@
                     </tr>
                 `;
             });
+            
+            tbody.innerHTML = html;
+        }
+
+        function loadOldAnnouncesTable(oldAnnounces) {
+            const tbody = document.getElementById('old-announces-table-body');
+            let html = '';
+            
+            if (oldAnnounces.length === 0) {
+                html = '<tr><td colspan="6" class="text-center">Aucune annonce ancienne à gérer</td></tr>';
+            } else {
+                oldAnnounces.forEach(announce => {
+                    const ageInDays = Math.floor((new Date() - new Date(announce.createdAt)) / (1000 * 60 * 60 * 24));
+                    html += `
+                        <tr>
+                            <td>
+                                <strong>${announce.title || announce.poste}</strong>
+                                <br><small class="text-muted">${announce.description?.substring(0, 50)}...</small>
+                            </td>
+                            <td>
+                                <span class="badge ${getAnnounceTypeBadge(announce)}">
+                                    ${getAnnounceType(announce)}
+                                </span>
+                            </td>
+                            <td>${announce.userName}</td>
+                            <td>${new Date(announce.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                <span class="badge bg-warning">${ageInDays} jours</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-warning btn-sm me-1" onclick="pauseAnnounce(${announce.id}, '${announce.type}')">
+                                    <i class="fas fa-pause me-1"></i>Pause
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteAnnounceAdmin(${announce.id}, '${announce.type}')">
+                                    <i class="fas fa-trash me-1"></i>Supprimer
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
             
             tbody.innerHTML = html;
         }
@@ -4423,6 +5420,7 @@
                 case ANNOUNCE_STATUS.PENDING: return 'bg-warning';
                 case ANNOUNCE_STATUS.REJECTED: return 'bg-danger';
                 case ANNOUNCE_STATUS.REPORTED: return 'bg-danger';
+                case ANNOUNCE_STATUS.PAUSED: return 'bg-secondary';
                 default: return 'bg-secondary';
             }
         }
@@ -4433,6 +5431,7 @@
                 case ANNOUNCE_STATUS.PENDING: return 'En attente';
                 case ANNOUNCE_STATUS.REJECTED: return 'Rejeté';
                 case ANNOUNCE_STATUS.REPORTED: return 'Signalé';
+                case ANNOUNCE_STATUS.PAUSED: return 'En pause';
                 default: return status;
             }
         }
@@ -4504,6 +5503,218 @@
             showAlert('Newsletter programmée pour envoi automatique', 'info');
         }
 
+        // ========== FONCTIONS DE SAUVEGARDE DES ADHÉRENTS ==========
+        function trackUserVisit() {
+            if (appState.currentUser) {
+                btpDB.incrementUserVisit(appState.currentUser.id);
+            }
+        }
+
+        async function showBackupSettings() {
+            if (!appState.isAdmin) {
+                showAlert('Accès réservé aux administrateurs', 'error');
+                return;
+            }
+
+            const settings = await btpDB.getBackupSettings();
+            const history = await btpDB.getBackupHistory();
+
+            // Remplir le formulaire
+            document.getElementById('backupEnabled').checked = settings.enabled;
+            document.getElementById('backupFrequency').value = settings.frequency;
+            document.getElementById('backupEmail').value = settings.email;
+            document.getElementById('includeCoordinates').checked = settings.includeCoordinates;
+            document.getElementById('includeVisits').checked = settings.includeVisits;
+
+            // Mettre à jour l'info de prochaine sauvegarde
+            updateNextBackupInfo(settings);
+
+            // Charger l'historique
+            loadBackupHistory(history);
+
+            backupSettingsModal.show();
+        }
+
+        function updateNextBackupInfo(settings) {
+            const nextBackupInfo = document.getElementById('nextBackupInfo');
+            if (!settings.enabled) {
+                nextBackupInfo.innerHTML = '<i class="fas fa-pause me-2"></i>Sauvegarde automatique désactivée';
+                nextBackupInfo.className = 'alert alert-warning';
+                return;
+            }
+
+            let nextDate = new Date();
+            switch(settings.frequency) {
+                case 'daily':
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    break;
+                case 'weekly':
+                    nextDate.setDate(nextDate.getDate() + (7 - nextDate.getDay() + 1) % 7 || 7);
+                    break;
+                case 'monthly':
+                    nextDate.setMonth(nextDate.getMonth() + 1);
+                    nextDate.setDate(1);
+                    break;
+            }
+
+            nextBackupInfo.innerHTML = `
+                <i class="fas fa-calendar me-2"></i>
+                Prochaine sauvegarde: ${nextDate.toLocaleDateString('fr-FR')}
+                ${settings.lastBackup ? `<br><small>Dernière sauvegarde: ${new Date(settings.lastBackup).toLocaleDateString('fr-FR')}</small>` : ''}
+            `;
+            nextBackupInfo.className = 'alert alert-success';
+        }
+
+        function loadBackupHistory(history) {
+            const container = document.getElementById('backupHistoryList');
+            let html = '';
+
+            if (history.length === 0) {
+                html = '<div class="text-center text-muted py-3">Aucune sauvegarde effectuée</div>';
+            } else {
+                history.forEach(backup => {
+                    html += `
+                        <div class="backup-history-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6>Sauvegarde du ${new Date(backup.timestamp).toLocaleDateString('fr-FR')}</h6>
+                                    <div class="backup-stats">
+                                        <span class="me-3">👥 ${backup.totalUsers} utilisateurs</span>
+                                        <span class="me-3">✅ ${backup.activeUsers} actifs</span>
+                                        <span class="me-3">⭐ ${backup.premiumUsers} premium</span>
+                                        <span>📊 ${backup.totalVisits} visites totales</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="downloadBackup(${backup.id})">
+                                        <i class="fas fa-download me-1"></i>Télécharger
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function saveBackupSettings() {
+            if (!appState.isAdmin) return;
+
+            const settings = {
+                enabled: document.getElementById('backupEnabled').checked,
+                frequency: document.getElementById('backupFrequency').value,
+                email: document.getElementById('backupEmail').value,
+                includeCoordinates: document.getElementById('includeCoordinates').checked,
+                includeVisits: document.getElementById('includeVisits').checked
+            };
+
+            await btpDB.saveBackupSettings(settings);
+            showAlert('✅ Paramètres de sauvegarde enregistrés !', 'success');
+            updateNextBackupInfo(settings);
+        }
+
+        async function createManualBackup() {
+            if (!appState.isAdmin) return;
+
+            showLoading(true);
+            try {
+                const backupData = await btpDB.createBackup();
+                showAlert('✅ Sauvegarde créée avec succès !', 'success');
+                
+                // Recharger l'historique
+                const history = await btpDB.getBackupHistory();
+                loadBackupHistory(history);
+                
+                // Mettre à jour les paramètres
+                const settings = await btpDB.getBackupSettings();
+                updateNextBackupInfo(settings);
+
+            } catch (error) {
+                showAlert('❌ Erreur lors de la création de la sauvegarde', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function downloadUsersBackup() {
+            if (!appState.isAdmin) return;
+
+            showLoading(true);
+            try {
+                const users = await btpDB.getAllUsersWithDetails();
+                const backupData = {
+                    timestamp: new Date().toISOString(),
+                    totalUsers: users.length,
+                    activeUsers: users.filter(u => !u.isBlocked).length,
+                    premiumUsers: users.filter(u => u.hasPremium).length,
+                    totalVisits: users.reduce((sum, user) => sum + (user.visitCount || 0), 0),
+                    users: users
+                };
+
+                // Créer un fichier CSV
+                const csvContent = convertToCSV(backupData);
+                downloadCSV(csvContent, `btp_pro_backup_${new Date().toISOString().split('T')[0]}.csv`);
+                
+                showAlert('✅ Backup téléchargé avec succès !', 'success');
+
+            } catch (error) {
+                showAlert('❌ Erreur lors du téléchargement du backup', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function convertToCSV(backupData) {
+            const headers = ['ID', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Rôle', 'Statut', 'Premium', 'Visites', 'Dernière visite', 'Date d\'inscription'];
+            let csv = headers.join(';') + '\n';
+
+            backupData.users.forEach(user => {
+                const row = [
+                    user.id,
+                    user.prenom,
+                    user.nom,
+                    user.email,
+                    user.phone,
+                    user.role,
+                    user.isBlocked ? 'Bloqué' : 'Actif',
+                    user.hasPremium ? 'Oui' : 'Non',
+                    user.visitCount,
+                    user.lastVisit ? new Date(user.lastVisit).toLocaleDateString('fr-FR') : 'Jamais',
+                    new Date(user.createdAt).toLocaleDateString('fr-FR')
+                ];
+                csv += row.join(';') + '\n';
+            });
+
+            return csv;
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function downloadBackup(backupId) {
+            const history = await btpDB.getBackupHistory();
+            const backup = history.find(b => b.id === backupId);
+            
+            if (backup) {
+                const csvContent = convertToCSV(backup);
+                downloadCSV(csvContent, `btp_pro_backup_${backup.timestamp.split('T')[0]}.csv`);
+                showAlert('✅ Backup téléchargé avec succès !', 'success');
+            }
+        }
+
         // ========== FONCTIONS UTILITAIRES ==========
         function showAlert(message, type = 'success') {
             const alert = document.querySelector('.message-alert');
@@ -4561,10 +5772,6 @@
             }
         }
 
-        function toggleFavorite(itemId) {
-            showAlert('Ajouté aux favoris', 'success');
-        }
-
         function selectSubscription(plan) {
             if (!appState.currentUser) {
                 showAlert('🔐 Connectez-vous pour souscrire à un abonnement Premium', 'warning');
@@ -4572,6 +5779,11 @@
                 return;
             }
             showAlert(`Abonnement ${plan} sélectionné - Fonctionnalité de paiement à venir!`, 'success');
+        }
+
+        function changePassword(event) {
+            event.preventDefault();
+            showAlert('🔒 Fonctionnalité de changement de mot de passe à venir !', 'info');
         }
 
         // ========== INITIALISATION DU THÈME ==========
