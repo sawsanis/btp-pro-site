@@ -1,0 +1,79 @@
+@media (max-width: 1200px) {
+    .global-search-container {
+        width: 500px;
+    }
+}
+
+@media (max-width: 992px) {
+    .global-search-container {
+        width: 400px;
+        margin: 10px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-banner {
+        padding: 60px 0;
+    }
+    
+    .hero-banner h1 {
+        font-size: 2rem;
+    }
+    
+    .global-search-container {
+        display: none;
+    }
+
+    .search-container-mobile {
+        display: block;
+    }
+
+    .messaging-container {
+        width: 95vw;
+        height: 70vh;
+        bottom: 20px;
+        right: 2.5vw;
+    }
+
+    .premium-card {
+        transform: none;
+        margin-bottom: 1rem;
+    }
+
+    .navbar-nav {
+        text-align: center;
+    }
+
+    .nav-link {
+        padding: 10px 0;
+    }
+
+    .account-sidebar {
+        margin-bottom: 2rem;
+    }
+
+    .admin-actions {
+        position: static;
+        display: block;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 5px;
+    }
+}
