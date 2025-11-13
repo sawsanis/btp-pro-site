@@ -1,636 +1,615 @@
-// ========== ÉTAT DE L'APPLICATION ==========
-const appState = {
-    currentUser: null,
-    currentSection: 'home',
-    currentAccountSection: 'profile',
-    isAdmin: false,
-    theme: 'light',
-    currentPage: {
-        marketplace: 1,
-        realestate: 1,
-        jobs: 1,
-        freelancers: 1,
-        professionals: 1
-    }
-};
-
-// ========== INITIALISATION ==========
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-    trackUserVisit();
-    setupNavigation();
-});
-
-function initializeApp() {
-    initializeModals();
-    loadMarketplaceCategories();
-    loadApprovedAnnounces();
-    loadProfessionals();
-    loadFreelancers();
-    loadAdminStats();
-    loadForumTopics();
-    
-    console.log('✅ Application initialisée !');
-}
-
-function initializeModals() {
-    loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-    registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
-}
-
-// ========== NAVIGATION ==========
-function setupNavigation() {
-    // Navigation principale
-    document.querySelectorAll('.nav-link[data-section]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section');
-            if (section) {
-                goToSection(section);
-            }
-        });
-    });
-    
-    // Navigation footer
-    document.querySelectorAll('.footer a[data-section]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section');
-            if (section) {
-                goToSection(section);
-            }
-        });
-    });
-    
-    // Navigation compte utilisateur
-    document.querySelectorAll('.account-sidebar .nav-link[data-account-section]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-account-section');
-            if (section) {
-                showAccountSection(section);
-            }
-        });
-    });
-    
-    // Navigation dropdown utilisateur
-    document.querySelectorAll('.dropdown-item[data-section]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section');
-            if (section) {
-                goToSection(section);
-            }
-        });
-    });
-}
-
-function goToSection(section) {
-    console.log('Navigation vers:', section);
-    
-    // Vérifier l'accès aux sections privées
-    if ((section === 'my_account' || section === 'favorites' || section === 'publish') && !appState.currentUser) {
-        showAlert('🔐 Connectez-vous pour accéder à cette section', 'warning');
-        showLoginModal();
-        return;
+// ========== GESTION GLOBALE DE L'APPLICATION ==========
+class BTPApp {
+    constructor() {
+        this.state = {
+            currentUser: null,
+            isAdmin: false,
+            currentSection: 'home'
+        };
+        this.init();
     }
 
-    if (section === 'admin' && !appState.isAdmin) {
-        showAlert('❌ Accès réservé aux administrateurs', 'error');
-        return;
-    }
-
-    // Masquer toutes les sections
-    document.querySelectorAll('.section-content').forEach(s => {
-        s.classList.remove('active');
-    });
-    
-    // Mettre à jour les liens de navigation
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    
-    const targetSection = document.getElementById(section + '-section');
-    if (targetSection) {
-        targetSection.classList.add('active');
-        appState.currentSection = section;
+    init() {
+        console.log('🚀 Initialisation BTP Pro...');
         
-        // Activer le lien correspondant dans la navigation
-        const activeLink = document.querySelector(`.nav-link[data-section="${section}"]`);
+        // Vérifier d'abord l'authentification
+        this.checkAuth();
+        
+        // Initialiser l'interface
+        this.setupEventListeners();
+        this.loadSection('home');
+        
+        // Cacher le loader
+        setTimeout(() => {
+            const loader = document.querySelector('.loading-overlay');
+            if (loader) loader.style.display = 'none';
+        }, 1000);
+    }
+
+    setupEventListeners() {
+        // Navigation principale
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            // Liens de navigation
+            if (target.matches('[data-section]') || target.closest('[data-section]')) {
+                e.preventDefault();
+                const element = target.matches('[data-section]') ? target : target.closest('[data-section]');
+                const section = element.getAttribute('data-section');
+                this.loadSection(section);
+                return;
+            }
+
+            // Logo
+            if (target.closest('.navbar-brand')) {
+                e.preventDefault();
+                this.loadSection('home');
+                return;
+            }
+
+            // Boutons avec actions spécifiques
+            if (target.matches('[onclick]')) {
+                // Laisser les onclick gérer
+                return;
+            }
+        });
+
+        // Gestion du menu mobile
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        if (navbarToggler) {
+            navbarToggler.addEventListener('click', () => {
+                const navbarCollapse = document.querySelector('.navbar-collapse');
+                if (navbarCollapse) {
+                    navbarCollapse.classList.toggle('show');
+                }
+            });
+        }
+
+        // Fermer le menu mobile quand on clique sur un lien
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 992) {
+                const navbarCollapse = document.querySelector('.navbar-collapse.show');
+                if (navbarCollapse && e.target.matches('.nav-link')) {
+                    navbarCollapse.classList.remove('show');
+                }
+            }
+        });
+    }
+
+    loadSection(sectionId) {
+        console.log('📂 Chargement section:', sectionId);
+        
+        // Masquer toutes les sections
+        document.querySelectorAll('.section-content').forEach(section => {
+            section.classList.remove('active');
+            section.style.display = 'none';
+        });
+
+        // Afficher la section cible
+        const targetSection = document.getElementById(sectionId + '-section');
+        if (targetSection) {
+            targetSection.classList.add('active');
+            targetSection.style.display = 'block';
+            this.state.currentSection = sectionId;
+
+            // Fermer le menu mobile
+            this.closeMobileMenu();
+
+            // Mettre à jour la navigation active
+            this.updateActiveNav(sectionId);
+
+            // Charger les données de la section
+            this.loadSectionData(sectionId);
+
+            // Scroll vers le haut
+            window.scrollTo(0, 0);
+        } else {
+            console.warn('❌ Section non trouvée:', sectionId);
+        }
+    }
+
+    closeMobileMenu() {
+        if (window.innerWidth < 992) {
+            const navbarCollapse = document.querySelector('.navbar-collapse');
+            if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                navbarCollapse.classList.remove('show');
+            }
+        }
+    }
+
+    updateActiveNav(sectionId) {
+        // Retirer active de tous les liens
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // Activer le lien courant
+        const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
         if (activeLink) {
             activeLink.classList.add('active');
         }
 
-        // Actions spécifiques selon la section
-        switch(section) {
-            case 'my_account':
-                loadUserProfile();
-                loadUserAnnounces();
-                break;
-            case 'admin':
-                loadAdminStats();
-                loadUsersTable();
-                break;
-            case 'marketplace':
-                loadMarketplaceAnnounces();
-                break;
-            case 'realestate':
-                loadRealEstateAnnounces();
-                break;
-            case 'jobs':
-                loadJobsAnnounces();
-                break;
-            case 'freelancers':
-                loadFreelancersAnnounces();
-                break;
-            case 'professionals':
-                loadProfessionalsAnnounces();
-                break;
-            case 'publish':
-                showPublishForm('marketplace');
-                break;
-            case 'forum-create':
-                // Initialiser le formulaire de création de sujet
-                break;
-        }
-    } else {
-        console.warn('Section non trouvée:', section);
-    }
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function goToPublish() {
-    if (!appState.currentUser) {
-        showAlert('🔐 Connectez-vous pour publier une annonce', 'warning');
-        showLoginModal();
-        return;
-    }
-    goToSection('publish');
-}
-
-function checkAuthAndGo(section, type) {
-    if (!appState.currentUser) {
-        showAlert('🔐 Connectez-vous pour accéder à cette fonctionnalité', 'warning');
-        showLoginModal();
-        return;
-    }
-    goToSection(section);
-}
-
-function showAccountSection(section) {
-    // Masquer toutes les sections
-    document.querySelectorAll('.account-section').forEach(s => {
-        s.classList.remove('active');
-    });
-    
-    // Désactiver tous les liens
-    document.querySelectorAll('.account-sidebar .nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    
-    // Activer la section sélectionnée
-    document.getElementById('account-' + section).classList.add('active');
-    
-    // Activer le lien correspondant
-    document.querySelector(`[data-account-section="${section}"]`).classList.add('active');
-    
-    appState.currentAccountSection = section;
-}
-
-// ========== GESTION DU PROFIL ==========
-async function loadUserProfile() {
-    if (!appState.currentUser) return;
-    
-    const user = appState.currentUser;
-    
-    document.getElementById('profile-fullname').textContent = `${user.prenom} ${user.nom}`;
-    document.getElementById('profile-email').textContent = user.email;
-    document.getElementById('profile-phone').textContent = user.phone || 'Non renseigné';
-    document.getElementById('profile-created').textContent = new Date(user.createdAt).toLocaleDateString('fr-FR');
-    document.getElementById('profile-initials').textContent = 
-        `${user.prenom.charAt(0)}${user.nom.charAt(0)}`.toUpperCase();
-    
-    if (user.hasPremium) {
-        document.getElementById('premium-status-badge').classList.remove('d-none');
-    }
-}
-
-function toggleEditProfile() {
-    const view = document.getElementById('profile-view');
-    const edit = document.getElementById('profile-edit');
-    
-    if (view.style.display !== 'none') {
-        // Passer en mode édition
-        view.style.display = 'none';
-        edit.style.display = 'block';
-        
-        // Remplir le formulaire
-        document.getElementById('edit-prenom').value = appState.currentUser.prenom;
-        document.getElementById('edit-nom').value = appState.currentUser.nom;
-        document.getElementById('edit-email').value = appState.currentUser.email;
-        document.getElementById('edit-phone').value = appState.currentUser.phone || '';
-    } else {
-        // Retourner en mode visualisation
-        view.style.display = 'block';
-        edit.style.display = 'none';
-    }
-}
-
-async function updateProfile(event) {
-    event.preventDefault();
-    
-    const prenom = document.getElementById('edit-prenom').value;
-    const nom = document.getElementById('edit-nom').value;
-    const email = document.getElementById('edit-email').value;
-    const phone = document.getElementById('edit-phone').value;
-    
-    try {
-        // Mettre à jour l'utilisateur dans la base
-        await btpDB.put('users', appState.currentUser.id, {
-            prenom,
-            nom,
-            email,
-            phone
+        // Mettre à jour également les liens du footer
+        document.querySelectorAll('footer [data-section]').forEach(link => {
+            if (link.getAttribute('data-section') === sectionId) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
         });
+    }
+
+    loadSectionData(sectionId) {
+        console.log('📊 Chargement données section:', sectionId);
         
-        // Mettre à jour l'état local
-        appState.currentUser.prenom = prenom;
-        appState.currentUser.nom = nom;
-        appState.currentUser.email = email;
-        appState.currentUser.phone = phone;
+        const sectionLoaders = {
+            'home': () => {
+                console.log('🏠 Section accueil chargée');
+            },
+            'marketplace': () => {
+                if (window.loadMarketplaceAnnounces) {
+                    loadMarketplaceAnnounces();
+                } else {
+                    console.warn('❌ loadMarketplaceAnnounces non disponible');
+                }
+            },
+            'realestate': () => {
+                if (window.loadRealEstateAnnounces) {
+                    loadRealEstateAnnounces();
+                } else {
+                    console.warn('❌ loadRealEstateAnnounces non disponible');
+                }
+            },
+            'jobs': () => {
+                if (window.loadJobsAnnounces) {
+                    loadJobsAnnounces();
+                } else {
+                    console.warn('❌ loadJobsAnnounces non disponible');
+                }
+            },
+            'freelancers': () => {
+                if (window.loadFreelancers) {
+                    loadFreelancers();
+                } else {
+                    console.warn('❌ loadFreelancers non disponible');
+                }
+            },
+            'professionals': () => {
+                if (window.loadProfessionals) {
+                    loadProfessionals();
+                } else {
+                    console.warn('❌ loadProfessionals non disponible');
+                }
+            },
+            'forum': () => {
+                if (window.loadForumTopics) {
+                    loadForumTopics();
+                } else {
+                    console.warn('❌ loadForumTopics non disponible');
+                }
+            },
+            'ai': () => {
+                console.log('🤖 Section IA chargée');
+            },
+            'premium': () => {
+                console.log('⭐ Section Premium chargée');
+            },
+            'favorites': () => {
+                if (window.loadFavorites) {
+                    loadFavorites();
+                } else {
+                    console.warn('❌ loadFavorites non disponible');
+                }
+            },
+            'publish': () => {
+                console.log('📝 Section publication chargée');
+                this.initializePublishSection();
+            },
+            'admin': () => {
+                if (this.state.isAdmin && window.refreshAdminData) {
+                    refreshAdminData();
+                } else if (!this.state.isAdmin) {
+                    console.warn('❌ Accès admin refusé');
+                    this.loadSection('home');
+                }
+            },
+            'my_account': () => {
+                if (window.navigateToAccountSection) {
+                    navigateToAccountSection('profile');
+                } else {
+                    console.warn('❌ navigateToAccountSection non disponible');
+                }
+            },
+            'search': () => {
+                if (window.displaySearchResults) {
+                    displaySearchResults();
+                }
+            }
+        };
+
+        if (sectionLoaders[sectionId]) {
+            try {
+                sectionLoaders[sectionId]();
+            } catch (error) {
+                console.error(`❌ Erreur chargement section ${sectionId}:`, error);
+            }
+        } else {
+            console.warn('❌ Aucun loader défini pour la section:', sectionId);
+        }
+    }
+
+    initializePublishSection() {
+        // Initialiser les sélecteurs de villes si nécessaire
+        const citySelects = document.querySelectorAll('select[name="city"]');
+        citySelects.forEach(select => {
+            if (select.children.length <= 1) {
+                this.loadCitiesIntoSelect(select);
+            }
+        });
+
+        // Initialiser les sélecteurs de catégories marketplace
+        const marketplaceCategorySelect = document.getElementById('marketplaceCategorySelect');
+        if (marketplaceCategorySelect && marketplaceCategorySelect.children.length <= 1) {
+            this.loadMarketplaceCategories();
+        }
+    }
+
+    loadCitiesIntoSelect(selectElement) {
+        const cities = [
+            'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger', 'Meknès', 'Agadir', 
+            'Oujda', 'Kénitra', 'Tétouan', 'Safi', 'Mohammédia', 'Beni Mellal', 
+            'El Jadida', 'Nador', 'Taza', 'Settat', 'Khouribga', 'Laâyoune', 'Dakhla'
+        ];
         
-        // Mettre à jour l'UI
-        updateUIAfterAuth();
-        toggleEditProfile();
-        loadUserProfile();
-        
-        showAlert('✅ Profil mis à jour avec succès', 'success');
-    } catch (error) {
-        console.error('Erreur mise à jour profil:', error);
-        showAlert('❌ Erreur lors de la mise à jour du profil', 'error');
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            selectElement.appendChild(option);
+        });
+    }
+
+    loadMarketplaceCategories() {
+        const categories = {
+            'ciment': 'Ciment',
+            'acier': 'Acier',
+            'revetement': 'Revêtement',
+            'bois': 'Bois',
+            'isolation': 'Isolation',
+            'plomberie': 'Plomberie',
+            'electricite': 'Électricité',
+            'outillage': 'Outillage',
+            'quincaillerie': 'Quincaillerie',
+            'autres': 'Autres'
+        };
+
+        const select = document.getElementById('marketplaceCategorySelect');
+        if (!select) return;
+
+        // Vider les options existantes sauf la première
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
+        Object.entries(categories).forEach(([value, label]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        });
+    }
+
+    checkAuth() {
+        try {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                this.state.currentUser = JSON.parse(savedUser);
+                this.state.isAdmin = this.state.currentUser.role === 'admin';
+                console.log('🔐 Utilisateur restauré:', this.state.currentUser.prenom);
+                
+                // Mettre à jour l'interface d'authentification si la fonction existe
+                if (typeof updateAuthUI === 'function') {
+                    updateAuthUI();
+                }
+            }
+        } catch (error) {
+            console.error('❌ Erreur authentification:', error);
+            this.state.currentUser = null;
+            this.state.isAdmin = false;
+            if (typeof updateAuthUI === 'function') {
+                updateAuthUI();
+            }
+        }
+    }
+
+    updateAuthUI() {
+        const guestNav = document.getElementById('guest-nav');
+        const userNav = document.getElementById('user-nav');
+        const adminNav = document.getElementById('admin-nav');
+
+        if (this.state.currentUser) {
+            if (guestNav) guestNav.style.display = 'none';
+            if (userNav) userNav.style.display = 'flex';
+            if (adminNav) adminNav.style.display = this.state.isAdmin ? 'block' : 'none';
+        } else {
+            if (guestNav) guestNav.style.display = 'flex';
+            if (userNav) userNav.style.display = 'none';
+            if (adminNav) adminNav.style.display = 'none';
+        }
+    }
+
+    // Méthodes utilitaires
+    requireAuth(callback) {
+        if (!this.state.currentUser) {
+            if (window.showLoginModal) {
+                showLoginModal();
+            }
+            showAlert('🔐 Veuillez vous connecter pour accéder à cette fonctionnalité', 'warning');
+            return false;
+        }
+        if (callback) callback();
+        return true;
+    }
+
+    requireAdmin(callback) {
+        if (!this.state.currentUser || !this.state.isAdmin) {
+            showAlert('❌ Accès réservé aux administrateurs', 'error');
+            return false;
+        }
+        if (callback) callback();
+        return true;
+    }
+
+    showSection(sectionId) {
+        this.loadSection(sectionId);
+    }
+
+    refreshCurrentSection() {
+        console.log('🔄 Rafraîchissement section courante:', this.state.currentSection);
+        this.loadSectionData(this.state.currentSection);
     }
 }
 
-async function loadUserAnnounces() {
-    if (!appState.currentUser) return;
-    
-    const collections = ['marketplace_posts', 'realestate_posts', 'job_posts', 'freelancers'];
-    let userAnnounces = [];
-    
-    for (const collection of collections) {
-        const items = await btpDB.get(collection);
-        const userItems = items.filter(item => item.userId === appState.currentUser.id);
-        userAnnounces = userAnnounces.concat(userItems.map(item => ({
-            ...item,
-            type: collection.replace('_posts', '')
-        })));
+// ========== FONCTIONS GLOBALES ==========
+
+// ✅ FONCTION DE VÉRIFICATION UNIFIÉE POUR LES PUBLICATIONS (CORRIGÉE)
+function checkAuthForPublish() {
+    if (!btpApp || !btpApp.state.currentUser) {
+        showAlert('🔐 Connectez-vous pour publier une annonce', 'warning');
+        if (typeof showLoginModal === 'function') {
+            showLoginModal();
+        }
+        return false;
     }
     
-    const container = document.getElementById('user-announces-list');
+    if (btpApp.state.currentUser.status === 'suspended' || btpApp.state.currentUser.status === 'banned') {
+        showAlert('❌ Votre compte est suspendu. Vous ne pouvez pas publier d\'annonces.', 'error');
+        return false;
+    }
     
-    // Mettre à jour les statistiques
-    document.getElementById('stats-total-announces').textContent = userAnnounces.length;
-    document.getElementById('stats-active-announces').textContent = 
-        userAnnounces.filter(a => a.status === ANNOUNCE_STATUS.APPROVED).length;
-    document.getElementById('stats-pending-announces').textContent = 
-        userAnnounces.filter(a => a.status === ANNOUNCE_STATUS.PENDING).length;
-    document.getElementById('stats-rejected-announces').textContent = 
-        userAnnounces.filter(a => a.status === ANNOUNCE_STATUS.REJECTED).length;
-    
-    // Afficher les annonces
-    let html = '';
-    
-    userAnnounces.forEach(announce => {
-        const statusBadge = getStatusBadge(announce.status);
-        
-        html += `
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h5 class="card-title">${announce.title || announce.poste}</h5>
-                        <p class="card-text text-muted">${announce.description.substring(0, 150)}...</p>
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-secondary">${announce.type}</span>
-                            ${statusBadge}
-                            ${announce.isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <small class="text-muted">${new Date(announce.createdAt).toLocaleDateString('fr-FR')}</small>
-                        <div class="mt-2">
-                            <button class="btn btn-outline-primary btn-sm me-1" onclick="editAnnounce('${announce.type}', ${announce.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce('${announce.type}', ${announce.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    });
-    
-    container.innerHTML = html || '<p class="text-muted text-center">Aucune annonce publiée</p>';
+    return true;
 }
 
-// ========== FONCTIONS DE GESTION DES ANNONCES ==========
-function loadMarketplaceCategories() {
-    const categories = [
-        'ciment', 'béton', 'acier', 'bois', 'revetement', 
-        'sanitaire', 'electricite', 'outillage', 'peinture', 'autres'
-    ];
-    
-    const categorySelect = document.getElementById('marketplaceCategorySelect');
-    const categoryFilter = document.getElementById('marketplaceCategoryFilter');
-    
-    categories.forEach(category => {
-        const option1 = document.createElement('option');
-        option1.value = category;
-        option1.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categorySelect) categorySelect.appendChild(option1);
-        
-        const option2 = document.createElement('option');
-        option2.value = category;
-        option2.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        if (categoryFilter) categoryFilter.appendChild(option2);
-    });
-}
-
-async function loadApprovedAnnounces() {
-    console.log('📦 Chargement des annonces approuvées...');
-}
-
-// ========== RECHERCHE GLOBALE ==========
+// ✅ FONCTION DE RECHERCHE GLOBALE
 function performGlobalSearch() {
-    const searchTerm = document.getElementById('globalSearch').value || 
-                     document.getElementById('globalSearchMobile').value;
+    const searchInput = document.querySelector('.search-container input');
+    const query = searchInput.value.trim();
     
-    if (!searchTerm.trim()) {
+    if (!query) {
         showAlert('🔍 Veuillez saisir un terme de recherche', 'warning');
         return;
     }
     
-    showLoading(true);
-    
-    // Recherche dans toutes les collections
-    Promise.all([
-        btpDB.get('marketplace_posts'),
-        btpDB.get('realestate_posts'),
-        btpDB.get('job_posts'),
-        btpDB.get('freelancers'),
-        btpDB.get('professionals')
-    ]).then(results => {
-        const [marketplace, realestate, jobs, freelancers, professionals] = results;
-        
-        const allResults = [
-            ...marketplace.map(item => ({...item, type: 'marketplace'})),
-            ...realestate.map(item => ({...item, type: 'realestate'})),
-            ...jobs.map(item => ({...item, type: 'jobs'})),
-            ...freelancers.map(item => ({...item, type: 'freelancers'})),
-            ...professionals.map(item => ({...item, type: 'professionals'}))
-        ];
-        
-        const filteredResults = allResults.filter(item => {
-            const searchableText = Object.values(item).join(' ').toLowerCase();
-            return searchableText.includes(searchTerm.toLowerCase());
-        });
-        
-        displaySearchResults(filteredResults, searchTerm);
-        showLoading(false);
-    });
+    console.log('🔍 Recherche globale:', query);
+    sessionStorage.setItem('globalSearchQuery', query);
+    goToSection('search');
 }
 
-function displaySearchResults(results, searchTerm) {
-    let html = '';
+function displaySearchResults() {
+    const query = sessionStorage.getItem('globalSearchQuery');
     
-    if (results.length === 0) {
-        html = `
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                    <h4>Aucun résultat trouvé</h4>
-                    <p class="text-muted">Aucun élément ne correspond à "${searchTerm}"</p>
-                </div>
-            </div>
-        </div>`;
-    } else {
-        results.forEach(item => {
-            const typeLabels = {
-                'marketplace': 'Marketplace',
-                'realestate': 'Immobilier',
-                'jobs': 'Emploi',
-                'freelancers': 'Freelance',
-                'professionals': 'Professionnel'
-            };
-            
-            html += `
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <span class="badge bg-primary mb-2">${typeLabels[item.type]}</span>
-                        <h5 class="card-title">${item.title || item.poste || item.company}</h5>
-                        <p class="card-text text-muted">${item.description?.substring(0, 100)}...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            ${item.price ? `<span class="h6 text-primary mb-0">${typeof item.price === 'number' ? item.price.toLocaleString() : item.price} MAD</span>` : ''}
-                            ${item.rating ? `<small><i class="fas fa-star text-warning"></i> ${item.rating}</small>` : ''}
-                        </div>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <button class="btn btn-primary btn-sm w-100" onclick="goToSection('${item.type}')">
-                            Voir détails
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-        });
-    }
-    
-    // Afficher les résultats dans la section appropriée
-    const currentSection = appState.currentSection;
-    const container = document.getElementById(`${currentSection}-container`);
-    if (container) {
-        container.innerHTML = html;
-    }
-    
-    showAlert(`🔍 ${results.length} résultat(s) trouvé(s) pour "${searchTerm}"`, 'success');
-}
-
-// ========== FONCTIONS DE GESTION DES FAVORIS ==========
-async function toggleFavorite(itemId, itemType) {
-    if (!appState.currentUser) {
-        showAlert('🔐 Connectez-vous pour ajouter aux favoris', 'warning');
-        showLoginModal();
+    if (!query) {
+        goToSection('home');
         return;
     }
     
-    const favorites = await btpDB.get('favorites');
-    const existingFavorite = favorites.find(fav => 
-        fav.userId === appState.currentUser.id && 
-        fav.itemId === itemId && 
-        fav.itemType === itemType
-    );
+    const container = document.getElementById('search-results-container');
+    if (!container) return;
     
-    if (existingFavorite) {
-        // Supprimer des favoris
-        await btpDB.put('favorites', existingFavorite.id, { isActive: false });
-        showAlert('❤️ Retiré des favoris', 'success');
-    } else {
-        // Ajouter aux favoris
-        await btpDB.post('favorites', {
-            userId: appState.currentUser.id,
-            itemId: itemId,
-            itemType: itemType,
-            isActive: true,
-            addedAt: new Date().toISOString()
-        });
-        showAlert('❤️ Ajouté aux favoris', 'success');
-    }
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <h4>Résultats pour: "${query}"</h4>
+            <p class="text-muted">Recherche en cours de développement...</p>
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    `;
 }
 
-// ========== FONCTIONS DE GESTION DES MOTS DE PASSE ==========
-async function changePassword(event) {
-    event.preventDefault();
+// ✅ FONCTION POUR REJOINDRE L'ANNUAIRE DES PROFESSIONNELS
+function requestProfessionalListing() {
+    if (!checkAuthForPublish()) return;
     
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const modalHtml = `
+        <div class="modal fade" id="professionalRequestModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Rejoindre l'Annuaire des Professionnels</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="professionalRequestForm">
+                            <div class="mb-3">
+                                <label class="form-label">Nom de l'entreprise</label>
+                                <input type="text" class="form-control" name="companyName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Spécialité</label>
+                                <select class="form-select" name="specialty" required>
+                                    <option value="">Choisir une spécialité</option>
+                                    <option value="maçonnerie">Maçonnerie</option>
+                                    <option value="electricite">Électricité</option>
+                                    <option value="plomberie">Plomberie</option>
+                                    <option value="charpente">Charpente</option>
+                                    <option value="couverture">Couverture</option>
+                                    <option value="peinture">Peinture</option>
+                                    <option value="isolation">Isolation</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" name="phone" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" onclick="submitProfessionalRequest()">Soumettre la demande</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
+    // Injecter le modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('professionalRequestModal'));
+    modal.show();
+    
+    // Nettoyer après fermeture
+    document.getElementById('professionalRequestModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+function submitProfessionalRequest() {
+    const form = document.getElementById('professionalRequestForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Validation
+    if (!data.companyName || !data.specialty || !data.description || !data.phone) {
         showAlert('❌ Veuillez remplir tous les champs', 'error');
         return;
     }
     
-    if (newPassword !== confirmNewPassword) {
-        showAlert('❌ Les nouveaux mots de passe ne correspondent pas', 'error');
-        return;
-    }
+    // Sauvegarder la demande
+    const requestData = {
+        ...data,
+        userId: btpApp.state.currentUser.id,
+        userName: btpApp.state.currentUser.prenom + ' ' + btpApp.state.currentUser.nom,
+        userEmail: btpApp.state.currentUser.email,
+        status: 'en_attente',
+        createdAt: new Date().toISOString()
+    };
     
-    if (newPassword.length < 6) {
-        showAlert('❌ Le nouveau mot de passe doit contenir au moins 6 caractères', 'error');
-        return;
-    }
+    // Ici vous sauvegarderiez dans votre base de données
+    console.log('💾 Demande professionnelle:', requestData);
     
-    showLoading(true);
+    showAlert('✅ Votre demande a été soumise avec succès! Elle sera traitée sous 48h.', 'success');
     
-    try {
-        // Vérifier le mot de passe actuel
-        const hashedCurrentPassword = btpDB.hashPassword(currentPassword);
-        if (hashedCurrentPassword !== appState.currentUser.password) {
-            showAlert('❌ Mot de passe actuel incorrect', 'error');
-            return;
-        }
-        
-        // Mettre à jour le mot de passe
-        await btpDB.put('users', appState.currentUser.id, {
-            password: btpDB.hashPassword(newPassword)
-        });
-        
-        // Mettre à jour l'état local
-        appState.currentUser.password = btpDB.hashPassword(newPassword);
-        
-        showAlert('✅ Mot de passe changé avec succès', 'success');
-        document.getElementById('changePasswordForm').reset();
-        
-    } catch (error) {
-        console.error('Erreur changement mot de passe:', error);
-        showAlert('❌ Erreur lors du changement de mot de passe', 'error');
-    } finally {
-        showLoading(false);
-    }
+    // Fermer le modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('professionalRequestModal'));
+    modal.hide();
 }
 
-console.log('🚀 BTP Pro Maroc - Application prête !');
-console.log(`🌐 Firebase: ${firebaseOnline ? '✅ Connecté' : '❌ Hors ligne - Utilisation localStorage'}`);
-// ========== FONCTIONS TEMPORAIRES POUR CORRIGER LES ERREURS ==========
-console.log('🔄 Chargement des fonctions temporaires...');
+// ========== INITIALISATION ==========
+let btpApp;
 
-// Fonctions manquantes pour l'initialisation
-window.loadFreelancers = async function() {
-    console.log('✅ loadFreelancers appelée');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOM chargé - Démarrage application...');
+    btpApp = new BTPApp();
+    window.appState = btpApp.state;
+});
+
+window.goToSection = function(sectionId) {
+    if (btpApp) {
+        btpApp.loadSection(sectionId);
+    } else {
+        console.error('❌ Application non initialisée');
+        document.querySelectorAll('.section-content').forEach(section => {
+            section.classList.remove('active');
+            section.style.display = 'none';
+        });
+        const targetSection = document.getElementById(sectionId + '-section');
+        if (targetSection) {
+            targetSection.classList.add('active');
+            targetSection.style.display = 'block';
+        }
+    }
+};
+
+window.checkAuthAndGo = function(section, context = '') {
+    if (!btpApp || !btpApp.state.currentUser) {
+        if (window.showLoginModal) {
+            showLoginModal();
+        }
+        showAlert(`🔐 Veuillez vous connecter pour ${context || 'accéder à cette fonctionnalité'}`, 'warning');
+        return false;
+    }
+    goToSection(section);
     return true;
 };
 
-window.loadProfessionals = async function() {
-    console.log('✅ loadProfessionals appelée');
-    return true;
+window.goToPublish = function() {
+    if (checkAuthAndGo('publish', 'publier une annonce')) {
+        setTimeout(() => {
+            const marketplaceForm = document.getElementById('marketplace-form');
+            if (marketplaceForm) {
+                marketplaceForm.style.display = 'block';
+            }
+        }, 100);
+    }
 };
 
-window.loadAdminStats = async function() {
-    console.log('✅ loadAdminStats appelée');
-    return true;
+window.showNewAnnounceForm = function() {
+    document.querySelectorAll('.publish-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    document.getElementById('marketplace-form').style.display = 'block';
+    
+    document.querySelectorAll('.list-group-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector('[onclick="showPublishForm(\'marketplace\')"]').classList.add('active');
 };
 
-window.loadForumTopics = async function() {
-    console.log('✅ loadForumTopics appelée');
-    return true;
+window.showPublishForm = function(formType) {
+    document.querySelectorAll('.publish-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    const targetForm = document.getElementById(formType + '-form');
+    if (targetForm) {
+        targetForm.style.display = 'block';
+    }
+    
+    document.querySelectorAll('.list-group-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[onclick="showPublishForm('${formType}')"]`).classList.add('active');
 };
 
-window.loadMarketplaceAnnounces = async function() {
-    console.log('✅ loadMarketplaceAnnounces appelée');
-    return true;
+window.appDebug = function() {
+    console.log('🔍 État application:', btpApp?.state);
+    console.log('🔗 Sections disponibles:', document.querySelectorAll('.section-content').length);
+    console.log('📋 Liens navigation:', document.querySelectorAll('[data-section]').length);
+    console.log('👤 Utilisateur:', btpApp?.state.currentUser);
+    console.log('👑 Admin:', btpApp?.state.isAdmin);
 };
 
-window.loadRealEstateAnnounces = async function() {
-    console.log('✅ loadRealEstateAnnounces appelée');
-    return true;
-};
+window.addEventListener('error', function(e) {
+    console.error('❌ Erreur globale:', e.error);
+});
 
-window.loadJobsAnnounces = async function() {
-    console.log('✅ loadJobsAnnounces appelée');
-    return true;
-};
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('❌ Promise rejetée:', e.reason);
+});
 
-window.loadApprovedAnnounces = async function() {
-    console.log('✅ loadApprovedAnnounces appelée');
-    return true;
-};
-
-console.log('✅ Toutes les fonctions temporaires sont chargées');// ========== FONCTIONS TEMPORAIRES POUR CORRIGER LES ERREURS ==========
-console.log('🔄 Chargement des fonctions temporaires...');
-
-// Fonctions manquantes pour l'initialisation
-window.loadFreelancers = async function() {
-    console.log('✅ loadFreelancers appelée');
-    return true;
-};
-
-window.loadProfessionals = async function() {
-    console.log('✅ loadProfessionals appelée');
-    return true;
-};
-
-window.loadAdminStats = async function() {
-    console.log('✅ loadAdminStats appelée');
-    return true;
-};
-
-window.loadForumTopics = async function() {
-    console.log('✅ loadForumTopics appelée');
-    return true;
-};
-
-window.loadMarketplaceAnnounces = async function() {
-    console.log('✅ loadMarketplaceAnnounces appelée');
-    return true;
-};
-
-window.loadRealEstateAnnounces = async function() {
-    console.log('✅ loadRealEstateAnnounces appelée');
-    return true;
-};
-
-window.loadJobsAnnounces = async function() {
-    console.log('✅ loadJobsAnnounces appelée');
-    return true;
-};
-
-window.loadApprovedAnnounces = async function() {
-    console.log('✅ loadApprovedAnnounces appelée');
-    return true;
-};
-
-console.log('✅ Toutes les fonctions temporaires sont chargées');
+console.log('✅ app.js corrigé - Application PRÊTE avec gestion complète des sections');

@@ -1,238 +1,424 @@
-// ========== FONCTIONS MARKETPLACE ==========
+// ========== FONCTIONS MARKETPLACE CORRIGÉES ==========
+async function loadMarketplace() {
+    console.log('🛍️ Chargement de la marketplace...');
+    await loadMarketplaceAnnounces();
+}
+
 async function loadMarketplaceAnnounces() {
-    const posts = await btpDB.get('marketplace_posts');
-    const container = document.getElementById('marketplace-container');
+    console.log('🛍️ Chargement des produits marketplace...');
     
-    if (posts.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Aucun produit disponible pour le moment</p></div>';
-        return;
+    try {
+        const products = await btpDB.get('marketplace_posts');
+        console.log('📊 Produits récupérés:', products.length);
+        
+        const container = document.getElementById('marketplace-container');
+        
+        if (!container) {
+            console.warn('❌ Container marketplace non trouvé');
+            return;
+        }
+        
+        if (!products || products.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun produit disponible</h5>
+                    <p class="text-muted">Soyez le premier à publier un produit !</p>
+                    <button class="btn btn-primary" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Publier le premier produit
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        const approvedProducts = products.filter(product => 
+            product.status === 'approuve' || product.status === 'approved' || !product.status
+        );
+        
+        console.log('✅ Produits approuvés:', approvedProducts.length);
+        
+        if (approvedProducts.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun produit disponible</h5>
+                    <p class="text-muted">Tous les produits sont en attente de modération</p>
+                    <button class="btn btn-primary" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Publier un produit
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Initialiser les filtres
+        initializeMarketplaceFilters(approvedProducts);
+        
+        // Utiliser la pagination
+        if (typeof setupPagination === 'function') {
+            setupPagination('marketplace-container', approvedProducts, displayMarketplacePosts);
+            console.log(`✅ ${approvedProducts.length} produits chargés avec pagination`);
+        } else {
+            displayMarketplacePosts(approvedProducts);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement marketplace:', error);
+        const container = document.getElementById('marketplace-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="col-12 text-center">
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des produits
+                    </p>
+                    <button class="btn btn-primary btn-sm" onclick="loadMarketplaceAnnounces()">
+                        <i class="fas fa-redo me-1"></i>Réessayer
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+function initializeMarketplaceFilters(products) {
+    // Récupérer les catégories uniques
+    const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+    const cities = [...new Set(products.map(p => p.city).filter(Boolean))];
+    
+    // Mettre à jour le filtre des catégories
+    const categoryFilter = document.getElementById('marketplaceCategoryFilter');
+    if (categoryFilter) {
+        // Garder l'option "Toutes les catégories"
+        while (categoryFilter.children.length > 1) {
+            categoryFilter.removeChild(categoryFilter.lastChild);
+        }
+        
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = getCategoryLabel(category);
+            categoryFilter.appendChild(option);
+        });
     }
     
-    let html = '';
-    posts.forEach(post => {
-        if (post.status === ANNOUNCE_STATUS.APPROVED) {
-            html += `
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="position-relative">
-                        <img src="https://via.placeholder.com/300x200?text=${encodeURIComponent(post.title)}" 
-                             class="card-img-top" alt="${post.title}" style="height: 200px; object-fit: cover;">
-                        <button class="favorite-btn" onclick="toggleFavorite(${post.id}, 'marketplace')">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                        ${post.isPremium ? '<span class="premium-badge position-absolute top-0 end-0 m-2">⭐ PREMIUM</span>' : ''}
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">${post.title}</h5>
-                        <p class="card-text text-muted">${post.description.substring(0, 100)}...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 text-primary mb-0">${post.price} MAD</span>
-                            <small class="text-muted">${post.unit}</small>
-                        </div>
-                        <div class="mt-2">
-                            <i class="fas fa-map-marker-alt text-muted me-1"></i>
-                            <small class="text-muted">${post.city}</small>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <button class="btn btn-primary btn-sm w-100" onclick="contactSeller(${post.id}, 'marketplace')">
-                            <i class="fas fa-envelope me-1"></i>Contacter
-                        </button>
-                    </div>
-                </div>
-            </div>`;
+    // Mettre à jour le filtre des villes
+    const cityFilter = document.getElementById('marketplaceCityFilter');
+    if (cityFilter) {
+        // Garder l'option "Toutes les villes"
+        while (cityFilter.children.length > 1) {
+            cityFilter.removeChild(cityFilter.lastChild);
         }
-    });
-    
-    container.innerHTML = html || '<div class="col-12 text-center"><p class="text-muted">Aucun produit disponible pour le moment</p></div>';
+        
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            cityFilter.appendChild(option);
+        });
+    }
 }
 
 async function filterMarketplace() {
-    const category = document.getElementById('marketplaceCategoryFilter').value;
-    const city = document.getElementById('marketplaceCityFilter').value;
-    const sort = document.getElementById('marketplaceSort').value;
+    console.log('🔍 Filtrage marketplace...');
     
-    const posts = await btpDB.get('marketplace_posts');
-    let filteredPosts = posts.filter(post => {
-        if (category && post.category !== category) return false;
-        if (city && post.city !== city) return false;
-        return post.status === ANNOUNCE_STATUS.APPROVED;
-    });
-    
-    // Trier les résultats
-    switch(sort) {
-        case 'price_asc':
-            filteredPosts.sort((a, b) => a.price - b.price);
-            break;
-        case 'price_desc':
-            filteredPosts.sort((a, b) => b.price - a.price);
-            break;
-        case 'premium':
-            filteredPosts.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
-            break;
-        default: // 'newest'
-            filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    try {
+        const category = document.getElementById('marketplaceCategoryFilter')?.value;
+        const city = document.getElementById('marketplaceCityFilter')?.value;
+        const sort = document.getElementById('marketplaceSort')?.value;
+        
+        const products = await btpDB.get('marketplace_posts');
+        let filteredProducts = products.filter(product => {
+            if (category && product.category !== category) return false;
+            if (city && product.city !== city) return false;
+            return product.status === 'approuve' || product.status === 'approved' || !product.status;
+        });
+        
+        // Trier les résultats
+        if (sort === 'price_asc') {
+            filteredProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+        } else if (sort === 'price_desc') {
+            filteredProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+        } else if (sort === 'premium') {
+            filteredProducts.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+        } else {
+            // Plus récent d'abord
+            filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        if (typeof setupPagination === 'function') {
+            setupPagination('marketplace-container', filteredProducts, displayMarketplacePosts);
+        } else {
+            displayMarketplacePosts(filteredProducts);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur filtrage marketplace:', error);
+        showAlert('❌ Erreur lors du filtrage', 'error');
     }
-    
-    displayMarketplacePosts(filteredPosts);
 }
 
-function displayMarketplacePosts(posts) {
+function displayMarketplacePosts(products) {
     const container = document.getElementById('marketplace-container');
     
-    if (posts.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Aucun produit trouvé</p></div>';
+    if (!container) {
+        console.warn('❌ Container marketplace non trouvé');
+        return;
+    }
+    
+    if (!products || products.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucun produit trouvé</p>
+                <p class="text-muted small">Essayez de modifier vos critères de recherche</p>
+                <button class="btn btn-primary" onclick="clearMarketplaceFilters()">
+                    <i class="fas fa-times me-2"></i>Effacer les filtres
+                </button>
+            </div>
+        `;
         return;
     }
     
     let html = '';
-    posts.forEach(post => {
+    products.forEach((product, index) => {
+        const isFavorite = isInFavorites(product.id, 'marketplace');
+        const favoriteBtnClass = isFavorite ? 'text-danger' : 'text-muted';
+        const favoriteIcon = isFavorite ? 'fas' : 'far';
+        
+        // CORRECTION : Afficher les contacts au lieu du bouton "Acheter"
         html += `
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100">
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 product-card">
                 <div class="position-relative">
-                    <img src="https://via.placeholder.com/300x200?text=${encodeURIComponent(post.title)}" 
-                         class="card-img-top" alt="${post.title}" style="height: 200px; object-fit: cover;">
-                    <button class="favorite-btn" onclick="toggleFavorite(${post.id}, 'marketplace')">
-                        <i class="fas fa-heart"></i>
+                    ${product.photos && product.photos.length > 0 ? `
+                    <img src="${product.photos[0]}" class="card-img-top" alt="${product.title}" style="height: 200px; object-fit: cover;">
+                    ` : `
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-box fa-3x text-muted"></i>
+                    </div>
+                    `}
+                    <button class="btn btn-sm btn-light favorite-btn ${favoriteBtnClass}" 
+                            onclick="toggleFavorite('${product.id}', 'marketplace')"
+                            title="${isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                        <i class="${favoriteIcon} fa-heart"></i>
                     </button>
-                    ${post.isPremium ? '<span class="premium-badge position-absolute top-0 end-0 m-2">⭐ PREMIUM</span>' : ''}
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">${post.title}</h5>
-                    <p class="card-text text-muted">${post.description.substring(0, 100)}...</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="h5 text-primary mb-0">${post.price} MAD</span>
-                        <small class="text-muted">${post.unit}</small>
+                    ${product.isPremium ? `
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-warning">⭐ Premium</span>
                     </div>
-                    <div class="mt-2">
-                        <i class="fas fa-map-marker-alt text-muted me-1"></i>
-                        <small class="text-muted">${post.city}</small>
-                    </div>
+                    ` : ''}
                 </div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">${product.title || 'Produit sans titre'}</h5>
+                    <p class="card-text text-muted flex-grow-1">${product.description ? truncateText(product.description, 100) : 'Aucune description disponible'}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-primary">${getCategoryLabel(product.category)}</span>
+                        ${product.city ? `<span class="badge bg-secondary ms-1">${product.city}</span>` : ''}
+                        ${product.unit ? `<small class="text-muted ms-1">/ ${getUnitLabel(product.unit)}</small>` : ''}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <h4 class="text-primary mb-0">${formatPrice(product.price || 0)}</h4>
+                        <small class="text-muted">${formatDate(product.createdAt)}</small>
+                    </div>
+                    
+                    <!-- BOUTONS ADMIN -->
+                    ${appState.currentUser && appState.isAdmin ? `
+                    <div class="admin-actions mt-2">
+                        <div class="btn-group btn-group-sm w-100">
+                            <button class="btn btn-outline-warning btn-sm" onclick="toggleAnnounceStatus('${product.id}', 'marketplace', '${product.status === 'en_pause' ? 'approuve' : 'en_pause'}')" 
+                                    title="${product.status === 'en_pause' ? 'Activer' : 'Mettre en pause'}">
+                                <i class="fas fa-${product.status === 'en_pause' ? 'play' : 'pause'}"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="togglePremium('${product.id}', 'marketplace', ${!product.isPremium})" 
+                                    title="${product.isPremium ? 'Retirer premium' : 'Mettre en avant'}">
+                                <i class="fas fa-${product.isPremium ? 'star' : 'crown'}"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce('${product.id}', 'marketplace')" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <!-- CORRECTION : REMPLACER "ACHETER" PAR LES CONTACTS -->
                 <div class="card-footer bg-transparent">
-                    <button class="btn btn-primary btn-sm w-100" onclick="contactSeller(${post.id}, 'marketplace')">
-                        <i class="fas fa-envelope me-1"></i>Contacter
-                    </button>
+                    <div class="contact-info">
+                        <h6 class="mb-2">📞 Contacter le vendeur :</h6>
+                        ${product.phone ? `
+                        <div class="contact-phone">
+                            <i class="fas fa-phone text-success"></i>
+                            <strong>Téléphone :</strong>
+                            <a href="tel:${product.phone}" class="ms-1">${product.phone}</a>
+                        </div>
+                        ` : ''}
+                        ${product.userEmail ? `
+                        <div class="contact-email mt-1">
+                            <i class="fas fa-envelope text-primary"></i>
+                            <strong>Email :</strong>
+                            <a href="mailto:${product.userEmail}" class="ms-1">${product.userEmail}</a>
+                        </div>
+                        ` : ''}
+                        ${product.userName ? `
+                        <div class="contact-seller mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> Vendeur : ${product.userName}
+                            </small>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         </div>`;
     });
     
     container.innerHTML = html;
+    console.log(`✅ ${products.length} produits affichés avec contacts directs`);
 }
 
+// ========== FONCTIONS UTILITAIRES ==========
+function getCategoryLabel(category) {
+    const categories = {
+        'ciment': 'Ciment',
+        'acier': 'Acier',
+        'revetement': 'Revêtement',
+        'bois': 'Bois',
+        'isolation': 'Isolation',
+        'plomberie': 'Plomberie',
+        'electricite': 'Électricité',
+        'outillage': 'Outillage',
+        'quincaillerie': 'Quincaillerie',
+        'autres': 'Autres'
+    };
+    return categories[category] || category;
+}
+
+function getUnitLabel(unit) {
+    const units = {
+        'sac': 'sac',
+        'm2': 'm²',
+        'm3': 'm³',
+        'unite': 'unité',
+        'lot': 'lot',
+        'kg': 'kg',
+        'tonne': 'tonne'
+    };
+    return units[unit] || unit;
+}
+
+function formatPrice(price) {
+    return new Intl.NumberFormat('fr-FR').format(price) + ' MAD';
+}
+
+function clearMarketplaceFilters() {
+    document.getElementById('marketplaceCategoryFilter').value = '';
+    document.getElementById('marketplaceCityFilter').value = '';
+    document.getElementById('marketplaceSort').value = 'newest';
+    filterMarketplace();
+}
+
+// ========== GESTION DES ANNONCES MARKETPLACE ==========
 async function handlePublishMarketplace(event) {
     event.preventDefault();
-    await handlePublish(event, 'marketplace_posts');
-}
-
-// ========== FONCTIONS DE PUBLICATION ==========
-function showPublishForm(type) {
-    // Masquer tous les formulaires
-    document.querySelectorAll('.publish-form').forEach(form => {
-        form.style.display = 'none';
-    });
     
-    // Afficher le formulaire sélectionné
-    document.getElementById(`${type}-form`).style.display = 'block';
-    
-    // Mettre à jour le titre
-    const titles = {
-        'marketplace': 'Nouveau produit Marketplace',
-        'immobilier': 'Nouvelle annonce Immobilier',
-        'emploi': 'Nouvelle offre d\'emploi',
-        'freelance': 'Nouveau service Freelance'
-    };
-    
-    document.getElementById('publish-title').textContent = titles[type] || 'Publier une annonce';
-    
-    // Mettre à jour l'état actif dans la sidebar
-    document.querySelectorAll('.list-group-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.querySelector(`[onclick="showPublishForm('${type}')"]`).classList.add('active');
-}
-
-function showNewAnnounceForm() {
-    showPublishForm('marketplace');
-}
-
-async function handlePublish(event, collection) {
-    if (!appState.currentUser) {
-        showAlert('🔐 Connectez-vous pour publier', 'warning');
-        return;
-    }
+    if (!checkAuthForPublish()) return;
     
     const form = event.target;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     
-    // Ajouter les informations utilisateur
-    data.userId = appState.currentUser.id;
-    data.userName = `${appState.currentUser.prenom} ${appState.currentUser.nom}`;
-    data.status = ANNOUNCE_STATUS.PENDING;
-    data.isPremium = appState.currentUser.hasPremium || false;
+    console.log('📝 Données du formulaire:', data);
+    
+    // Validation
+    if (!data.title || !data.category || !data.price || !data.description || !data.phone) {
+        showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+    
+    // Validation du prix
+    const price = parseFloat(data.price);
+    if (isNaN(price) || price <= 0) {
+        showAlert('❌ Veuillez saisir un prix valide', 'error');
+        return;
+    }
     
     showLoading(true);
     
     try {
-        await btpDB.post(collection, data);
-        showAlert('✅ Annonce publiée avec succès ! Elle sera visible après modération.', 'success');
+        const productData = {
+            title: data.title.trim(),
+            category: data.category,
+            price: price,
+            unit: data.unit || 'unite',
+            city: data.city ? data.city.trim() : '',
+            description: data.description.trim(),
+            phone: data.phone.trim(),
+            userId: appState.currentUser.id,
+            userName: `${appState.currentUser.prenom} ${appState.currentUser.nom}`,
+            userEmail: appState.currentUser.email,
+            status: 'en_attente',
+            isPremium: false,
+            photos: [],
+            viewCount: 0,
+            contactCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        console.log('💾 Données à sauvegarder:', productData);
+        
+        const result = await btpDB.post('marketplace_posts', productData);
+        
+        console.log('✅ Produit sauvegardé:', result);
+        
+        showAlert('✅ Votre produit a été publié avec succès ! Il sera visible après modération.', 'success');
+        
+        // Réinitialiser le formulaire
         form.reset();
         
-        // Revenir à la section appropriée
-        switch(collection) {
-            case 'marketplace_posts':
-                goToSection('marketplace');
-                break;
-            case 'realestate_posts':
-                goToSection('realestate');
-                break;
-            case 'job_posts':
-                goToSection('jobs');
-                break;
-            case 'freelancers':
-                goToSection('freelancers');
-                break;
-        }
+        // Rediriger vers la section marketplace
+        setTimeout(() => {
+            goToSection('marketplace');
+        }, 2000);
+        
     } catch (error) {
-        console.error('Erreur publication:', error);
-        showAlert('❌ Erreur lors de la publication', 'error');
+        console.error('❌ Erreur publication marketplace:', error);
+        showAlert('❌ Erreur lors de la publication: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
 }
 
-function handlePhotoUpload(input, type) {
-    const files = input.files;
-    const previewId = `${type}PhotoPreview`;
-    const preview = document.getElementById(previewId);
-    
-    preview.innerHTML = '';
-    
-    for (let i = 0; i < Math.min(files.length, 5); i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const previewItem = document.createElement('div');
-            previewItem.className = 'photo-preview-item';
-            
-            previewItem.innerHTML = `
-                <img src="${e.target.result}" alt="Preview">
-                <button type="button" class="photo-remove" onclick="removePhoto(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            preview.appendChild(previewItem);
-        };
-        
-        reader.readAsDataURL(file);
-    }
+function handleCategoryChange(select) {
+    console.log('Catégorie sélectionnée:', select.value);
 }
 
-function removePhoto(button) {
-    button.parentElement.remove();
+function handlePhotoUpload(input, type) {
+    console.log('Upload photo pour:', type);
+    showAlert('📸 Fonction d\'upload photo en développement', 'info');
 }
+
+// CORRECTION : Fonction supprimée car remplacée par l'affichage direct des contacts
+// function contactSellerMarketplace(productId) {
+//     // Cette fonction n'est plus nécessaire car les contacts sont affichés directement
+// }
+
+function viewProductDetails(productId) {
+    showAlert('🔍 Fonction détails produit en développement', 'info');
+}
+
+// ========== EXPORT DES FONCTIONS CORRIGÉES ==========
+window.loadMarketplace = loadMarketplace;
+window.loadMarketplaceAnnounces = loadMarketplaceAnnounces;
+window.filterMarketplace = filterMarketplace;
+window.handlePublishMarketplace = handlePublishMarketplace;
+window.handleCategoryChange = handleCategoryChange;
+window.handlePhotoUpload = handlePhotoUpload;
+window.viewProductDetails = viewProductDetails;
+window.clearMarketplaceFilters = clearMarketplaceFilters;
+
+console.log('✅ marketplace.js CORRIGÉ - Contacts directs affichés au lieu de "Acheter"');

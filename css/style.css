@@ -1,4 +1,4 @@
-/* Votre CSS complet reste inchangé */
+/* ========== VARIABLES ET STYLES DE BASE ========== */
 :root {
     --primary-color: #0a5cb8;
     --secondary-color: #ff7710;
@@ -18,29 +18,44 @@
     --text-color: #ffffff;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--light-color);
     color: var(--text-color);
     padding-top: 80px;
     transition: all 0.3s ease;
+    margin: 0;
+    min-height: 100vh;
 }
 
+/* ========== NAVIGATION ========== */
 .navbar {
     background-color: var(--light-color) !important;
     box-shadow: 0 2px 15px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    padding: 1rem 0;
 }
 
 .navbar-brand {
     font-weight: 700;
     color: var(--primary-color) !important;
+    text-decoration: none;
 }
 
 .nav-link {
     color: var(--text-color) !important;
     transition: all 0.3s ease;
     cursor: pointer;
+    text-decoration: none;
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
 }
 
 .nav-link.active {
@@ -49,6 +64,7 @@ body {
     border-bottom: 2px solid var(--primary-color);
 }
 
+/* ========== HERO BANNER ========== */
 .hero-banner {
     background: 
         linear-gradient(135deg, var(--primary-color), var(--secondary-color)),
@@ -62,20 +78,31 @@ body {
     position: relative;
 }
 
+/* ========== SECTIONS ET CONTENU ========== */
 .section-content {
     display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .section-content.active {
     display: block;
+    opacity: 1;
     animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
+/* ========== ALERTES ET MESSAGES ========== */
 .message-alert {
     position: fixed;
     top: 100px;
@@ -83,74 +110,233 @@ body {
     z-index: 1060;
     display: none;
     min-width: 300px;
+    animation: slideInRight 0.3s ease;
 }
 
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+/* ========== CARTES ET COMPOSANTS ========== */
 .card {
     background-color: var(--light-color);
     color: var(--text-color);
     border: 1px solid #dee2e6;
     margin-bottom: 1rem;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-.footer {
-    background-color: var(--dark-color);
-    color: white;
-    padding: 3rem 0 1.5rem;
-    margin-top: 4rem;
+.job-card, .freelancer-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e9ecef;
 }
 
-.footer a {
-    color: #ccc;
-    text-decoration: none;
-    transition: color 0.3s ease;
-    cursor: pointer;
+.job-card:hover, .freelancer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.footer a:hover {
-    color: white;
+.service-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
 }
 
-[data-theme="dark"] .navbar {
-    background-color: var(--dark-color) !important;
-    border-bottom: 1px solid #444;
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-[data-theme="dark"] .card {
-    background-color: var(--dark-color);
-    border-color: #444;
+.premium-card {
+    border: 2px solid var(--primary-color);
+    transform: scale(1.05);
 }
 
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: none;
+/* ========== SYSTÈME DE NOTATION ========== */
+
+/* Étoiles de notation */
+.rating-stars, .category-rating {
+    display: flex;
+    gap: 5px;
     justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    color: white;
-    font-size: 1.2rem;
 }
 
+.rating-star, .category-star {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #e4e5e9; /* Couleur par défaut */
+}
+
+.rating-star:hover, .category-star:hover {
+    transform: scale(1.2);
+}
+
+.rating-star.text-warning, .category-star.text-warning {
+    color: #ffc107 !important;
+}
+
+.rating-star.text-muted, .category-star.text-muted {
+    color: #e4e5e9 !important;
+}
+
+.category-rating {
+    justify-content: flex-start;
+    gap: 3px;
+}
+
+.category-star {
+    font-size: 0.9em;
+}
+
+/* Barres de distribution des notes */
+.rating-bar .progress {
+    background-color: #f0f0f0;
+}
+
+.rating-bar .progress-bar {
+    background-color: #ffc107;
+}
+
+/* Résumé des notes */
+.rating-summary {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: var(--light-color);
+}
+
+.rating-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.rating-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Étoiles petites pour les catégories */
+.small {
+    font-size: 0.8em;
+}
+
+/* Badges pour les types */
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+    font-size: 0.7em;
+}
+
+/* Sections de candidatures */
+.candidatures-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #28a745;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* ========== BOUTONS ET INTERACTIONS ========== */
+.btn {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.favorite-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.favorite-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.favorite-btn.active {
+    color: #ff4757;
+}
+
+/* ========== CORRECTIONS URGENTES AUTH ========== */
+
+/* FORCER l'affichage des éléments de navigation */
+#auth-buttons {
+    display: flex !important;
+    gap: 0.5rem;
+}
+
+#user-menu {
+    display: flex !important;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Badge admin toujours visible */
 .admin-badge {
     background: linear-gradient(45deg, #ff6b6b, #ee5a24);
     color: white;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 12px;
     font-size: 0.7rem;
     font-weight: bold;
     margin-left: 8px;
+    display: inline-block !important;
 }
 
+/* Éléments admin toujours visibles */
+#admin-nav-item {
+    display: list-item !important;
+}
+
+#admin-menu-item {
+    display: list-item !important;
+}
+
+/* ========== RECHERCHE ET FILTRES ========== */
 .global-search-container {
     position: relative;
     width: 700px;
@@ -179,39 +365,57 @@ body {
     border: 2px solid var(--primary-color);
     min-width: 120px;
     cursor: pointer;
+    color: white;
 }
 
-.btn {
-    cursor: pointer;
-}
-
-.favorite-btn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(255,255,255,0.9);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+/* ========== STYLES POUR L'AUTOCOMPLÉTION DES VILLES ========== */
+.city-autocomplete {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 2 12 12M2 14 14 2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
     transition: all 0.3s ease;
-    z-index: 10;
 }
 
-.favorite-btn:hover {
+.city-autocomplete:focus {
+    background-image: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(10, 92, 184, 0.25);
+}
+
+/* Style pour les suggestions de villes */
+.city-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     background: white;
-    transform: scale(1.1);
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.favorite-btn.active {
-    color: #ff4757;
+.city-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background-color 0.2s ease;
 }
 
-/* Messagerie améliorée */
+.city-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.city-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* ========== MESSAGERIE AMÉLIORÉE ========== */
 .messaging-container {
     position: fixed;
     bottom: 80px;
@@ -225,6 +429,33 @@ body {
     display: none;
     flex-direction: column;
     border: 1px solid #dee2e6;
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.messaging-container.closing {
+    animation: slideOutDown 0.3s ease;
+}
+
+@keyframes slideOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 }
 
 .chat-messages {
@@ -240,17 +471,35 @@ body {
     border-radius: 18px;
     max-width: 80%;
     word-wrap: break-word;
+    animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message.sent {
     background-color: var(--primary-color);
     color: white;
     margin-left: auto;
+    border-bottom-right-radius: 5px;
 }
 
 .message.received {
     background-color: #e9ecef;
     color: var(--text-color);
+    border-bottom-left-radius: 5px;
+}
+
+.message-content {
+    margin-bottom: 5px;
 }
 
 .message-time {
@@ -262,6 +511,7 @@ body {
 .chat-input {
     padding: 15px;
     border-top: 1px solid #dee2e6;
+    background: white;
 }
 
 /* Liste des contacts */
@@ -277,7 +527,8 @@ body {
     padding: 12px 15px;
     border-bottom: 1px solid #eee;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .contact-item:hover {
@@ -289,37 +540,22 @@ body {
     color: white;
 }
 
-/* Section construction */
-.construction-section {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 15px;
-    margin: 2rem 0;
+.contact-unread-badge {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.construction-icon {
-    font-size: 4rem;
-    color: var(--secondary-color);
-    margin-bottom: 1.5rem;
-}
-
-/* Pub Adsense */
-.adsense-container {
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 10px;
-    padding: 2rem;
-    text-align: center;
-    margin: 2rem 0;
-}
-
-.adsense-placeholder {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-
-/* Admin */
+/* ========== ADMIN ET GESTION ========== */
 .admin-stats-card {
     transition: transform 0.3s ease;
 }
@@ -333,62 +569,53 @@ body {
     overflow-y: auto;
 }
 
-/* Newsletter */
-.newsletter-template {
-    border: 1px solid #dee2e6;
+.admin-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+}
+
+.card:hover .admin-actions {
+    display: block;
+}
+
+.admin-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    margin-left: 5px;
+}
+
+/* ========== FORMULAIRES ET INPUTS ========== */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(10, 92, 184, 0.25);
+}
+
+/* Zones de téléchargement CV */
+.cv-upload-area {
+    border: 2px dashed #dee2e6;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 40px 20px;
+    text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
+    background-color: #f8f9fa;
 }
 
-.newsletter-template:hover {
-    border-color: var(--primary-color);
-    background: #f8f9fa;
+.cv-upload-area:hover {
+    border-color: #ffc107;
+    background-color: #fff3cd;
 }
 
-.newsletter-template.active {
-    border-color: var(--primary-color);
-    background: #e3f2fd;
-}
-
-/* Forum */
-.forum-category {
-    border-left: 4px solid var(--primary-color);
-    margin-bottom: 1rem;
-}
-
-.forum-topic {
-    border-bottom: 1px solid #eee;
-    padding: 1rem 0;
-    transition: background 0.2s ease;
-}
-
-.forum-topic:hover {
-    background: #f8f9fa;
-}
-
-.topic-badge {
-    font-size: 0.7rem;
-    margin-left: 8px;
-}
-
-.premium-card {
-    border: 2px solid var(--primary-color);
-    transform: scale(1.05);
-}
-
-/* Pagination */
-.pagination-container {
+.cv-file-info {
     display: flex;
+    align-items: center;
     justify-content: center;
-    margin-top: 2rem;
-}
-
-.page-item.active .page-link {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
 }
 
 /* Upload photos */
@@ -443,18 +670,7 @@ body {
     cursor: pointer;
 }
 
-/* Premium badge */
-.premium-badge {
-    background: linear-gradient(45deg, #ffd700, #ffed4e);
-    color: #000;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-left: 8px;
-}
-
-/* Section Mon Compte */
+/* ========== COMPTE UTILISATEUR ========== */
 .account-sidebar {
     background: var(--light-color);
     border-radius: 10px;
@@ -467,6 +683,7 @@ body {
     border-bottom: 1px solid #dee2e6;
     color: var(--text-color);
     border-radius: 0;
+    text-decoration: none;
 }
 
 .account-sidebar .nav-link.active {
@@ -486,6 +703,16 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+.account-section {
+    display: none;
+}
+
+.account-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* ========== BADGES ET STATUTS ========== */
 .announce-status-badge {
     font-size: 0.7rem;
     padding: 4px 8px;
@@ -512,52 +739,157 @@ body {
     color: #383d41;
 }
 
-.account-section {
+.badge {
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.premium-badge {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+/* ========== LOADING ET ANIMATIONS ========== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
     display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+    font-size: 1.2rem;
 }
 
-.account-section.active {
-    display: block;
+.loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
-/* Logo en construction */
+/* Animation pour les nouvelles notifications */
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ========== SECTIONS SPÉCIALES ========== */
+.construction-section {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    margin: 2rem 0;
+}
+
+.construction-icon {
+    font-size: 4rem;
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+}
+
 .construction-logo {
     max-width: 200px;
     margin: 0 auto 2rem;
     display: block;
 }
 
-/* Optimisation de la barre de recherche */
-.search-container-mobile {
-    display: none;
-    margin: 10px 0;
+/* Pub Adsense */
+.adsense-container {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    margin: 2rem 0;
 }
 
-/* Boutons admin */
-.admin-actions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: none;
+.adsense-placeholder {
+    color: #6c757d;
+    font-size: 0.9rem;
 }
 
-.card:hover .admin-actions {
-    display: block;
+/* Newsletter */
+.newsletter-template {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.admin-btn {
-    padding: 4px 8px;
+.newsletter-template:hover {
+    border-color: var(--primary-color);
+    background: #f8f9fa;
+}
+
+.newsletter-template.active {
+    border-color: var(--primary-color);
+    background: #e3f2fd;
+}
+
+/* Forum */
+.forum-category {
+    border-left: 4px solid var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.forum-topic {
+    border-bottom: 1px solid #eee;
+    padding: 1rem 0;
+    transition: background 0.2s ease;
+}
+
+.forum-topic:hover {
+    background: #f8f9fa;
+}
+
+.topic-badge {
     font-size: 0.7rem;
-    margin-left: 5px;
+    margin-left: 8px;
 }
 
-/* Classes utilitaires Maroc */
-.text-morocco-red { color: var(--morocco-red); }
-.text-morocco-green { color: var(--morocco-green); }
-.bg-morocco-green { background-color: var(--morocco-green); }
-.border-morocco-gold { border-color: var(--morocco-gold); }
+/* ========== PAGINATION ========== */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
 
-/* Backup styles */
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* ========== BACKUP ET IMPORT/EXPORT ========== */
 .backup-history-item {
     border-left: 4px solid var(--primary-color);
     margin-bottom: 1rem;
@@ -571,7 +903,6 @@ body {
     color: #6c757d;
 }
 
-/* Import/Export styles */
 .json-actions {
     border-left: 4px solid var(--secondary-color);
     padding-left: 15px;
@@ -594,3 +925,342 @@ body {
 .json-checkbox {
     margin-right: 8px;
 }
+
+/* ========== FOOTER ========== */
+.footer {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 3rem 0 1.5rem;
+    margin-top: 4rem;
+}
+
+.footer a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.footer a:hover {
+    color: white;
+}
+
+/* ========== MODALES ========== */
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* ========== TABLEAUX ========== */
+.table th {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* ========== ALERTES PERSONNALISÉES ========== */
+.alert {
+    border: none;
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+}
+
+.alert-success {
+    background-color: #d1edff;
+    color: #004085;
+    border-left-color: var(--primary-color);
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left-color: #ffc107;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left-color: #dc3545;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-left-color: #17a2b8;
+}
+
+/* ========== MODE SOMBRE ========== */
+[data-theme="dark"] .navbar {
+    background-color: var(--dark-color) !important;
+    border-bottom: 1px solid #444;
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--dark-color);
+    border-color: #444;
+}
+
+[data-theme="dark"] .city-autocomplete {
+    background-color: var(--dark-color);
+    border-color: #444;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .city-suggestions {
+    background: var(--dark-color);
+    border-color: #444;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .city-suggestion-item:hover {
+    background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .messaging-container {
+    background: var(--dark-color);
+    border-color: #444;
+}
+
+[data-theme="dark"] .chat-messages {
+    background: #1a1a1a;
+}
+
+[data-theme="dark"] .message.received {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .chat-input {
+    background: var(--dark-color);
+    border-color: #444;
+}
+
+[data-theme="dark"] .contacts-list {
+    background: var(--dark-color);
+    border-color: #444;
+}
+
+[data-theme="dark"] .contact-item:hover {
+    background: #2a2a2a;
+}
+
+[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .rating-summary {
+    background: var(--dark-color);
+    border-color: #444;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 991px) {
+    .navbar-collapse .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding: 1rem 0;
+    }
+    
+    #auth-buttons,
+    #user-menu {
+        width: 100%;
+        justify-content: center;
+        display: flex !important;
+    }
+    
+    #auth-buttons .btn,
+    #user-menu .btn {
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+    
+    .admin-badge {
+        margin-left: 5px;
+        font-size: 0.6rem;
+    }
+    
+    .global-search-container {
+        display: none;
+    }
+
+    .search-container-mobile {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+    }
+    
+    .rating-stars {
+        gap: 3px;
+    }
+    
+    .rating-star {
+        font-size: 1.5em;
+    }
+    
+    .category-ratings .col-6 {
+        margin-bottom: 5px;
+    }
+    
+    .rating-summary .row {
+        text-align: center;
+    }
+    
+    .rating-summary .display-4 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Sur très petits écrans */
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    #auth-buttons .btn {
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+    
+    .admin-badge {
+        padding: 2px 6px;
+        font-size: 0.5rem;
+    }
+    
+    .messaging-container {
+        width: 95%;
+        right: 2.5%;
+        height: 400px;
+    }
+}
+
+/* Correction pour éviter le débordement */
+.navbar .container {
+    position: relative;
+    overflow: visible;
+}
+
+.navbar-collapse {
+    overflow: visible;
+}
+
+/* ========== STYLES POUR LA CATÉGORIE "AUTRES" ========== */
+.other-category-container {
+    margin-top: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.other-category-input {
+    border-left: 3px solid var(--secondary-color);
+    padding-left: 10px;
+}
+
+/* ========== STYLES POUR LES IMAGES ========== */
+.card-img-top {
+    background-color: #f8f9fa;
+    background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                      linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                      linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                      linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    min-height: 200px;
+    object-fit: cover;
+}
+
+/* ========== STYLES POUR LES ICÔNES ========== */
+.fas, .fab {
+    font-size: inherit;
+}
+
+/* ========== AMÉLIORATIONS ACCESSIBILITÉ ========== */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* ========== STYLES IMPRESSION ========== */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .messaging-container,
+    .global-search-container,
+    .search-container-mobile {
+        display: none !important;
+    }
+    
+    body {
+        padding-top: 0;
+    }
+    
+    .section-content {
+        display: block !important;
+    }
+    
+    .card {
+        border: 1px solid #000;
+        break-inside: avoid;
+    }
+    
+    a {
+        color: #000 !important;
+        text-decoration: none !important;
+    }
+}
+
+/* ========== MODE CONTRASTE ÉLEVÉ ========== */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0000ff;
+        --secondary-color: #ff0000;
+        --text-color: #000000;
+        --light-color: #ffffff;
+        --dark-color: #000000;
+    }
+    
+    .card {
+        border: 2px solid #000;
+    }
+    
+    .btn {
+        border: 2px solid;
+    }
+}
+
+/* ========== CLASSES UTILITAIRES MAROC ========== */
+.text-morocco-red { color: var(--morocco-red); }
+.text-morocco-green { color: var(--morocco-green); }
+.bg-morocco-green { background-color: var(--morocco-green); }
+.border-morocco-gold { border-color: var(--morocco-gold); }

@@ -1,0 +1,139 @@
+/* admin.css - Styles supplémentaires pour l'administration */
+.admin-stats-card {
+    transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.admin-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.photo-upload-container {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f8f9fa;
+}
+
+.photo-upload-container:hover {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.photo-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.photo-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.photo-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-preview-item .remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255,255,255,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.premium-badge {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.admin-badge {
+    background: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-left: 5px;
+}
+
+.account-sidebar .nav-link {
+    border-radius: 8px;
+    margin-bottom: 5px;
+    transition: all 0.3s;
+}
+
+.account-sidebar .nav-link:hover,
+.account-sidebar .nav-link.active {
+    background: #0d6efd;
+    color: white;
+}
+
+.construction-section {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.construction-logo {
+    max-width: 200px;
+    margin-bottom: 2rem;
+}
+
+.premium-card {
+    border: 2px solid #0d6efd !important;
+    transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-table-container {
+        font-size: 0.875rem;
+    }
+    
+    .photo-upload-container {
+        padding: 1rem;
+    }
+    
+    .premium-card {
+        transform: none;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation pour les chargements */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading-pulse {
+    animation: pulse 2s infinite;
+}
