@@ -1,4 +1,4 @@
-// ========== CHARGEMENT DES BIENS IMMOBILIERS CORRIGÉ ==========
+// ========== CHARGEMENT DES BIENS IMMOBILIERS OPTIMISÉ ==========
 async function loadRealEstateAnnounces() {
     console.log('🏠 Chargement des biens immobiliers...');
     
@@ -29,7 +29,7 @@ async function loadRealEstateAnnounces() {
                     <i class="fas fa-home fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Aucun bien immobilier disponible</h5>
                     <p class="text-muted">Soyez le premier à publier un bien !</p>
-                    <button class="btn btn-success" onclick="goToSection('publish')">
+                    <button class="btn btn-success" onclick="showPublishRealEstate()">
                         <i class="fas fa-plus me-2"></i>Publier le premier bien
                     </button>
                 </div>
@@ -49,7 +49,7 @@ async function loadRealEstateAnnounces() {
                     <i class="fas fa-home fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Aucun bien immobilier disponible</h5>
                     <p class="text-muted">Tous les biens sont en attente de modération</p>
-                    <button class="btn btn-success" onclick="goToSection('publish')">
+                    <button class="btn btn-success" onclick="showPublishRealEstate()">
                         <i class="fas fa-plus me-2"></i>Publier un bien
                     </button>
                 </div>
@@ -85,6 +85,134 @@ async function loadRealEstateAnnounces() {
             `;
         }
     }
+}
+
+// ========== PUBLICATION IMMOBILIÈRE CORRIGÉE ==========
+async function handlePublishRealEstate(event) {
+    event.preventDefault();
+    
+    console.log('📝 Début publication immobilier...');
+    
+    // ✅ VÉRIFICATION UNIFIÉE ET SIMPLIFIÉE
+    if (!checkAuthForPublish()) {
+        console.log('❌ Échec vérification auth pour publication');
+        return;
+    }
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    console.log('📊 Données du formulaire immobilier:', data);
+    console.log('👤 Utilisateur actuel:', authState.currentUser);
+    
+    // Validation améliorée
+    const requiredFields = ['title', 'type', 'price', 'address', 'description', 'phone'];
+    const missingFields = requiredFields.filter(field => !data[field]);
+    
+    if (missingFields.length > 0) {
+        showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+    
+    // Validation du prix
+    const price = parseFloat(data.price);
+    if (isNaN(price) || price <= 0) {
+        showAlert('❌ Veuillez saisir un prix valide', 'error');
+        return;
+    }
+    
+    // Validation de la surface si fournie
+    if (data.surface && (isNaN(data.surface) || data.surface < 0)) {
+        showAlert('❌ Veuillez saisir une surface valide', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        // Récupérer l'utilisateur actuel de manière sécurisée
+        const currentUser = authState.currentUser;
+        if (!currentUser) {
+            throw new Error('Utilisateur non authentifié');
+        }
+        
+        const propertyData = {
+            title: data.title.trim(),
+            type: data.type,
+            price: price,
+            surface: data.surface ? parseFloat(data.surface) : null,
+            rooms: data.rooms ? parseInt(data.rooms) : null,
+            address: data.address.trim(),
+            city: data.city ? data.city.trim() : '',
+            description: data.description.trim(),
+            phone: data.phone.trim(),
+            userId: currentUser.id,
+            userName: `${currentUser.prenom} ${currentUser.nom}`,
+            userEmail: currentUser.email,
+            status: 'en_attente',
+            isPremium: false,
+            photos: [],
+            viewCount: 0,
+            contactCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        console.log('💾 Données immobilier à sauvegarder:', propertyData);
+        
+        const result = await btpDB.post('realestate_posts', propertyData);
+        
+        console.log('✅ Bien immobilier sauvegardé:', result);
+        
+        showAlert('✅ Votre bien immobilier a été publié avec succès ! Il sera visible après modération.', 'success');
+        
+        // Réinitialiser le formulaire
+        form.reset();
+        
+        // Rediriger vers la section immobilier
+        setTimeout(() => {
+            goToSection('realestate');
+            // Recharger les annonces
+            setTimeout(() => loadRealEstateAnnounces(), 500);
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Erreur publication immobilier:', error);
+        showAlert('❌ Erreur lors de la publication: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// NOUVELLE FONCTION POUR AFFICHER LA PAGE DE PUBLICATION
+function showPublishRealEstate() {
+    console.log('🎯 Navigation vers publication immobilier...');
+    
+    // Vérifier l'authentification d'abord
+    if (!checkAuthForPublish()) {
+        console.log('❌ Utilisateur non authentifié - affichage modal connexion');
+        return;
+    }
+    
+    // Si authentifié, aller directement à la publication
+    goToSection('publish');
+    
+    // S'assurer que le formulaire immobilier est visible
+    setTimeout(() => {
+        const realEstateForm = document.getElementById('realEstateForm');
+        if (realEstateForm) {
+            realEstateForm.style.display = 'block';
+        }
+        
+        // Cacher les autres formulaires de publication
+        const otherForms = document.querySelectorAll('.publish-form');
+        otherForms.forEach(form => {
+            if (form.id !== 'realEstateForm') {
+                form.style.display = 'none';
+            }
+        });
+    }, 100);
 }
 
 function initializeRealEstateFilters(properties) {
@@ -315,8 +443,8 @@ function displayRealEstatePosts(properties) {
                         <small class="text-muted">${formatDate(property.createdAt)}</small>
                     </div>
                     
-                    <!-- BOUTONS ADMIN CORRIGÉS -->
-                    ${appState.currentUser && appState.isAdmin ? `
+                    <!-- BOUTONS ADMIN -->
+                    ${authState.isAdmin ? `
                     <div class="admin-actions mt-2">
                         <div class="btn-group btn-group-sm w-100">
                             <button class="btn btn-outline-warning btn-sm" onclick="toggleAnnounceStatus('${property.id}', 'realestate', '${property.status === 'en_pause' ? 'approuve' : 'en_pause'}')" 
@@ -359,88 +487,7 @@ function displayRealEstatePosts(properties) {
     console.log(`✅ ${properties.length} biens immobiliers affichés`);
 }
 
-// ========== GESTION DES ANNONCES IMMOBILIÈRES CORRIGÉE ==========
-async function handlePublishRealEstate(event) {
-    event.preventDefault();
-    
-    // ✅ NOUVELLE VÉRIFICATION UNIFIÉE
-    if (!checkAuthForPublish()) return;
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
-    console.log('📝 Données du formulaire immobilier:', data);
-    
-    // Validation améliorée
-    if (!data.title || !data.type || !data.price || !data.address || !data.description || !data.phone) {
-        showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
-        return;
-    }
-    
-    // Validation du prix
-    const price = parseFloat(data.price);
-    if (isNaN(price) || price <= 0) {
-        showAlert('❌ Veuillez saisir un prix valide', 'error');
-        return;
-    }
-    
-    // Validation de la surface si fournie
-    if (data.surface && (isNaN(data.surface) || data.surface < 0)) {
-        showAlert('❌ Veuillez saisir une surface valide', 'error');
-        return;
-    }
-    
-    showLoading(true);
-    
-    try {
-        const propertyData = {
-            title: data.title.trim(),
-            type: data.type,
-            price: price,
-            surface: data.surface ? parseFloat(data.surface) : null,
-            rooms: data.rooms ? parseInt(data.rooms) : null,
-            address: data.address.trim(),
-            city: data.city ? data.city.trim() : '',
-            description: data.description.trim(),
-            phone: data.phone.trim(),
-            userId: appState.currentUser.id,
-            userName: `${appState.currentUser.prenom} ${appState.currentUser.nom}`,
-            userEmail: appState.currentUser.email,
-            status: 'en_attente',
-            isPremium: false,
-            photos: [],
-            viewCount: 0,
-            contactCount: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        
-        console.log('💾 Données immobilier à sauvegarder:', propertyData);
-        
-        const result = await btpDB.post('realestate_posts', propertyData);
-        
-        console.log('✅ Bien immobilier sauvegardé:', result);
-        
-        showAlert('✅ Votre bien immobilier a été publié avec succès ! Il sera visible après modération.', 'success');
-        
-        // Réinitialiser le formulaire
-        form.reset();
-        
-        // Rediriger vers la section immobilier
-        setTimeout(() => {
-            goToSection('realestate');
-        }, 2000);
-        
-    } catch (error) {
-        console.error('❌ Erreur publication immobilier:', error);
-        showAlert('❌ Erreur lors de la publication: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-// ========== FONCTIONS UTILITAIRES CORRIGÉES ==========
+// ========== FONCTIONS UTILITAIRES ==========
 function getPropertyTypeLabel(type) {
     const types = {
         'villa': 'Villa',
@@ -494,12 +541,13 @@ function showFilterResults(containerId, count) {
     container.appendChild(resultsCount);
 }
 
-// ========== EXPORT DES FONCTIONS CORRIGÉES ==========
+// ========== EXPORT DES FONCTIONS ==========
 window.loadRealEstateAnnounces = loadRealEstateAnnounces;
 window.filterRealEstate = filterRealEstate;
 window.handlePublishRealEstate = handlePublishRealEstate;
 window.viewPropertyDetails = viewPropertyDetails;
 window.clearRealEstateFilters = clearRealEstateFilters;
 window.getPropertyTypeLabel = getPropertyTypeLabel;
+window.showPublishRealEstate = showPublishRealEstate;
 
-console.log('✅ realestate.js CORRIGÉ - Module immobilier OPTIMISÉ avec affichage direct des coordonnées');
+console.log('✅ realestate.js CORRIGÉ - Double authentification RÉSOLUE');

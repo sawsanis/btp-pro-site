@@ -1,9 +1,198 @@
-// ========== FONCTIONS UTILITAIRES ==========
-const appState = window.appState || {
-    currentUser: null,
-    isAdmin: false,
-    currentSection: 'home'
-};
+// ========== FONCTIONS UTILITAIRES SYNCHRONISÉES ==========
+
+// ✅ GESTION D'ÉTAT UNIFIÉE - Utiliser authState comme source de vérité
+function getAppState() {
+    if (typeof authState !== 'undefined') {
+        return authState;
+    }
+    if (typeof appState !== 'undefined') {
+        return appState;
+    }
+    return {
+        currentUser: null,
+        isAdmin: false,
+        isAuthenticated: false,
+        currentSection: 'home'
+    };
+}
+
+// ✅ FONCTIONS DE RÉINITIALISATION DES FILTRES - VERSION CORRIGÉE
+function resetSectionFilters(sectionId) {
+    console.log('🔄 Réinitialisation des filtres pour:', sectionId);
+    
+    // Petit délai pour s'assurer que le DOM est chargé
+    setTimeout(() => {
+        switch(sectionId) {
+            case 'marketplace':
+                resetMarketplaceFilters();
+                break;
+            case 'realestate':
+                resetRealEstateFilters();
+                break;
+            case 'jobs':
+                resetJobsFilters();
+                break;
+            case 'freelancers':
+                resetFreelancersFilters();
+                break;
+            case 'professionals':
+                resetProfessionalsFilters();
+                break;
+            default:
+                console.log('🔍 Aucun filtre à réinitialiser pour:', sectionId);
+        }
+    }, 150);
+}
+
+// ✅ FONCTIONS SPÉCIFIQUES AVEC LES BONS IDs
+function resetMarketplaceFilters() {
+    console.log('🔄 Réinitialisation Marketplace...');
+    
+    const filters = {
+        'marketplaceCategoryFilter': '',
+        'marketplaceCityFilter': '', 
+        'marketplacePriceFilter': '',
+        'marketplaceSort': 'newest'
+    };
+    
+    applyFiltersReset(filters);
+    
+    // Réinitialiser aussi les champs de recherche
+    const searchInput = document.querySelector('#marketplace-section input[type="search"]');
+    if (searchInput) searchInput.value = '';
+    
+    console.log('✅ Filtres marketplace réinitialisés');
+}
+
+function resetRealEstateFilters() {
+    console.log('🔄 Réinitialisation Immobilier...');
+    
+    const filters = {
+        'realestateTypeFilter': '',
+        'realestateCityFilter': '',
+        'realestatePriceFilter': '', 
+        'realestateSort': 'newest'
+    };
+    
+    applyFiltersReset(filters);
+    
+    // Réinitialiser aussi les champs de recherche
+    const searchInput = document.querySelector('#realestate-section input[type="search"]');
+    if (searchInput) searchInput.value = '';
+    
+    console.log('✅ Filtres immobilier réinitialisés');
+}
+
+function resetJobsFilters() {
+    console.log('🔄 Réinitialisation Emplois...');
+    
+    const filters = {
+        'jobsTypeFilter': '',
+        'jobsCityFilter': '',
+        'jobsSalaryFilter': '',
+        'jobsSort': 'newest'
+    };
+    
+    applyFiltersReset(filters);
+    
+    // Réinitialiser aussi les champs de recherche
+    const searchInput = document.querySelector('#jobs-section input[type="search"]');
+    if (searchInput) searchInput.value = '';
+    
+    console.log('✅ Filtres emplois réinitialisés');
+}
+
+function resetFreelancersFilters() {
+    console.log('🔄 Réinitialisation Freelance...');
+    
+    const filters = {
+        'freelancersSpecialtyFilter': '',
+        'freelancersCityFilter': '',
+        'freelancersRateFilter': '', 
+        'freelancersSort': 'newest'
+    };
+    
+    applyFiltersReset(filters);
+    
+    // Réinitialiser aussi les champs de recherche
+    const searchInput = document.querySelector('#freelancers-section input[type="search"]');
+    if (searchInput) searchInput.value = '';
+    
+    console.log('✅ Filtres freelancers réinitialisés');
+}
+
+function resetProfessionalsFilters() {
+    console.log('🔄 Réinitialisation Professionnels...');
+    
+    const filters = {
+        'professionalsSpecialtyFilter': '',
+        'professionalsCityFilter': '',
+        'professionalsRatingFilter': '',
+        'professionalsSort': 'newest'
+    };
+    
+    applyFiltersReset(filters);
+    
+    // Réinitialiser aussi les champs de recherche
+    const searchInput = document.querySelector('#professionals-section input[type="search"]');
+    if (searchInput) searchInput.value = '';
+    
+    console.log('✅ Filtres professionnels réinitialisés');
+}
+
+// ✅ FONCTION GÉNÉRIQUE POUR APPLIQUER LA RÉINITIALISATION
+function applyFiltersReset(filtersConfig) {
+    let resetCount = 0;
+    
+    Object.entries(filtersConfig).forEach(([filterId, defaultValue]) => {
+        const element = document.getElementById(filterId);
+        if (element) {
+            const currentValue = element.value;
+            element.value = defaultValue;
+            
+            // Vérifier si la valeur a changé
+            if (currentValue !== defaultValue) {
+                resetCount++;
+                
+                // Déclencher l'événement change pour mettre à jour l'affichage
+                const event = new Event('change', { bubbles: true });
+                element.dispatchEvent(event);
+            }
+        } else {
+            console.warn('❌ Filtre non trouvé:', filterId);
+        }
+    });
+    
+    console.log(`✅ ${resetCount} filtre(s) réinitialisé(s)`);
+}
+
+// ✅ FONCTION POUR DÉBOGUER LES FILTRES
+function debugAllFilters() {
+    console.log('🐛 Debug complet des filtres:');
+    
+    const sections = [
+        { id: 'marketplace', name: 'Marketplace' },
+        { id: 'realestate', name: 'Immobilier' },
+        { id: 'jobs', name: 'Emplois' },
+        { id: 'freelancers', name: 'Freelance' },
+        { id: 'professionals', name: 'Professionnels' }
+    ];
+    
+    sections.forEach(section => {
+        console.log(`--- ${section.name} (${section.id}) ---`);
+        const sectionElement = document.getElementById(section.id + '-section');
+        if (sectionElement) {
+            const filters = sectionElement.querySelectorAll('select, input[type="search"]');
+            console.log(`📊 ${filters.length} filtre(s) trouvé(s):`);
+            
+            filters.forEach((filter, index) => {
+                console.log(`  ${index + 1}. ${filter.id || 'sans-id'} (${filter.tagName}.${filter.className}): "${filter.value}"`);
+            });
+        } else {
+            console.log('❌ Section non trouvée');
+        }
+    });
+}
 
 // Fonction pour afficher les alertes
 function showAlert(message, type = 'info') {
@@ -63,7 +252,7 @@ function initializeTheme() {
     changeTheme(savedTheme);
 }
 
-// ========== GESTION DES FAVORIS ==========
+// ========== GESTION DES FAVORIS CORRIGÉE ==========
 function isInFavorites(itemId, itemType) {
     try {
         const favorites = JSON.parse(localStorage.getItem('btp_favorites')) || [];
@@ -75,8 +264,12 @@ function isInFavorites(itemId, itemType) {
 }
 
 function toggleFavorite(itemId, itemType) {
-    if (!appState.currentUser) {
-        showLoginModal();
+    const currentState = getAppState();
+    
+    if (!currentState.currentUser || !currentState.isAuthenticated) {
+        if (typeof showLoginModal === 'function') {
+            showLoginModal();
+        }
         showAlert('🔐 Connectez-vous pour ajouter aux favoris', 'warning');
         return;
     }
@@ -93,7 +286,7 @@ function toggleFavorite(itemId, itemType) {
                 id: itemId,
                 type: itemType,
                 addedAt: new Date().toISOString(),
-                userId: appState.currentUser.id
+                userId: currentState.currentUser.id
             });
             showAlert('❤️ Ajouté aux favoris', 'success');
         }
@@ -101,7 +294,7 @@ function toggleFavorite(itemId, itemType) {
         localStorage.setItem('btp_favorites', JSON.stringify(favorites));
         
         // Mettre à jour l'affichage si on est dans la section favoris
-        if (appState.currentSection === 'favorites') {
+        if (currentState.currentSection === 'favorites') {
             loadFavorites();
         }
         
@@ -111,8 +304,7 @@ function toggleFavorite(itemId, itemType) {
     }
 }
 
-// Fonction pour charger les favoris
-// Fonction pour charger les favoris - CORRIGÉE
+// ✅ FONCTION AMÉLIORÉE : Charger les favoris
 function loadFavorites() {
     try {
         const favorites = JSON.parse(localStorage.getItem('btp_favorites')) || [];
@@ -142,7 +334,7 @@ function loadFavorites() {
             return;
         }
         
-        // ✅ CORRECTION : Charger les détails des favoris
+        // Charger les détails des favoris
         loadFavoritesDetails(favorites);
         
     } catch (error) {
@@ -151,7 +343,7 @@ function loadFavorites() {
     }
 }
 
-// ✅ NOUVELLE FONCTION : Charger les détails des favoris
+// ✅ FONCTION AMÉLIORÉE : Charger les détails des favoris
 async function loadFavoritesDetails(favorites) {
     try {
         showLoading(true);
@@ -204,7 +396,7 @@ async function loadFavoritesDetails(favorites) {
     }
 }
 
-// ✅ NOUVELLE FONCTION : Afficher les favoris
+// ✅ FONCTION AMÉLIORÉE : Afficher les favoris
 function displayFavorites(favorites) {
     const container = document.getElementById('favorites-section');
     
@@ -522,81 +714,7 @@ function goToSearchResult(type, id) {
     }
 }
 
-// ========== FONCTIONS DE FORMATAGE ==========
-function formatPrice(price) {
-    if (!price && price !== 0) return 'Non spécifié';
-    return new Intl.NumberFormat('fr-FR').format(price) + ' MAD';
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'Date inconnue';
-    
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
-    
-    return date.toLocaleDateString('fr-FR');
-}
-
-function truncateText(text, maxLength = 100) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-// ========== FONCTIONS DE VALIDATION ==========
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function validatePhone(phone) {
-    const phoneRegex = /^(\+212|0)[5-7][0-9]{8}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
-}
-
-function validatePassword(password) {
-    return password && password.length >= 6;
-}
-
-// ========== FONCTIONS D'INITIALISATION ==========
-function initializeEventListeners() {
-    // Écouteur pour la recherche globale (Enter key)
-    const globalSearchInput = document.getElementById('globalSearch');
-    const globalSearchMobile = document.getElementById('globalSearchMobile');
-    
-    if (globalSearchInput) {
-        globalSearchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleGlobalSearch();
-            }
-        });
-    }
-    
-    if (globalSearchMobile) {
-        globalSearchMobile.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleGlobalSearch();
-            }
-        });
-    }
-    
-    // Écouteur pour les liens de navigation du compte
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-account-section]') || e.target.closest('[data-account-section]')) {
-            e.preventDefault();
-            const target = e.target.matches('[data-account-section]') ? e.target : e.target.closest('[data-account-section]');
-            const section = target.getAttribute('data-account-section');
-            navigateToAccountSection(section);
-        }
-    });
-}
-
+// ========== GESTION DU COMPTE UTILISATEUR ==========
 function navigateToAccountSection(sectionId) {
     // Masquer toutes les sections du compte
     document.querySelectorAll('.account-section').forEach(section => {
@@ -641,9 +759,10 @@ function loadAccountSectionData(sectionId) {
 }
 
 function loadProfileData() {
-    if (!appState.currentUser) return;
+    const currentState = getAppState();
+    if (!currentState.currentUser) return;
     
-    const user = appState.currentUser;
+    const user = currentState.currentUser;
     
     // Mettre à jour l'affichage du profil
     const elements = {
@@ -660,10 +779,15 @@ function loadProfileData() {
     });
     
     // Mettre à jour le formulaire d'édition
-    document.getElementById('edit-prenom').value = user.prenom || '';
-    document.getElementById('edit-nom').value = user.nom || '';
-    document.getElementById('edit-email').value = user.email || '';
-    document.getElementById('edit-phone').value = user.phone || '';
+    const editPrenom = document.getElementById('edit-prenom');
+    const editNom = document.getElementById('edit-nom');
+    const editEmail = document.getElementById('edit-email');
+    const editPhone = document.getElementById('edit-phone');
+    
+    if (editPrenom) editPrenom.value = user.prenom || '';
+    if (editNom) editNom.value = user.nom || '';
+    if (editEmail) editEmail.value = user.email || '';
+    if (editPhone) editPhone.value = user.phone || '';
     
     // Badge premium
     const premiumBadge = document.getElementById('premium-status-badge');
@@ -696,7 +820,8 @@ function toggleEditProfile() {
 async function updateProfile(event) {
     event.preventDefault();
     
-    if (!appState.currentUser) return;
+    const currentState = getAppState();
+    if (!currentState.currentUser) return;
     
     const formData = {
         prenom: document.getElementById('edit-prenom').value.trim(),
@@ -720,11 +845,11 @@ async function updateProfile(event) {
     
     try {
         // Mettre à jour dans la base de données
-        await btpDB.put('users', appState.currentUser.id, formData);
+        await btpDB.put('users', currentState.currentUser.id, formData);
         
         // Mettre à jour l'état local
-        appState.currentUser = { ...appState.currentUser, ...formData };
-        localStorage.setItem('currentUser', JSON.stringify(appState.currentUser));
+        currentState.currentUser = { ...currentState.currentUser, ...formData };
+        localStorage.setItem('currentUser', JSON.stringify(currentState.currentUser));
         
         showAlert('✅ Profil mis à jour avec succès', 'success');
         
@@ -746,7 +871,8 @@ async function updateProfile(event) {
 }
 
 async function loadUserAnnounces() {
-    if (!appState.currentUser) return;
+    const currentState = getAppState();
+    if (!currentState.currentUser) return;
     
     try {
         // Récupérer toutes les annonces de l'utilisateur
@@ -759,11 +885,11 @@ async function loadUserAnnounces() {
         ]);
         
         const userAnnounces = [
-            ...marketplace.filter(ad => ad.userId == appState.currentUser.id).map(ad => ({ ...ad, type: 'marketplace' })),
-            ...realestate.filter(ad => ad.userId == appState.currentUser.id).map(ad => ({ ...ad, type: 'realestate' })),
-            ...jobs.filter(ad => ad.userId == appState.currentUser.id).map(ad => ({ ...ad, type: 'jobs' })),
-            ...freelancers.filter(ad => ad.userId == appState.currentUser.id).map(ad => ({ ...ad, type: 'freelancers' })),
-            ...professionals.filter(ad => ad.userId == appState.currentUser.id).map(ad => ({ ...ad, type: 'professionals' }))
+            ...marketplace.filter(ad => ad.userId == currentState.currentUser.id).map(ad => ({ ...ad, type: 'marketplace' })),
+            ...realestate.filter(ad => ad.userId == currentState.currentUser.id).map(ad => ({ ...ad, type: 'realestate' })),
+            ...jobs.filter(ad => ad.userId == currentState.currentUser.id).map(ad => ({ ...ad, type: 'jobs' })),
+            ...freelancers.filter(ad => ad.userId == currentState.currentUser.id).map(ad => ({ ...ad, type: 'freelancers' })),
+            ...professionals.filter(ad => ad.userId == currentState.currentUser.id).map(ad => ({ ...ad, type: 'professionals' }))
         ];
         
         displayUserAnnounces(userAnnounces);
@@ -910,6 +1036,85 @@ function getCollectionName(type) {
     return collections[type] || type;
 }
 
+// ========== FONCTIONS DE FORMATAGE ==========
+function formatPrice(price) {
+    if (!price && price !== 0) return 'Non spécifié';
+    return new Intl.NumberFormat('fr-FR').format(price) + ' MAD';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Date inconnue';
+    
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return 'Hier';
+        if (diffDays < 7) return `Il y a ${diffDays} jours`;
+        if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+        
+        return date.toLocaleDateString('fr-FR');
+    } catch (error) {
+        return 'Date inconnue';
+    }
+}
+
+function truncateText(text, maxLength = 100) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+// ========== FONCTIONS DE VALIDATION ==========
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function validatePhone(phone) {
+    const phoneRegex = /^(\+212|0)[5-7][0-9]{8}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+}
+
+function validatePassword(password) {
+    return password && password.length >= 6;
+}
+
+// ========== INITIALISATION DES ÉCOUTEURS D'ÉVÉNEMENTS ==========
+function initializeEventListeners() {
+    // Écouteur pour la recherche globale (Enter key)
+    const globalSearchInput = document.getElementById('globalSearch');
+    const globalSearchMobile = document.getElementById('globalSearchMobile');
+    
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleGlobalSearch();
+            }
+        });
+    }
+    
+    if (globalSearchMobile) {
+        globalSearchMobile.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleGlobalSearch();
+            }
+        });
+    }
+    
+    // Écouteur pour les liens de navigation du compte
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-account-section]') || e.target.closest('[data-account-section]')) {
+            e.preventDefault();
+            const target = e.target.matches('[data-account-section]') ? e.target : e.target.closest('[data-account-section]');
+            const section = target.getAttribute('data-account-section');
+            navigateToAccountSection(section);
+        }
+    });
+}
+
 // ========== STYLES DYNAMIQUES ==========
 const style = document.createElement('style');
 style.textContent = `
@@ -949,6 +1154,11 @@ style.textContent = `
     .bg-purple {
         background-color: #6f42c1 !important;
     }
+    .favorite-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
     @keyframes slideInRight {
         from {
             transform: translateX(100%);
@@ -981,19 +1191,31 @@ window.showLoading = showLoading;
 window.changeTheme = changeTheme;
 window.isInFavorites = isInFavorites;
 window.toggleFavorite = toggleFavorite;
-window.handleGlobalSearch = handleGlobalSearch;
-window.performGlobalSearch = performGlobalSearch;
-window.displaySearchResults = displaySearchResults;
-window.goToSearchResult = goToSearchResult;
 window.formatPrice = formatPrice;
 window.formatDate = formatDate;
 window.truncateText = truncateText;
 window.validateEmail = validateEmail;
 window.validatePhone = validatePhone;
 window.validatePassword = validatePassword;
+
+// ✅ EXPORT DES FONCTIONS DE RÉINITIALISATION CORRIGÉES
+window.resetSectionFilters = resetSectionFilters;
+window.resetMarketplaceFilters = resetMarketplaceFilters;
+window.resetRealEstateFilters = resetRealEstateFilters;
+window.resetJobsFilters = resetJobsFilters;
+window.resetFreelancersFilters = resetFreelancersFilters;
+window.resetProfessionalsFilters = resetProfessionalsFilters;
+window.debugAllFilters = debugAllFilters;
+
+// ✅ EXPORT DES FONCTIONS DE RECHERCHE ET COMPTE
+window.handleGlobalSearch = handleGlobalSearch;
+window.performGlobalSearch = performGlobalSearch;
+window.displaySearchResults = displaySearchResults;
+window.goToSearchResult = goToSearchResult;
 window.navigateToAccountSection = navigateToAccountSection;
 window.toggleEditProfile = toggleEditProfile;
 window.updateProfile = updateProfile;
 window.loadFavorites = loadFavorites;
+window.loadUserAnnounces = loadUserAnnounces;
 
-console.log('✅ utils.js chargé - Utilitaires PRÊTS avec fonctions de compte complètes');
+console.log('✅ utils.js SYNCHRONISÉ - Toutes les fonctionnalités restaurées');
