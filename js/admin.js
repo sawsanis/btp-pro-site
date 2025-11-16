@@ -445,8 +445,437 @@ async function deleteAnnounce(announceId, announceType) {
     }
 }
 
-function viewAdDetails(adId, adType) {
-    showAlert(`🔍 Détails de l'annonce ${adId} (${adType}) - Fonctionnalité en développement`, 'info');
+// ========== FONCTION DE VISION DÉTAILLÉE DES ANNONCES ==========
+async function viewAdDetails(adId, adType) {
+    if (!checkAdminAccess()) return;
+    
+    console.log(`🔍 Affichage détails annonce ${adId} (${adType})`);
+    
+    try {
+        const collectionName = getCollectionName(adType);
+        const ad = await btpDB.get(collectionName, adId);
+        
+        if (!ad) {
+            showAlert('❌ Annonce non trouvée', 'error');
+            return;
+        }
+
+        // Récupérer les informations utilisateur
+        const user = await btpDB.get('users', ad.userId);
+        const userName = user ? `${user.prenom} ${user.nom}` : 'Utilisateur inconnu';
+        const userEmail = user ? user.email : 'Email non disponible';
+        const userPhone = user ? user.phone : 'Téléphone non disponible';
+
+        // Générer le contenu détaillé selon le type d'annonce
+        const adDetails = generateAdDetailsContent(ad, adType, userName, userEmail, userPhone);
+        
+        // Afficher le modal avec les détails
+        showAdDetailsModal(adDetails, adId, adType);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement détails annonce:', error);
+        showAlert('❌ Erreur lors du chargement des détails', 'error');
+    }
+}
+
+function generateAdDetailsContent(ad, adType, userName, userEmail, userPhone) {
+    const typeLabels = {
+        'marketplace': '🛍️ Marketplace',
+        'realestate': '🏠 Immobilier', 
+        'jobs': '💼 Emploi',
+        'freelancers': '🎨 Freelance',
+        'professionals': '👷 Professionnel'
+    };
+
+    let detailsHTML = `
+        <div class="ad-details-container">
+            <div class="row">
+                <!-- Informations principales -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informations de l'annonce
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            ${generateAdSpecificDetails(ad, adType)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Informations utilisateur et statut -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user me-2"></i>
+                                Informations utilisateur
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Nom :</strong> ${userName}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Email :</strong> ${userEmail}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Téléphone :</strong> ${userPhone || 'Non renseigné'}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Type :</strong> 
+                                <span class="badge bg-secondary">${typeLabels[adType]}</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Statut :</strong> 
+                                <span class="badge bg-warning">⏳ En attente</span>
+                            </div>
+                            ${ad.createdAt ? `
+                            <div class="mb-3">
+                                <strong>Créée le :</strong> 
+                                ${new Date(ad.createdAt).toLocaleDateString('fr-FR')}
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions de modération -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="fas fa-gavel me-2"></i>
+                                Actions de modération
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-success" onclick="approveAdFromModal('${ad.id}', '${adType}')">
+                                    <i class="fas fa-check me-2"></i>Approuver
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectAdFromModal('${ad.id}', '${adType}')">
+                                    <i class="fas fa-times me-2"></i>Rejeter
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteAnnounceFromModal('${ad.id}', '${adType}')">
+                                    <i class="fas fa-trash me-2"></i>Supprimer
+                                </button>
+                                <button class="btn btn-outline-secondary ms-auto" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-2"></i>Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return detailsHTML;
+}
+
+function generateAdSpecificDetails(ad, adType) {
+    switch(adType) {
+        case 'marketplace':
+            return `
+                <div class="mb-3">
+                    <strong>Titre :</strong> ${ad.title || 'Non spécifié'}
+                </div>
+                <div class="mb-3">
+                    <strong>Description :</strong> 
+                    <div class="border p-2 bg-light rounded mt-1">${ad.description || 'Aucune description'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Prix :</strong> ${ad.price ? `${ad.price} DH` : 'Non spécifié'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Catégorie :</strong> ${ad.category || 'Non spécifiée'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Ville :</strong> ${ad.city || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>État :</strong> ${ad.condition || 'Non spécifié'}
+                        </div>
+                    </div>
+                </div>
+                ${ad.phone ? `
+                <div class="mb-3">
+                    <strong>Téléphone de contact :</strong> ${ad.phone}
+                </div>
+                ` : ''}
+            `;
+
+        case 'realestate':
+            return `
+                <div class="mb-3">
+                    <strong>Titre :</strong> ${ad.title || 'Non spécifié'}
+                </div>
+                <div class="mb-3">
+                    <strong>Description :</strong> 
+                    <div class="border p-2 bg-light rounded mt-1">${ad.description || 'Aucune description'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Type :</strong> ${ad.type || 'Non spécifié'}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Prix :</strong> ${ad.price ? `${ad.price} DH` : 'Non spécifié'}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Surface :</strong> ${ad.surface ? `${ad.surface} m²` : 'Non spécifiée'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Ville :</strong> ${ad.city || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Quartier :</strong> ${ad.area || 'Non spécifié'}
+                        </div>
+                    </div>
+                </div>
+                ${ad.rooms ? `
+                <div class="mb-3">
+                    <strong>Pièces :</strong> ${ad.rooms}
+                </div>
+                ` : ''}
+            `;
+
+        case 'jobs':
+            return `
+                <div class="mb-3">
+                    <strong>Poste :</strong> ${ad.poste || 'Non spécifié'}
+                </div>
+                <div class="mb-3">
+                    <strong>Description :</strong> 
+                    <div class="border p-2 bg-light rounded mt-1">${ad.description || 'Aucune description'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Entreprise :</strong> ${ad.company || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Type de contrat :</strong> ${ad.contractType || 'Non spécifié'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Salaire :</strong> ${ad.salary ? `${ad.salary} DH` : 'Non spécifié'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Ville :</strong> ${ad.ville || 'Non spécifiée'}
+                        </div>
+                    </div>
+                </div>
+                ${ad.experience ? `
+                <div class="mb-3">
+                    <strong>Expérience requise :</strong> ${ad.experience}
+                </div>
+                ` : ''}
+                ${ad.qualifications ? `
+                <div class="mb-3">
+                    <strong>Qualifications :</strong> ${ad.qualifications}
+                </div>
+                ` : ''}
+            `;
+
+        case 'freelancers':
+            return `
+                <div class="mb-3">
+                    <strong>Service :</strong> ${ad.service || 'Non spécifié'}
+                </div>
+                <div class="mb-3">
+                    <strong>Description :</strong> 
+                    <div class="border p-2 bg-light rounded mt-1">${ad.description || 'Aucune description'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Spécialité :</strong> ${ad.specialty || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Tarif :</strong> ${ad.rate ? `${ad.rate} DH` : 'Non spécifié'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Ville :</strong> ${ad.city || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Expérience :</strong> ${ad.experience || 0} an(s)
+                        </div>
+                    </div>
+                </div>
+                ${ad.skills ? `
+                <div class="mb-3">
+                    <strong>Compétences :</strong> ${Array.isArray(ad.skills) ? ad.skills.join(', ') : ad.skills}
+                </div>
+                ` : ''}
+                ${ad.portfolio ? `
+                <div class="mb-3">
+                    <strong>Portfolio :</strong> 
+                    <a href="${ad.portfolio}" target="_blank" class="text-primary">${ad.portfolio}</a>
+                </div>
+                ` : ''}
+            `;
+
+        case 'professionals':
+            return `
+                <div class="mb-3">
+                    <strong>Entreprise :</strong> ${ad.company || 'Non spécifiée'}
+                </div>
+                <div class="mb-3">
+                    <strong>Description :</strong> 
+                    <div class="border p-2 bg-light rounded mt-1">${ad.description || 'Aucune description'}</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Spécialité :</strong> ${ad.specialty || 'Non spécifiée'}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Ville :</strong> ${ad.city || 'Non spécifiée'}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Expérience :</strong> ${ad.experience || 0} an(s)
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Téléphone :</strong> ${ad.phone || 'Non spécifié'}
+                        </div>
+                    </div>
+                </div>
+                ${ad.email ? `
+                <div class="mb-3">
+                    <strong>Email :</strong> ${ad.email}
+                </div>
+                ` : ''}
+                ${ad.website ? `
+                <div class="mb-3">
+                    <strong>Site web :</strong> 
+                    <a href="${ad.website}" target="_blank" class="text-primary">${ad.website}</a>
+                </div>
+                ` : ''}
+                ${ad.certifications ? `
+                <div class="mb-3">
+                    <strong>Certifications :</strong> ${ad.certifications}
+                </div>
+                ` : ''}
+            `;
+
+        default:
+            return `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Type d'annonce non reconnu
+                </div>
+                <pre>${JSON.stringify(ad, null, 2)}</pre>
+            `;
+    }
+}
+
+function showAdDetailsModal(content, adId, adType) {
+    const modalHTML = `
+        <div class="modal fade" id="adDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-search me-2"></i>
+                            Détails de l'annonce - ${getAdTypeLabel(adType)}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Supprimer le modal existant
+    const existingModal = document.getElementById('adDetailsModal');
+    if (existingModal) existingModal.remove();
+
+    // Ajouter le nouveau modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('adDetailsModal'));
+    modal.show();
+}
+
+// ========== FONCTIONS D'ACTION DEPUIS LE MODAL ==========
+async function approveAdFromModal(adId, adType) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('adDetailsModal'));
+    if (modal) modal.hide();
+    
+    setTimeout(() => {
+        approveAd(adId, adType);
+    }, 300);
+}
+
+async function rejectAdFromModal(adId, adType) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('adDetailsModal'));
+    if (modal) modal.hide();
+    
+    setTimeout(() => {
+        rejectAd(adId, adType);
+    }, 300);
+}
+
+async function deleteAnnounceFromModal(adId, adType) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('adDetailsModal'));
+    if (modal) modal.hide();
+    
+    setTimeout(() => {
+        deleteAnnounce(adId, adType);
+    }, 300);
 }
 
 function getCollectionName(adType) {
@@ -1551,6 +1980,11 @@ window.viewUserDetails = viewUserDetails;
 window.refreshAdminData = refreshAdminData;
 window.checkAdminAccess = checkAdminAccess;
 
+// Nouvelles fonctions de modération détaillée
+window.approveAdFromModal = approveAdFromModal;
+window.rejectAdFromModal = rejectAdFromModal;
+window.deleteAnnounceFromModal = deleteAnnounceFromModal;
+
 // Nouvelles fonctions newsletter
 window.initNewsletterFeatures = initNewsletterFeatures;
 window.showImportRecipientsModal = showImportRecipientsModal;
@@ -1567,4 +2001,4 @@ window.importBackup = importBackup;
 window.sendBackupByEmail = sendBackupByEmail;
 window.showBackupSection = showBackupSection;
 
-console.log('✅ admin.js COMPLET - Toutes les fonctionnalités intégrées et sauvegarde CORRIGÉE');
+console.log('✅ admin.js COMPLET - Toutes les fonctionnalités intégrées, modération détaillée OPÉRATIONNELLE');

@@ -137,3 +137,190 @@
 .loading-pulse {
     animation: pulse 2s infinite;
 }
+/* ========== CORRECTION SUPERPOSITION BOUTONS ADMIN/FAVORIS ========== */
+
+/* Container principal des actions sur les cartes */
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    margin-top: auto;
+}
+
+/* Boutons d'administration */
+.admin-controls {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.admin-controls .btn {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 20;
+}
+
+/* Actions utilisateur (favoris, etc) */
+.user-actions {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+    position: relative;
+    z-index: 10;
+}
+
+/* Style spécifique pour les boutons admin */
+.btn-admin {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.btn-admin:hover {
+    background: #c82333;
+    color: white;
+}
+
+/* Style pour les boutons de statut */
+.btn-status {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.btn-status:hover {
+    background: #218838;
+    color: white;
+}
+
+/* Icône favoris */
+.favorite-btn {
+    background: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn:hover {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.favorite-btn.active {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+/* Pour les cartes en mode admin */
+.admin-card .card-body {
+    position: relative;
+}
+
+/* Assurer l'ordre z-index correct */
+.admin-controls {
+    z-index: 100;
+}
+
+.user-actions {
+    z-index: 90;
+}
+
+/* Responsive pour petits écrans */
+@media (max-width: 768px) {
+    .card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .admin-controls {
+        order: 1;
+        justify-content: center;
+    }
+    
+    .user-actions {
+        order: 2;
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    .admin-controls .btn,
+    .user-actions .btn {
+        flex: 1;
+        min-width: 60px;
+        text-align: center;
+    }
+}
+
+/* Style spécifique pour le tableau de modération */
+#moderation-table-body .btn-group {
+    display: flex;
+    gap: 2px;
+    flex-wrap: nowrap;
+}
+
+#moderation-table-body .btn {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+/* Pour les cartes d'annonces dans l'admin */
+.annonce-card .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+}
+
+/* Correction pour les boutons dans les tableaux */
+.table .btn-group {
+    position: relative;
+    z-index: 5;
+}
+
+.table .btn-group .btn {
+    position: relative;
+    z-index: 6;
+}
+
+/* Style pour éviter les superpositions dans les cellules de tableau */
+.table td {
+    position: relative;
+}
+
+.table .actions-cell {
+    min-width: 150px;
+}
+
+/* Animation pour les changements d'état */
+.btn-status, .btn-admin, .favorite-btn {
+    transition: all 0.3s ease;
+    transform: translateZ(0);
+}
+
+/* Priorité d'affichage */
+.admin-priority {
+    position: relative;
+    z-index: 1000 !important;
+}
+
+.user-actions-priority {
+    position: relative;
+    z-index: 900 !important;
+}

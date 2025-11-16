@@ -13,21 +13,52 @@ async function loadProfessionals() {
             return;
         }
         
+        // VÉRIFIER SI L'UTILISATEUR A DÉJÀ UN PROFIL
+        const userProfessional = await checkUserProfessionalProfile();
+        
         if (!professionals || professionals.length === 0) {
+            let buttonHTML = '';
+            
+            if (userProfessional) {
+                // Utilisateur a déjà un profil
+                const status = userProfessional.status;
+                const statusMessages = {
+                    'en_attente': '⏳ Votre profil est en attente de validation',
+                    'approuve': '✅ Votre profil est publié dans l\'annuaire', 
+                    'rejete': '❌ Votre profil a été rejeté'
+                };
+                
+                buttonHTML = `
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        ${statusMessages[status] || '✅ Votre profil est dans l\'annuaire'}
+                        ${status === 'rejete' ? `
+                        <br><small>Vous pouvez contacter le support pour plus d'informations.</small>
+                        ` : ''}
+                        ${status === 'en_attente' ? `
+                        <br><small>Vous serez notifié dès que votre profil sera validé.</small>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                // Utilisateur n'a pas de profil - AFFICHER LE BOUTON
+                buttonHTML = appState.currentUser ? `
+                    <button class="btn btn-primary" onclick="showProfessionalModal()">
+                        <i class="fas fa-plus me-2"></i>Rejoindre l'annuaire
+                    </button>
+                ` : `
+                    <button class="btn btn-primary" onclick="showLoginModal()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour rejoindre
+                    </button>
+                `;
+            }
+            
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="fas fa-hard-hat fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Aucun professionnel disponible</h5>
                     <p class="text-muted">Rejoignez notre annuaire de professionnels BTP !</p>
-                    ${appState.currentUser ? `
-                        <button class="btn btn-primary" onclick="showProfessionalModal()">
-                            <i class="fas fa-plus me-2"></i>Rejoindre l'annuaire
-                        </button>
-                    ` : `
-                        <button class="btn btn-primary" onclick="showLoginModal()">
-                            <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour rejoindre
-                        </button>
-                    `}
+                    ${buttonHTML}
                 </div>
             `;
             return;
@@ -40,14 +71,36 @@ async function loadProfessionals() {
         console.log('✅ Professionnels approuvés:', approvedProfessionals.length);
         
         if (approvedProfessionals.length === 0) {
+            let buttonHTML = '';
+            
+            if (userProfessional) {
+                const status = userProfessional.status;
+                const statusMessages = {
+                    'en_attente': '⏳ Votre profil est en attente de validation',
+                    'approuve': '✅ Votre profil est publié dans l\'annuaire',
+                    'rejete': '❌ Votre profil a été rejeté'
+                };
+                
+                buttonHTML = `
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        ${statusMessages[status] || '✅ Votre profil est dans l\'annuaire'}
+                    </div>
+                `;
+            } else {
+                buttonHTML = `
+                    <button class="btn btn-primary" onclick="showProfessionalModal()">
+                        <i class="fas fa-plus me-2"></i>Rejoindre l'annuaire
+                    </button>
+                `;
+            }
+            
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="fas fa-hard-hat fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Aucun professionnel disponible</h5>
                     <p class="text-muted">Tous les professionnels sont en attente de vérification</p>
-                    <button class="btn btn-primary" onclick="showProfessionalModal()">
-                        <i class="fas fa-plus me-2"></i>Rejoindre l'annuaire
-                    </button>
+                    ${buttonHTML}
                 </div>
             `;
             return;
@@ -63,6 +116,9 @@ async function loadProfessionals() {
         } else {
             displayProfessionals(approvedProfessionals);
         }
+        
+        // Afficher le statut de l'utilisateur sans cacher le bouton
+        displayUserProfessionalStatus(userProfessional);
         
     } catch (error) {
         console.error('❌ Erreur chargement professionnels:', error);
@@ -327,6 +383,268 @@ function displayProfessionals(professionals) {
     
     container.innerHTML = html;
     console.log(`✅ ${professionals.length} professionnels affichés avec système de notation`);
+}
+
+// ========== FONCTION POUR REJOINDRE L'ANNUAIRE ==========
+function showProfessionalModal() {
+    console.log('👤 Ouverture modal rejoindre annuaire...');
+    
+    if (!appState.currentUser) {
+        showAlert('🔐 Connectez-vous pour rejoindre l\'annuaire', 'warning');
+        showLoginModal();
+        return;
+    }
+
+    const modalHTML = `
+        <div class="modal fade" id="professionalModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-plus me-2"></i>Rejoindre l'Annuaire des Professionnels
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="professionalForm" onsubmit="submitProfessionalForm(event)">
+                            <!-- Informations entreprise -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nom de l'entreprise *</label>
+                                        <input type="text" class="form-control" name="company" required 
+                                               placeholder="Ex: SARL BTP Maroc">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Spécialité *</label>
+                                        <select class="form-select" name="specialty" required>
+                                            <option value="">Choisir votre spécialité</option>
+                                            <option value="maçonnerie">Maçonnerie</option>
+                                            <option value="electricite">Électricité</option>
+                                            <option value="plomberie">Plomberie</option>
+                                            <option value="menuiserie">Menuiserie</option>
+                                            <option value="peinture">Peinture</option>
+                                            <option value="carrelage">Carrelage</option>
+                                            <option value="charpente">Charpente</option>
+                                            <option value="couverture">Couverture</option>
+                                            <option value="terrassement">Terrassement</option>
+                                            <option value="isolation">Isolation</option>
+                                            <option value="batiment">Bâtiment</option>
+                                            <option value="renovation">Rénovation</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label class="form-label">Description de vos services *</label>
+                                <textarea class="form-control" name="description" rows="3" 
+                                          placeholder="Décrivez vos services, vos compétences, vos réalisations..."
+                                          required></textarea>
+                            </div>
+
+                            <!-- Localisation -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Ville *</label>
+                                        <input type="text" class="form-control" name="city" required 
+                                               placeholder="Ex: Casablanca">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Années d'expérience *</label>
+                                        <input type="number" class="form-control" name="experience" 
+                                               min="0" max="50" value="0" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contacts -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Téléphone *</label>
+                                        <input type="tel" class="form-control" name="phone" required 
+                                               placeholder="Ex: +212 6 12 34 56 78">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Email de contact *</label>
+                                        <input type="email" class="form-control" name="email" required 
+                                               value="${appState.currentUser.email}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Site web (optionnel) -->
+                            <div class="mb-3">
+                                <label class="form-label">Site web (optionnel)</label>
+                                <input type="url" class="form-control" name="website" 
+                                       placeholder="Ex: https://votre-entreprise.com">
+                            </div>
+
+                            <!-- Personne à contacter -->
+                            <div class="mb-3">
+                                <label class="form-label">Personne à contacter *</label>
+                                <input type="text" class="form-control" name="userName" required 
+                                       value="${appState.currentUser.prenom} ${appState.currentUser.nom}">
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Votre profil sera vérifié par notre équipe avant publication dans l'annuaire.
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1">
+                                    <i class="fas fa-check me-2"></i>Soumettre ma candidature
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Supprimer le modal existant s'il y en a un
+    const existingModal = document.getElementById('professionalModal');
+    if (existingModal) existingModal.remove();
+
+    // Ajouter le modal au DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('professionalModal'));
+    modal.show();
+}
+
+// ========== SOUMISSION DU FORMULAIRE ==========
+async function submitProfessionalForm(event) {
+    event.preventDefault();
+    
+    console.log('📝 Soumission formulaire professionnel...');
+    
+    if (!appState.currentUser) {
+        showAlert('❌ Vous devez être connecté', 'error');
+        return;
+    }
+
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Validation basique
+    const company = formData.get('company').trim();
+    const specialty = formData.get('specialty');
+    const description = formData.get('description').trim();
+    
+    if (!company || !specialty || !description) {
+        showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+
+    showLoading(true);
+
+    try {
+        const professionalData = {
+            id: generateId(),
+            userId: appState.currentUser.id,
+            company: company,
+            specialty: specialty,
+            description: description,
+            city: formData.get('city').trim(),
+            experience: parseInt(formData.get('experience')) || 0,
+            phone: formData.get('phone').trim(),
+            email: formData.get('email').trim(),
+            website: formData.get('website').trim() || '',
+            userName: formData.get('userName').trim(),
+            status: 'en_attente', // En attente de modération
+            rating: 0,
+            reviewCount: 0,
+            isVerified: false,
+            isPremium: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        // Sauvegarder dans la base de données
+        await btpDB.post('professionals', professionalData);
+
+        // Fermer le modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('professionalModal'));
+        if (modal) modal.hide();
+
+        showAlert('✅ Votre demande a été soumise avec succès ! Elle sera examinée par notre équipe.', 'success');
+
+        // Recharger la liste des professionnels
+        setTimeout(() => {
+            loadProfessionals();
+        }, 2000);
+
+    } catch (error) {
+        console.error('❌ Erreur soumission formulaire:', error);
+        showAlert('❌ Erreur lors de la soumission du formulaire', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ========== VÉRIFICATION SI L'UTILISATEUR A DÉJÀ UN PROFIL ==========
+async function checkUserProfessionalProfile() {
+    if (!appState.currentUser) return false;
+    
+    try {
+        const professionals = await btpDB.get('professionals');
+        const userProfessional = professionals.find(pro => pro.userId === appState.currentUser.id);
+        return userProfessional;
+    } catch (error) {
+        console.error('Erreur vérification profil:', error);
+        return false;
+    }
+}
+
+// ========== FONCTION POUR AFFICHER LE STATUT UTILISATEUR ==========
+function displayUserProfessionalStatus(userProfessional) {
+    const container = document.getElementById('professionals-container');
+    if (!container || !userProfessional) return;
+    
+    // Créer un élément pour afficher le statut
+    const statusElement = document.createElement('div');
+    statusElement.className = 'row mt-4';
+    
+    const status = userProfessional.status;
+    const statusMessages = {
+        'en_attente': '⏳ Votre profil est en attente de validation',
+        'approuve': '✅ Votre profil est publié dans l\'annuaire',
+        'rejete': '❌ Votre profil a été rejeté'
+    };
+    
+    statusElement.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                ${statusMessages[status] || '✅ Votre profil est dans l\'annuaire'}
+                ${status === 'rejete' ? `
+                <br><small>Vous pouvez contacter le support pour plus d'informations.</small>
+                ` : ''}
+                ${status === 'en_attente' ? `
+                <br><small>Vous serez notifié dès que votre profil sera validé.</small>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    // Ajouter le statut en haut du conteneur
+    container.insertBefore(statusElement, container.firstChild);
 }
 
 // ========== SYSTÈME DE NOTATION (NOUVEAU) ==========
@@ -649,6 +967,11 @@ function clearProfessionalsFilters() {
     filterProfessionals();
 }
 
+// ========== FONCTION UTILITAIRE GENERATE ID ==========
+function generateId() {
+    return 'pro_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 // ========== EXPORT DES FONCTIONS ==========
 window.loadProfessionals = loadProfessionals;
 window.filterProfessionals = filterProfessionals;
@@ -657,6 +980,12 @@ window.getProfessionalSpecialtyLabel = getProfessionalSpecialtyLabel;
 window.getProfessionalSpecialtyColor = getProfessionalSpecialtyColor;
 window.generateProfessionalRatingStars = generateProfessionalRatingStars;
 
+// ========== EXPORT DES NOUVELLES FONCTIONS ==========
+window.showProfessionalModal = showProfessionalModal;
+window.submitProfessionalForm = submitProfessionalForm;
+window.checkUserProfessionalProfile = checkUserProfessionalProfile;
+window.displayUserProfessionalStatus = displayUserProfessionalStatus;
+
 // ========== EXPORT DES FONCTIONS DE NOTATION ==========
 window.showProfessionalRatingForm = showProfessionalRatingForm;
 window.highlightStars = highlightStars;
@@ -664,4 +993,4 @@ window.resetStars = resetStars;
 window.setProfessionalRating = setProfessionalRating;
 window.submitProfessionalRating = submitProfessionalRating;
 
-console.log('✅ professionals.js COMPLET - Système de notation ajouté sans supprimer de fonctionnalités');
+console.log('✅ professionals.js COMPLET - Bouton "Rejoindre l\'annuaire" CORRIGÉ et toutes fonctionnalités opérationnelles');

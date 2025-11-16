@@ -160,46 +160,6 @@ class BTPDatabase {
                     contactCount: 12,
                     createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
                     updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "2",
-                    title: "Carreaux Céramique 30x30",
-                    description: "Marque Céragrès - Lot de 10m² - Qualité première choix - Divers motifs disponibles",
-                    price: 120,
-                    unit: "m2",
-                    category: "revetement",
-                    city: "Rabat",
-                    phone: "+212 6 87 65 43 21",
-                    status: 'approuve',
-                    userId: "1",
-                    userName: "Admin BTP",
-                    userEmail: "admin@btp.ma",
-                    isPremium: false,
-                    photos: [],
-                    viewCount: 23,
-                    contactCount: 8,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "3",
-                    title: "Acier de construction HA500",
-                    description: "Acier haute résistance pour béton armé - Diamètres disponibles: 6, 8, 10, 12, 14, 16mm",
-                    price: 2500,
-                    unit: "tonne",
-                    category: "acier",
-                    city: "Casablanca",
-                    phone: "+212 6 63 06 62 25",
-                    status: 'en_attente',
-                    userId: "2",
-                    userName: "Abderrahmane Lyaakobi",
-                    userEmail: "lyaakobi@hotmail.com",
-                    isPremium: false,
-                    photos: [],
-                    viewCount: 15,
-                    contactCount: 3,
-                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
                 }
             ],
             realestate_posts: [
@@ -225,30 +185,6 @@ class BTPDatabase {
                     viewCount: 156,
                     contactCount: 34,
                     createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "2",
-                    title: "Appartement 80m² - Casablanca Centre",
-                    description: "Bel appartement au cœur de Casablanca. 3 pièces, cuisine américaine, salle de bain rénovée. Immeuble sécurisé avec ascenseur. Idéal pour jeune couple ou investissement.",
-                    price: 850000,
-                    type: "appartement",
-                    transaction: "vente",
-                    surface: 80,
-                    rooms: 3,
-                    bathrooms: 1,
-                    address: "Centre Ville, Casablanca",
-                    city: "Casablanca",
-                    phone: "+212 6 87 65 43 21",
-                    status: 'en_attente',
-                    userId: "1",
-                    userName: "Admin BTP",
-                    userEmail: "admin@btp.ma",
-                    isPremium: false,
-                    photos: [],
-                    viewCount: 67,
-                    contactCount: 12,
-                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
                     updatedAt: new Date().toISOString()
                 }
             ],
@@ -316,28 +252,6 @@ class BTPDatabase {
                     contactCount: 45,
                     createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
                     updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "2",
-                    title: "Architecte d'intérieur - Conception Espaces",
-                    description: "Architecte d'intérieur spécialisé dans l'aménagement d'espaces résidentiels et commerciaux. Services: conception 3D, suivi de chantier, sélection de matériaux.",
-                    specialty: "architecture",
-                    tarif: "800-1200 MAD/jour",
-                    ville: "Marrakech",
-                    experience: "3+ ans",
-                    portfolio: "https://architecte-exemple.com",
-                    phone: "+212 6 87 65 43 21",
-                    status: 'en_attente',
-                    userId: "1",
-                    userName: "Admin BTP",
-                    userEmail: "admin@btp.ma",
-                    rating: 4.5,
-                    reviewCount: 8,
-                    isPremium: false,
-                    viewCount: 123,
-                    contactCount: 23,
-                    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
                 }
             ],
             professionals: [
@@ -360,49 +274,113 @@ class BTPDatabase {
                     contactCount: 89,
                     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
                     updatedAt: new Date().toISOString()
+                }
+            ],
+
+            // ========== COLLECTIONS AJOUTÉES POUR LE SYSTÈME EMPLOI ==========
+            
+            job_applications: [
+                {
+                    id: "1",
+                    jobId: "1",
+                    candidateId: "3",
+                    candidateName: "Younes Hachimi",
+                    candidateEmail: "y.hachimi.yh@gmail.com",
+                    candidatePhone: "+212 6 12 34 56 78",
+                    cvFileName: "CV_Younes_Hachimi.pdf",
+                    lettreMotivation: "Je suis très intéressé par ce poste de chef de chantier. Avec mes 8 ans d'expérience dans le BTP marocain, je suis convaincu que je peux apporter une réelle valeur à votre entreprise.",
+                    experience: "8 ans dans le BTP",
+                    disponibilite: "immediate",
+                    status: "en_attente",
+                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
                 },
                 {
                     id: "2",
-                    company: "Électricité BTP Pro",
-                    specialty: "electricite",
-                    experience: 8,
-                    city: "Rabat",
-                    description: "Installation électrique complète, mise aux normes, dépannage urgent. Certifié et assuré. Services: tableau électrique, éclairage, domotique, mise en sécurité.",
-                    phone: "+212 6 87 65 43 21",
-                    email: "contact@electricite-btppro.ma",
-                    website: "https://electricite-btppro.ma",
-                    rating: 4.9,
-                    reviewCount: 89,
-                    userId: "3",
-                    status: 'approuve',
-                    isVerified: true,
-                    viewCount: 345,
-                    contactCount: 67,
-                    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "3",
-                    company: "Plomberie Express Maroc",
-                    specialty: "plomberie",
-                    experience: 12,
-                    city: "Marrakech",
-                    description: "Service de plomberie rapide et efficace pour particuliers et professionnels. Intervention sous 2h. Réparation fuites, installation sanitaire, chauffage central.",
-                    phone: "+212 6 12 34 56 78",
-                    email: "contact@plomberie-express.ma",
-                    rating: 4.7,
-                    reviewCount: 67,
-                    userId: "1",
-                    status: 'en_attente',
-                    isVerified: false,
-                    viewCount: 234,
-                    contactCount: 45,
-                    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                    jobId: "1",
+                    candidateId: "2",
+                    candidateName: "Abderrahmane Lyaakobi",
+                    candidateEmail: "lyaakobi@hotmail.com",
+                    candidatePhone: "+212 6 63 06 62 25",
+                    cvFileName: "CV_Lyaakobi.pdf",
+                    lettreMotivation: "En tant que professionnel du BTP avec 15 ans d'expérience, je suis intéressé par ce poste de chef de chantier pour relever de nouveaux défis.",
+                    experience: "15 ans en maçonnerie et gestion de chantier",
+                    disponibilite: "15j",
+                    status: "en_cours",
+                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
                     updatedAt: new Date().toISOString()
                 }
             ],
+
+            job_ratings: [
+                {
+                    id: "1",
+                    jobId: "1",
+                    employerId: "2",
+                    reviewerId: "3",
+                    reviewerName: "Younes Hachimi",
+                    reviewerEmail: "y.hachimi.yh@gmail.com",
+                    rating: 5,
+                    categoryRatings: {
+                        clarity: 5,
+                        process: 4,
+                        communication: 5,
+                        timing: 4
+                    },
+                    comment: "Processus de recrutement très professionnel. L'annonceur a été très réactif et les informations sur le poste étaient claires et détaillées.",
+                    experienceType: "entretien",
+                    isAnonymous: false,
+                    status: "approuve",
+                    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
+                }
+            ],
+
+            employer_profiles: [
+                {
+                    id: "1",
+                    userId: "2",
+                    rating: 4.8,
+                    ratingCount: 1,
+                    totalJobsPosted: 2,
+                    responseRate: 100,
+                    averageResponseTime: "2 heures",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                }
+            ],
+
+            notifications: [
+                {
+                    id: "1",
+                    type: "new_application",
+                    title: "Nouvelle candidature reçue",
+                    message: "📬 Younes Hachimi a postulé à votre offre 'Chef de Chantier BTP Expérimenté'",
+                    recipientId: "2",
+                    recipientEmail: "lyaakobi@hotmail.com",
+                    applicationId: "1",
+                    jobId: "1",
+                    isRead: false,
+                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                    id: "2",
+                    type: "application_status",
+                    title: "Statut de candidature mis à jour",
+                    message: "✅ Votre candidature pour 'Chef de Chantier BTP' est maintenant en cours d'examen",
+                    recipientId: "3",
+                    recipientEmail: "y.hachimi.yh@gmail.com",
+                    applicationId: "1",
+                    jobId: "1",
+                    isRead: true,
+                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+                }
+            ],
+
             messages: [],
+
             forum_topics: [],
+
             adsense_slots: [
                 {
                     id: 'header_ad',
@@ -412,47 +390,20 @@ class BTPDatabase {
                     isActive: true,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
-                },
-                {
-                    id: 'sidebar_ad',
-                    name: 'Panneau latéral',
-                    code: '<!-- Code Adsense pour panneau latéral -->',
-                    position: 'sidebar',
-                    isActive: true,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: 'footer_ad',
-                    name: 'Pied de page',
-                    code: '<!-- Code Adsense pour pied de page -->',
-                    position: 'footer',
-                    isActive: true,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
                 }
             ],
+
             premium_features: [
                 {
                     id: 'stats_advanced',
                     name: 'Statistiques avancées',
                     description: 'Accès aux données détaillées de performance'
-                },
-                {
-                    id: 'priority_support',
-                    name: 'Support prioritaire',
-                    description: 'Réponses rapides de notre équipe'
-                },
-                {
-                    id: 'unlimited_announces',
-                    name: 'Annonces illimitées',
-                    description: 'Publiez autant d\'annonces que vous voulez'
                 }
             ]
         };
         
         this.saveLocalData(initialData);
-        console.log('✅ Données de démonstration initialisées');
+        console.log('✅ Données de démonstration initialisées avec collections emploi');
     }
 
     // ========== OPÉRATIONS CRUD ==========
@@ -979,4 +930,4 @@ class BTPDatabase {
 const btpDB = new BTPDatabase();
 window.btpDB = btpDB;
 
-console.log('✅ database.js CORRIGÉ - Fonctionnalités profil AJOUTÉES avec gestion sécurisée');
+console.log('✅ database.js CORRIGÉ - Collections emploi AJOUTÉES avec données de démonstration');

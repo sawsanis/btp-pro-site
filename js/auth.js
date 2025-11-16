@@ -10,6 +10,7 @@ function syncAuthState() {
     if (typeof appState !== 'undefined') {
         appState.currentUser = authState.currentUser;
         appState.isAdmin = authState.isAdmin;
+        appState.isAuthenticated = authState.isAuthenticated;
     }
     
     // Rafraîchir l'interface si l'application est initialisée
@@ -725,4 +726,4 @@ window.saveProfile = saveProfile;
 window.changePassword = changePassword;
 window.loadProfileData = loadProfileData;
 
-console.log('✅ auth.js SYNCHRONISÉ - Toutes les fonctionnalités intégrées et optimisées');
+console.log('✅ auth.js CORRIGÉ - Compatible avec la nouvelle structure modulaire');

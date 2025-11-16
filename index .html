@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTP Pro Maroc - Plateforme Professionnelle BTP Marocaine</title>
+    
+    <!-- CDN Links -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- CSS personnalisé -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- AJOUT : Assistant IA -->
+    <link rel="stylesheet" href="css/ai-assistant.css">
+</head>
+<body data-theme="light">
+    <!-- Overlay de chargement -->
+    <div class="loading-overlay">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="javascript:void(0)" onclick="goToSection('home')">
+                <i class="fas fa-hard-hat me-2"></i>BTP Pro <span>🇲🇦</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="javascript:void(0)" data-section="home">Accueil</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="marketplace">Marketplace</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="realestate">Immobilier</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="jobs">Emploi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="freelancers">Freelancers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="professionals">Professionnels</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="forum">Forum</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="favorites">Favoris</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0)" data-section="publish"><i class="fas fa-plus-circle me-1"></i>Publier</a></li>
+                    <li class="nav-item d-none" id="admin-nav-item"><a class="nav-link" href="javascript:void(0)" data-section="admin">Admin</a></li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <!-- Boutons Connexion/Inscription -->
+                    <div class="d-flex" id="auth-buttons">
+                        <button class="btn btn-outline-primary me-2" type="button" onclick="showLoginModal()">Connexion</button>
+                        <button class="btn btn-primary me-3" type="button" onclick="showRegisterModal()">Inscription</button>
+                    </div>
+
+                    <!-- Menu utilisateur connecté -->
+                    <div class="d-flex align-items-center d-none" id="user-menu">
+                        <!-- Bouton Premium -->
+                        <button class="btn btn-warning me-3" type="button" onclick="goToSection('premium')">
+                            <i class="fas fa-crown me-2"></i>Premium
+                        </button>
+
+                        <!-- Bouton Messagerie -->
+                        <button class="btn btn-outline-primary me-3 position-relative" type="button" onclick="toggleMessaging()" id="messagingBtn">
+                            <i class="fas fa-comments"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
+                                0
+                            </span>
+                        </button>
+
+                        <!-- Sélecteur de thème -->
+                        <div class="dropdown me-3">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-palette"></i> Thème
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="changeTheme('light')">Clair</a></li>
+                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="changeTheme('dark')">Sombre</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Avatar et menu utilisateur -->
+                        <div class="user-avatar me-2 position-relative">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                <span id="user-initials">MA</span>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="user-name">Utilisateur</span>
+                                <span id="admin-badge" class="admin-badge d-none">ADMIN</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="showProfileModal()"><i class="fas fa-user me-2"></i>Mon Profil</a></li>
+                                <li><a class="dropdown-item" href="javascript:void(0)" data-section="favorites"><i class="fas fa-heart me-2"></i>Mes favoris</a></li>
+                                <li><a class="dropdown-item" href="javascript:void(0)" data-section="my_account"><i class="fas fa-cog me-2"></i>Mon Compte</a></li>
+                                <li id="admin-menu-item" class="d-none"><a class="dropdown-item" href="javascript:void(0)" data-section="admin"><i class="fas fa-cog me-2"></i>Administration</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="javascript:void(0)" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Message Alert -->
+    <div class="alert alert-success message-alert">
+        <i class="fas fa-check-circle me-2"></i> <span class="alert-message">Opération réussie!</span>
+    </div>
+
+    <!-- Messagerie améliorée -->
+    <div class="messaging-container" id="messagingContainer">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-comments me-2"></i>Messagerie
+            </h6>
+            <button class="btn btn-sm btn-light" type="button" onclick="toggleMessaging()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Liste des contacts -->
+        <div class="p-3 border-bottom">
+            <h6 class="mb-2">Contacts</h6>
+            <div class="contacts-list" id="contactsList">
+                <!-- Contacts chargés dynamiquement -->
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                Sélectionnez un contact pour commencer à discuter
+            </div>
+        </div>
+        <div class="chat-input">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Tapez votre message..." id="messageInput" disabled>
+                <button class="btn btn-primary" type="button" onclick="sendMessage()" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Connexion -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required placeholder="votre@email.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="loginPassword" required placeholder="Votre mot de passe">
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="handleLogin()">
+                            <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-2">Vous n'avez pas de compte ?</p>
+                        <button type="button" class="btn btn-outline-primary" onclick="switchToRegister()">
+                            Créer un compte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'Inscription -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Inscription
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="registerPrenom" class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="registerPrenom" required placeholder="Votre prénom">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="registerNom" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="registerNom" required placeholder="Votre nom">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required 
+                                   placeholder="votre@email.com" onblur="validateEmailField(this)">
+                            <div class="invalid-feedback" id="emailError">
+                                Format d'email invalide
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPhone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="registerPhone" placeholder="+212 XX XX XX XX">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="registerPassword" required placeholder="Minimum 6 caractères">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Confirmer le mot de passe</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword" required placeholder="Confirmez votre mot de passe">
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="handleRegister()">
+                            <i class="fas fa-user-plus me-2"></i>Créer mon compte
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-2">Vous avez déjà un compte ?</p>
+                        <button type="button" class="btn btn-outline-primary" onclick="switchToLogin()">
+                            Se connecter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Devenir Professionnel -->
+    <div class="modal fade" id="professionalModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="professionalModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Devenir Professionnel
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="professionalForm" onsubmit="submitProfessionalForm(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nom de l'entreprise *</label>
+                            <input type="text" class="form-control" name="company" required placeholder="Ex: Maçonnerie Lyaakobi">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Spécialité *</label>
+                            <select class="form-select" name="specialty" required id="professionalSpecialtySelect">
+                                <option value="">Choisir une spécialité</option>
+                                <option value="maçonnerie">Maçonnerie</option>
+                                <option value="electricite">Électricité</option>
+                                <option value="plomberie">Plomberie</option>
+                                <option value="charpente">Charpente</option>
+                                <option value="couverture">Couverture</option>
+                                <option value="isolation">Isolation</option>
+                                <option value="peinture">Peinture</option>
+                                <option value="carrelage">Carrelage</option>
+                                <option value="menuiserie">Menuiserie</option>
+                                <option value="terrassement">Terrassement</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Années d'expérience *</label>
+                                <input type="number" class="form-control" name="experience" required min="0" max="50" placeholder="Ex: 5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ville *</label>
+                                <select class="form-select" name="city" required>
+                                    <option value="">Choisir une ville</option>
+                                    <!-- Villes chargées dynamiquement -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description *</label>
+                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre entreprise et vos services..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Téléphone *</label>
+                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" placeholder="contact@votre-entreprise.ma">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Site web</label>
+                            <input type="url" class="form-control" name="website" placeholder="https://votre-entreprise.ma">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="submitProfessionalBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Soumettre ma demande
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Profil Utilisateur -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>Modifier mon profil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm" onsubmit="saveProfile(event)">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profileEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="profileEmail" required placeholder="votre@email.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="profilePhone" class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" id="profilePhone" placeholder="+212 XX XX XX XX">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileCompany" class="form-label">Entreprise</label>
+                            <input type="text" class="form-control" id="profileCompany" placeholder="Nom de votre entreprise">
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileAddress" class="form-label">Adresse</label>
+                            <input type="text" class="form-control" id="profileAddress" placeholder="Votre adresse complète">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profileCity" class="form-label">Ville</label>
+                                <input type="text" class="form-control" id="profileCity" placeholder="Votre ville">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="profilePostalCode" class="form-label">Code postal</label>
+                                <input type="text" class="form-control" id="profilePostalCode" placeholder="Code postal">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="showChangePasswordModal()">
+                                <i class="fas fa-key me-2"></i>Mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Changement de Mot de Passe -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key me-2"></i>Changer mon mot de passe
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm" onsubmit="changePassword(event)">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Mot de passe actuel *</label>
+                            <input type="password" class="form-control" id="currentPassword" required placeholder="Votre mot de passe actuel">
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Nouveau mot de passe *</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6" placeholder="Minimum 6 caractères">
+                            <div class="form-text">Le mot de passe doit contenir au moins 6 caractères.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmNewPassword" class="form-label">Confirmer le nouveau mot de passe *</label>
+                            <input type="password" class="form-control" id="confirmNewPassword" required placeholder="Retapez votre nouveau mot de passe">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-key me-2"></i>Changer le mot de passe
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="showProfileModal()">
+                                <i class="fas fa-user me-2"></i>Profil
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Contenu principal -->
+    <main class="container main-content">
+        
+        <!-- SECTION ACCUEIL -->
+        <section id="home-section" class="section-content active">
+            <div class="hero-banner">
+                <div class="container">
+                    <h1 class="display-3 fw-bold mb-4">BTP Pro <span>🇲🇦</span></h1>
+                    <p class="lead mb-4">La plateforme de référence des professionnels du BTP marocain</p>
+                    
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <button class="btn btn-light btn-lg" type="button" onclick="goToSection('marketplace')">
+                            <i class="fas fa-shopping-cart me-2"></i>Découvrir la Marketplace
+                        </button>
+                        <button class="btn btn-outline-light btn-lg" type="button" onclick="goToSection('jobs')">
+                            <i class="fas fa-briefcase me-2"></i>Voir les offres d'emploi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Nos Services au Maroc</h2>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('marketplace')">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">Marketplace BTP</h5>
+                                <p class="text-muted">Matériaux, équipements et fournitures</p>
+                                <button class="btn btn-outline-primary btn-sm mt-2" type="button" onclick="goToSection('marketplace')">Accéder</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('realestate')">
+                            <div class="card-body">
+                                <i class="fas fa-home fa-3x text-success mb-3"></i>
+                                <h5 class="card-title">Immobilier</h5>
+                                <p class="text-muted">Biens, terrains et projets</p>
+                                <button class="btn btn-outline-success btn-sm mt-2" type="button" onclick="goToSection('realestate')">Explorer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('jobs')">
+                            <div class="card-body">
+                                <i class="fas fa-briefcase fa-3x text-warning mb-3"></i>
+                                <h5 class="card-title">Emploi & Carrière</h5>
+                                <p class="text-muted">Offres d'emploi et recrutement</p>
+                                <button class="btn btn-outline-warning btn-sm mt-2" type="button" onclick="goToSection('jobs')">Voir les offres</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card text-center h-100" onclick="goToSection('freelancers')">
+                            <div class="card-body">
+                                <i class="fas fa-palette fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">Freelancers</h5>
+                                <p class="text-muted">Talents créatifs et techniques</p>
+                                <button class="btn btn-outline-info btn-sm mt-2" type="button" onclick="goToSection('freelancers')">Découvrir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ déplacée ici -->
+            <div class="container my-5">
+                <h2 class="text-center mb-5">Foire Aux Questions</h2>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Comment publier une annonce ?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cliquez sur "Publier" dans le menu, choisissez le type d'annonce et remplissez le formulaire. Vos annonces seront visibles après modération.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Comment contacter un professionnel ?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Rendez-vous dans la section "Professionnels", trouvez l'artisan qui vous intéresse et cliquez sur "Contacter". Vous pourrez ensuite discuter via notre messagerie sécurisée.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Comment devenir membre Premium ?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Rendez-vous dans la section "Premium" et choisissez l'abonnement qui vous convient. Les avantages Premium incluent la mise en avant de vos annonces et des statistiques détaillées.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pub Adsense -->
+            <div class="adsense-container">
+                <div class="adsense-placeholder">
+                    <i class="fas fa-ad fa-3x mb-3"></i>
+                    <h5>Espace Publicitaire BTP</h5>
+                    <p>Votre annonce pour les professionnels du bâtiment</p>
+                    <small>Code Adsense à intégrer depuis le panel admin</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION MARKETPLACE -->
+        <section id="marketplace-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Marketplace BTP</h2>
+                    <button class="btn btn-primary" type="button" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Publier un produit
+                    </button>
+                </div>
+                
+                <!-- Filtres et recherche -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceCategoryFilter" onchange="filterMarketplace()">
+                            <option value="">Toutes les catégories</option>
+                            <!-- Catégories chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceCityFilter" onchange="filterMarketplace()">
+                            <option value="">Toutes les villes</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="marketplaceSort" onchange="filterMarketplace()">
+                            <option value="newest">Plus récent</option>
+                            <option value="price_asc">Prix croissant</option>
+                            <option value="price_desc">Prix décroissant</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="marketplace-container">
+                    <!-- Produits chargés dynamiquement -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted mt-2">Chargement des produits...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="marketplace-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION IMMOBILIER -->
+        <section id="realestate-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Immobilier au Maroc</h2>
+                    <button class="btn btn-success" type="button" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Publier une annonce
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateTypeFilter" onchange="filterRealEstate()">
+                            <option value="">Tous les types</option>
+                            <option value="villa">Villa</option>
+                            <option value="appartement">Appartement</option>
+                            <option value="terrain">Terrain</option>
+                            <option value="local">Local commercial</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateCityFilter" onchange="filterRealEstate()">
+                            <option value="">Toutes les villes</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestatePriceFilter" onchange="filterRealEstate()">
+                            <option value="">Tous les prix</option>
+                            <option value="0-500000">Moins de 500K MAD</option>
+                            <option value="500000-1000000">500K - 1M MAD</option>
+                            <option value="1000000-2000000">1M - 2M MAD</option>
+                            <option value="2000000+">Plus de 2M MAD</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="realestateSort" onchange="filterRealEstate()">
+                            <option value="newest">Plus récent</option>
+                            <option value="price_asc">Prix croissant</option>
+                            <option value="price_desc">Prix décroissant</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="realestate-container">
+                    <!-- Biens chargés dynamiquement -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted mt-2">Chargement des biens immobiliers...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="realestate-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION EMPLOI -->
+        <section id="jobs-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Emploi BTP</h2>
+                    <button class="btn btn-warning" type="button" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Publier une offre
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobTypeFilter" onchange="filterJobs()">
+                            <option value="">Tous les contrats</option>
+                            <option value="cdi">CDI</option>
+                            <option value="cdd">CDD</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="stage">Stage</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobCityFilter" onchange="filterJobs()">
+                            <option value="">Toutes les villes</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobExperienceFilter" onchange="filterJobs()">
+                            <option value="">Toutes expériences</option>
+                            <option value="0-2">0-2 ans</option>
+                            <option value="2-5">2-5 ans</option>
+                            <option value="5-10">5-10 ans</option>
+                            <option value="10+">10+ ans</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="jobSort" onchange="filterJobs()">
+                            <option value="newest">Plus récent</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="jobs-container">
+                    <!-- Offres chargées dynamiquement -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted mt-2">Chargement des offres d'emploi...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="jobs-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FREELANCERS -->
+        <section id="freelancers-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Freelancers BTP</h2>
+                    <button class="btn btn-info" type="button" onclick="goToSection('publish')">
+                        <i class="fas fa-plus me-2"></i>Proposer mes services
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerSpecialtyFilter" onchange="filterFreelancers()">
+                            <option value="">Toutes les spécialités</option>
+                            <option value="infographie">Infographie 3D</option>
+                            <option value="photographie">Photographie</option>
+                            <option value="dessin">Dessin technique</option>
+                            <option value="conception">Conception</option>
+                            <option value="architecture">Architecture</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerCityFilter" onchange="filterFreelancers()">
+                            <option value="">Toutes les villes</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="freelancerSort" onchange="filterFreelancers()">
+                            <option value="newest">Plus récent</option>
+                            <option value="rating">Meilleures notes</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="freelancers-container">
+                    <!-- Freelancers chargés dynamiquement -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted mt-2">Chargement des freelancers...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="freelancers-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PROFESSIONNELS -->
+        <section id="professionals-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-5">
+                    <h2 class="mb-0">Annuaire des Professionnels BTP</h2>
+                   <button class="btn btn-primary" type="button" id="becomeProfessionalBtn" onclick="showProfessionalModal()">
+                         <i class="fas fa-user-plus me-2"></i>Rejoindre l'Annuaire
+                    </button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <select class="form-select" id="professionalSpecialtyFilter" onchange="filterProfessionals()">
+                            <option value="">Toutes les spécialités</option>
+                            <!-- Spécialités chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="professionalCityFilter" onchange="filterProfessionals()">
+                            <option value="">Toutes les villes</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="professionalSort" onchange="filterProfessionals()">
+                            <option value="newest">Plus récent</option>
+                            <option value="experience_desc">Expérience décroissante</option>
+                            <option value="rating_desc">Meilleures notes</option>
+                            <option value="premium">Premium d'abord</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="professionals-container">
+                    <!-- Professionnels chargés dynamiquement -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="text-muted mt-2">Chargement des professionnels...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="professionals-pagination">
+                    <!-- Pagination générée dynamiquement -->
+                </div>
+            </div>
+        </section>
+        <!-- SECTION FORUM -->
+        <section id="forum-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Forum BTP</h2>
+                    <button class="btn btn-primary" onclick="goToSection('forum-create')">
+                        <i class="fas fa-plus me-2"></i>Nouveau sujet
+                    </button>
+                </div>
+
+                <!-- Catégories du forum -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Catégories</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a class="list-group-item list-group-item-action active" href="javascript:void(0)" onclick="filterForum('all')">
+                                    Tous les sujets
+                                </a>
+                                <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="filterForum('technique')">
+                                    Questions techniques
+                                </a>
+                                <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="filterForum('materiaux')">
+                                    Matériaux & Fournitures
+                                </a>
+                                <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="filterForum('reglementation')">
+                                    Réglementation & Normes
+                                </a>
+                                <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="filterForum('chantier')">
+                                    Gestion de chantier
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Rechercher dans le forum..." id="forumSearch">
+                                    <button class="btn btn-primary" onclick="searchForum()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="forum-topics-container">
+                                    <!-- Sujets chargés dynamiquement -->
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                        <h4>Aucun sujet pour le moment</h4>
+                                        <p class="text-muted">Soyez le premier à lancer une discussion !</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION CRÉATION DE SUJET FORUM -->
+        <section id="forum-create-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Créer un nouveau sujet</h2>
+                    <button class="btn btn-outline-primary" onclick="goToSection('forum')">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au forum
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form id="forumTopicForm" onsubmit="createForumTopic(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Titre du sujet *</label>
+                                <input type="text" class="form-control" id="forumTopicTitle" required placeholder="Donnez un titre clair à votre sujet">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Catégorie *</label>
+                                <select class="form-select" id="forumTopicCategory" required>
+                                    <option value="">Choisir une catégorie</option>
+                                    <option value="technique">Questions techniques</option>
+                                    <option value="materiaux">Matériaux & Fournitures</option>
+                                    <option value="reglementation">Réglementation & Normes</option>
+                                    <option value="chantier">Gestion de chantier</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contenu du message *</label>
+                                <textarea class="form-control" id="forumTopicContent" rows="8" required placeholder="Décrivez votre question ou sujet de discussion en détail..."></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Publier le sujet
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="goToSection('forum')">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PREMIUM -->
+        <section id="premium-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Avantages Premium</h2>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">Basique</h5>
+                                <p class="card-text display-6 fw-bold text-primary">Gratuit</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ 3 annonces actives</li>
+                                    <li>✅ 5 photos par annonce</li>
+                                    <li>✅ Support standard</li>
+                                    <li>❌ Statistiques basiques</li>
+                                    <li>❌ Mise en avant</li>
+                                    <li>❌ Messagerie avancée</li>
+                                </ul>
+                                <button class="btn btn-outline-primary" type="button" onclick="selectSubscription('Basique')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-primary premium-card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Pro</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text display-6 fw-bold text-primary">49 MAD/mois</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ Annonces illimitées</li>
+                                    <li>✅ 20 photos HD par annonce</li>
+                                    <li>✅ Support prioritaire</li>
+                                    <li>✅ Statistiques détaillées</li>
+                                    <li>✅ Mise en avant 1 annonce</li>
+                                    <li>✅ Messagerie illimitée</li>
+                                </ul>
+                                <button class="btn btn-primary" type="button" onclick="selectSubscription('Pro')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">Entreprise</h5>
+                                <p class="card-text display-6 fw-bold text-primary">149 MAD/mois</p>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>✅ Tous les avantages Pro</li>
+                                    <li>✅ Multi-utilisateurs</li>
+                                    <li>✅ API d'intégration</li>
+                                    <li>✅ Formation incluse</li>
+                                    <li>✅ Mise en avant illimitée</li>
+                                    <li>✅ Certificat vérifié</li>
+                                </ul>
+                                <button class="btn btn-outline-primary" type="button" onclick="selectSubscription('Entreprise')">Choisir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Avantages Premium détaillés -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Pourquoi passer Premium ?</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-chart-line text-primary me-2"></i>Statistiques avancées</h6>
+                                        <p class="text-muted">Suivez les performances de vos annonces avec des données détaillées.</p>
+                                        
+                                        <h6><i class="fas fa-star text-warning me-2"></i>Mise en avant</h6>
+                                        <p class="text-muted">Vos annonces apparaissent en tête des résultats de recherche.</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-bolt text-success me-2"></i>Support prioritaire</h6>
+                                        <p class="text-muted">Réponses rapides et assistance dédiée pour vos questions.</p>
+                                        
+                                        <h6><i class="fas fa-shield-alt text-danger me-2"></i>Certification</h6>
+                                        <p class="text-muted">Badge vérifié qui renforce la confiance de vos clients.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION FAVORIS -->
+        <section id="favorites-section" class="section-content">
+            <div class="container my-5 py-5">
+                <h2 class="text-center mb-5">Mes Favoris</h2>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                                <h4>Vos favoris apparaîtront ici</h4>
+                                <p class="text-muted">Ajoutez des éléments en cliquant sur le cœur</p>
+                                <button class="btn btn-primary mt-3" onclick="goToSection('marketplace')">
+                                    <i class="fas fa-shopping-cart me-2"></i>Parcourir la Marketplace
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PUBLICATION -->
+        <section id="publish-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0" id="publish-title">Publier une annonce</h2>
+                    <button class="btn btn-outline-success" type="button" onclick="showNewAnnounceForm()" id="new-announce-btn" style="display: none;">
+                        <i class="fas fa-plus me-2"></i>Nouvelle annonce
+                    </button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="list-group">
+                            <a class="list-group-item list-group-item-action active" href="javascript:void(0)" onclick="showPublishForm('marketplace')">
+                                <i class="fas fa-shopping-cart me-2"></i>Marketplace
+                            </a>
+                            <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="showPublishForm('immobilier')">
+                                <i class="fas fa-home me-2"></i>Immobilier
+                            </a>
+                            <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="showPublishForm('emploi')">
+                                <i class="fas fa-briefcase me-2"></i>Offre d'emploi
+                            </a>
+                            <a class="list-group-item list-group-item-action" href="javascript:void(0)" onclick="showPublishForm('freelance')">
+                                <i class="fas fa-palette me-2"></i>Service Freelance
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Formulaire Marketplace -->
+                        <div id="marketplace-form" class="publish-form">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Nouveau produit Marketplace</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishMarketplace(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre du produit *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Ciment CPJ45 50kg">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Catégorie *</label>
+                                                <select class="form-select" name="category" required id="marketplaceCategorySelect" onchange="handleCategoryChange(this)">
+                                                    <!-- Catégories chargées dynamiquement -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Prix (MAD) *</label>
+                                                <input type="number" class="form-control" name="price" required placeholder="Ex: 85">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Unité</label>
+                                                <select class="form-select" name="unit">
+                                                    <option value="sac">Sac</option>
+                                                    <option value="m2">m²</option>
+                                                    <option value="m3">m³</option>
+                                                    <option value="unite">Unité</option>
+                                                    <option value="lot">Lot</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <select class="form-select" name="city" required>
+                                                    <option value="">Choisir une ville</option>
+                                                    <!-- Villes chargées dynamiquement -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description détaillée *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre produit..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Photos (max 5)</label>
+                                            <div class="photo-upload-container" onclick="document.getElementById('marketplacePhotos').click()">
+                                                <i class="fas fa-cloud-upload-alt fa-2x mb-3"></i>
+                                                <h5>Cliquez pour ajouter des photos</h5>
+                                                <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
+                                                <small class="text-muted">Maximum 5 photos, 2MB par photo</small>
+                                            </div>
+                                            <input type="file" id="marketplacePhotos" multiple accept="image/*" style="display: none" onchange="handlePhotoUpload(this, 'marketplace')">
+                                            <div class="photo-preview" id="marketplacePhotoPreview"></div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Immobilier -->
+                        <div id="immobilier-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-home me-2"></i>Nouvelle annonce Immobilier</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishRealEstate(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre de l'annonce *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Villa Moderne 220m² - Marrakech">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Type de bien *</label>
+                                                <select class="form-select" name="type" required>
+                                                    <option value="">Choisir un type</option>
+                                                    <option value="villa">Villa</option>
+                                                    <option value="appartement">Appartement</option>
+                                                    <option value="terrain">Terrain</option>
+                                                    <option value="local">Local commercial</option>
+                                                    <option value="bureau">Bureau</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Prix (MAD) *</label>
+                                                <input type="number" class="form-control" name="price" required placeholder="Ex: 2800000">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Surface (m²)</label>
+                                                <input type="number" class="form-control" name="surface" placeholder="Ex: 220">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Nombre de pièces</label>
+                                                <input type="number" class="form-control" name="rooms" placeholder="Ex: 4">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Adresse *</label>
+                                            <input type="text" class="form-control" name="address" required placeholder="Ex: Gueliz, Marrakech">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description détaillée *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre bien..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Photos (max 5)</label>
+                                            <div class="photo-upload-container" onclick="document.getElementById('realestatePhotos').click()">
+                                                <i class="fas fa-cloud-upload-alt fa-2x mb-3"></i>
+                                                <h5>Cliquez pour ajouter des photos</h5>
+                                                <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
+                                                <small class="text-muted">Maximum 5 photos, 2MB par photo</small>
+                                            </div>
+                                            <input type="file" id="realestatePhotos" multiple accept="image/*" style="display: none" onchange="handlePhotoUpload(this, 'realestate')">
+                                            <div class="photo-preview" id="realestatePhotoPreview"></div>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Emploi -->
+                        <div id="emploi-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>Nouvelle offre d'emploi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishJob(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Poste *</label>
+                                                <input type="text" class="form-control" name="poste" required placeholder="Ex: Chef de Chantier BTP">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Type de contrat *</label>
+                                                <select class="form-select" name="contrat" required>
+                                                    <option value="">Choisir un contrat</option>
+                                                    <option value="cdi">CDI</option>
+                                                    <option value="cdd">CDD</option>
+                                                    <option value="freelance">Freelance</option>
+                                                    <option value="stage">Stage</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Salaire *</label>
+                                                <input type="text" class="form-control" name="salaire" required placeholder="Ex: 15 000 - 18 000 MAD/mois">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Expérience requise</label>
+                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 5+ ans">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description du poste *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez le poste et les missions..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier l'offre
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formulaire Freelance -->
+                        <div id="freelance-form" class="publish-form" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Nouveau service Freelance</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="handlePublishFreelance(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Titre du service *</label>
+                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Infographiste 3D BTP">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Spécialité *</label>
+                                                <select class="form-select" name="specialty" required>
+                                                    <option value="">Choisir une spécialité</option>
+                                                    <option value="infographie">Infographie 3D</option>
+                                                    <option value="photographie">Photographie</option>
+                                                    <option value="dessin">Dessin technique</option>
+                                                    <option value="conception">Conception</option>
+                                                    <option value="architecture">Architecture</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Tarif (MAD)</label>
+                                                <input type="text" class="form-control" name="tarif" placeholder="Ex: 500-1000 MAD/jour">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Expérience</label>
+                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 3+ ans">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description du service *</label>
+                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez vos compétences et services..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Portfolio/Lien</label>
+                                            <input type="url" class="form-control" name="portfolio" placeholder="Ex: https://votre-portfolio.com">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Votre téléphone *</label>
+                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <button type="submit" class="btn btn-info">
+                                            <i class="fas fa-paper-plane me-2"></i>Publier le service
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION ADMINISTRATION -->
+        <section id="admin-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>Administration BTP Pro
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" type="button" onclick="goToSection('home')">
+                                    <i class="fas fa-arrow-left me-2"></i>Retour
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <h3 id="stats-users">0</h3>
+                                <p class="text-muted mb-0">Utilisateurs</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
+                                <h3 id="stats-marketplace">0</h3>
+                                <p class="text-muted mb-0">Produits</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-home fa-2x text-warning mb-2"></i>
+                                <h3 id="stats-realestate">0</h3>
+                                <p class="text-muted mb-0">Biens immo</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center admin-stats-card">
+                            <div class="card-body">
+                                <i class="fas fa-briefcase fa-2x text-info mb-2"></i>
+                                <h3 id="stats-jobs">0</h3>
+                                <p class="text-muted mb-0">Offres emploi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Newsletter/Communication -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-envelope me-2"></i>
+                            Communication & Newsletter
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card text-center h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                                        <h5>Envoyer aux abonnés</h5>
+                                        <p class="text-muted">Message à tous les utilisateurs</p>
+                                        <button class="btn btn-primary btn-sm" onclick="newsletterManager.showNewsletterModal('all')">
+                                            <i class="fas fa-paper-plane me-1"></i>Composer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-user-plus fa-2x text-success mb-3"></i>
+                                        <h5>Nouveaux abonnés</h5>
+                                        <p class="text-muted">Email de bienvenue</p>
+                                        <button class="btn btn-success btn-sm" onclick="newsletterManager.showNewsletterModal('new')">
+                                            <i class="fas fa-envelope me-1"></i>Composer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-crown fa-2x text-warning mb-3"></i>
+                                        <h5>Promotion Premium</h5>
+                                        <p class="text-muted">Encourager l'upgrade</p>
+                                        <button class="btn btn-warning btn-sm" onclick="newsletterManager.showNewsletterModal('premium')">
+                                            <i class="fas fa-bullhorn me-1"></i>Composer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gestion des abonnés -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6><i class="fas fa-users me-2"></i>Gestion des abonnés</h6>
+                            <div>
+                                <button class="btn btn-outline-primary btn-sm me-2" onclick="exportImportManager.exportSubscribers()">
+                                    <i class="fas fa-download me-1"></i>Exporter
+                                </button>
+                                <button class="btn btn-outline-success btn-sm me-2" onclick="exportImportManager.showImportModal()">
+                                    <i class="fas fa-upload me-1"></i>Importer
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="backupManager.showBackupModal()">
+                                    <i class="fas fa-database me-1"></i>Sauvegarde
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Historique des newsletters -->
+                        <div class="mt-4">
+                            <h6>Historique des newsletters</h6>
+                            <div id="newsletter-history-container">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Chargement de l'historique...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion des Utilisateurs -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users-cog me-2"></i>
+                            Gestion des Utilisateurs
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Utilisateur</th>
+                                        <th>Coordonnées</th>
+                                        <th>Statut</th>
+                                        <th>Inscription</th>
+                                        <th>Dernière visite</th>
+                                        <th>Visites</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Chargement des utilisateurs...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion Adsense -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-ad me-2"></i>
+                            Gestion des Publicités Adsense
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="adsense-slots-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Chargement de la gestion Adsense...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modération des annonces -->
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Modération des Annonces
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="admin-table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Type</th>
+                                        <th>Auteur</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moderation-table-body">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Chargement des annonces...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION MON COMPTE -->
+        <section id="my_account-section" class="section-content">
+            <div class="container my-5 py-5">
+                <div class="row">
+                    <div class="col-md-3">
+                        <!-- Sidebar Navigation -->
+                        <div class="account-sidebar">
+                            <nav class="nav flex-column">
+                                <a class="nav-link active" href="javascript:void(0)" data-account-section="profile">
+                                    <i class="fas fa-user me-2"></i>Mon Profil
+                                </a>
+                                <a class="nav-link" href="javascript:void(0)" data-account-section="announces">
+                                    <i class="fas fa-bullhorn me-2"></i>Mes Annonces
+                                </a>
+                                <a class="nav-link" href="javascript:void(0)" data-account-section="favorites">
+                                    <i class="fas fa-heart me-2"></i>Mes Favoris
+                                </a>
+                                <a class="nav-link" href="javascript:void(0)" data-account-section="settings">
+                                    <i class="fas fa-cog me-2"></i>Paramètres
+                                </a>
+                                <a class="nav-link" href="javascript:void(0)" data-account-section="premium">
+                                    <i class="fas fa-crown me-2"></i>Abonnement Premium
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <!-- Contenu du compte -->
+                        <div class="account-content">
+                            
+                            <!-- Section Profil -->
+                            <div id="account-profile" class="account-section active">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="mb-0">
+                                        <i class="fas fa-user me-2"></i>Mon Profil
+                                    </h3>
+                                    <button class="btn btn-outline-primary" onclick="toggleEditProfile()">
+                                        <i class="fas fa-edit me-2"></i>Modifier
+                                    </button>
+                                </div>
+                                
+                                <div id="profile-view">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Nom complet</label>
+                                                <p class="h5" id="profile-fullname">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Email</label>
+                                                <p class="h6" id="profile-email">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Téléphone</label>
+                                                <p class="h6" id="profile-phone">-</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted">Date d'inscription</label>
+                                                <p class="h6" id="profile-created">-</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <div class="user-avatar-large mb-3">
+                                                <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2rem; margin: 0 auto;">
+                                                    <span id="profile-initials">MA</span>
+                                                </div>
+                                            </div>
+                                            <div id="premium-status-badge" class="d-none">
+                                                <span class="premium-badge">⭐ ABONNÉ PREMIUM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="profile-edit" style="display: none;">
+                                    <form id="profile-form" onsubmit="saveProfile(event)">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Prénom *</label>
+                                                <input type="text" class="form-control" id="edit-prenom" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Nom *</label>
+                                                <input type="text" class="form-control" id="edit-nom" required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Email *</label>
+                                            <input type="email" class="form-control" id="edit-email" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Téléphone</label>
+                                            <input type="tel" class="form-control" id="edit-phone" placeholder="+212 XX XX XX XX">
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Enregistrer
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="toggleEditProfile()">
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Section Mes Annonces -->
+                            <div id="account-announces" class="account-section">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="mb-0">
+                                        <i class="fas fa-bullhorn me-2"></i>Mes Annonces
+                                    </h3>
+                                    <button class="btn btn-primary" onclick="goToSection('publish')">
+                                        <i class="fas fa-plus me-2"></i>Nouvelle Annonce
+                                    </button>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-primary" id="stats-total-announces">0</h4>
+                                                    <p class="text-muted mb-0">Total</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-success" id="stats-active-announces">0</h4>
+                                                    <p class="text-muted mb-0">Actives</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-warning" id="stats-pending-announces">0</h4>
+                                                    <p class="text-muted mb-0">En attente</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h4 class="text-danger" id="stats-rejected-announces">0</h4>
+                                                    <p class="text-muted mb-0">Rejetées</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="user-announces-list">
+                                    <p class="text-muted text-center">Aucune annonce publiée</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Section Paramètres -->
+                            <div id="account-settings" class="account-section">
+                                <h3 class="mb-4">
+                                    <i class="fas fa-cog me-2"></i>Paramètres du Compte
+                                </h3>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Changer le mot de passe</h5>
+                                        <form id="changePasswordForm" onsubmit="changePassword(event)">
+                                            <div class="mb-3">
+                                                <label class="form-label">Mot de passe actuel</label>
+                                                <input type="password" class="form-control" id="currentPassword" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Nouveau mot de passe</label>
+                                                <input type="password" class="form-control" id="newPassword" required minlength="6">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Confirmer le nouveau mot de passe</label>
+                                                <input type="password" class="form-control" id="confirmNewPassword" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-key me-2"></i>Changer le mot de passe
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="account-premium" class="account-section">
+                                <h3 class="mb-4">
+                                    <i class="fas fa-crown me-2"></i>Abonnement Premium
+                                </h3>
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-crown fa-3x text-warning mb-3"></i>
+                                        <h4>Passez à la version Premium</h4>
+                                        <p class="text-muted mb-4">Profitez d'avantages exclusifs pour booster votre activité</p>
+                                        <button class="btn btn-warning btn-lg" onclick="goToSection('premium')">
+                                            <i class="fas fa-star me-2"></i>Découvrir Premium
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5>BTP Pro <span>🇲🇦</span></h5>
+                    <p>La plateforme de référence des professionnels du BTP marocain</p>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Services</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="javascript:void(0)" data-section="marketplace">Marketplace</a></li>
+                        <li class="mb-2"><a href="javascript:void(0)" data-section="realestate">Immobilier</a></li>
+                        <li class="mb-2"><a href="javascript:void(0)" data-section="jobs">Emploi</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; 2024 BTP Pro Maroc. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts personnalisés - ORDRE CORRECT -->
+    <script src="js/utils.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/pagination.js"></script>
+    
+    <!-- NOUVEAUX MODULES JOBS -->
+    <script src="js/jobs-data.js"></script>
+    <script src="js/jobs-forms.js"></script>
+    <script src="js/jobs-ui.js"></script>
+    <script src="js/jobs-applications.js"></script>
+    
+    <!-- Script principal jobs RESTRUCTURÉ -->
+    <script src="js/jobs.js"></script>
+    
+    <!-- Autres modules -->
+    <script src="js/app.js"></script>
+    <script src="js/marketplace.js"></script>
+    <script src="js/realestate.js"></script>
+    <script src="js/freelancers.js"></script>
+    <script src="js/professionals.js"></script>
+    <script src="js/forum.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/messaging.js"></script>
+    
+    <!-- Nouveaux scripts pour les fonctionnalités avancées -->
+    <script src="js/newsletter.js"></script>
+    <script src="js/export-import.js"></script>
+    <script src="js/backup.js"></script>
+    
+    <!-- Assistant IA -->
+    <script src="js/ai-assistant.js"></script>
+</body>
+</html>
