@@ -204,6 +204,614 @@ async function loadUsersTable() {
     }
 }
 
+// ========== FONCTIONS DÉTAILS UTILISATEUR CORRIGÉES ==========
+
+async function viewUserDetails(userId) {
+    if (!checkAdminAccess()) return;
+    
+    console.log(`👤 Affichage détails utilisateur: ${userId}`);
+    
+    try {
+        // Récupérer les données utilisateur complètes
+        const user = await btpDB.get('users', userId);
+        
+        if (!user) {
+            showAlert('❌ Utilisateur non trouvé', 'error');
+            return;
+        }
+
+        // Récupérer les statistiques de l'utilisateur
+        const [userPosts, userApplications] = await Promise.all([
+            getUserPostsCount(userId),
+            getUserApplicationsCount(userId)
+        ]);
+
+        // Générer le contenu détaillé
+        const userDetailsHTML = generateUserDetailsContent(user, userPosts, userApplications);
+        
+        // Afficher le modal
+        showUserDetailsModal(userDetailsHTML, userId);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement détails utilisateur:', error);
+        showAlert('❌ Erreur lors du chargement des détails utilisateur', 'error');
+    }
+}
+
+async function getUserPostsCount(userId) {
+    try {
+        const [marketplace, realestate, jobs, freelancers, professionals] = await Promise.all([
+            btpDB.get('marketplace_posts'),
+            btpDB.get('realestate_posts'),
+            btpDB.get('job_posts'),
+            btpDB.get('freelancers'),
+            btpDB.get('professionals')
+        ]);
+
+        const userMarketplace = marketplace.filter(post => post.userId === userId);
+        const userRealestate = realestate.filter(post => post.userId === userId);
+        const userJobs = jobs.filter(post => post.userId === userId);
+        const userFreelancers = freelancers.filter(post => post.userId === userId);
+        const userProfessionals = professionals.filter(post => post.userId === userId);
+
+        return {
+            marketplace: userMarketplace.length,
+            realestate: userRealestate.length,
+            jobs: userJobs.length,
+            freelancers: userFreelancers.length,
+            professionals: userProfessionals.length,
+            total: userMarketplace.length + userRealestate.length + userJobs.length + userFreelancers.length + userProfessionals.length
+        };
+    } catch (error) {
+        console.error('Erreur comptage posts:', error);
+        return { marketplace: 0, realestate: 0, jobs: 0, freelancers: 0, professionals: 0, total: 0 };
+    }
+}
+
+async function getUserApplicationsCount(userId) {
+    try {
+        const applications = await btpDB.get('job_applications');
+        const userApplications = applications.filter(app => app.candidateId === userId);
+        
+        return {
+            total: userApplications.length,
+            pending: userApplications.filter(app => app.status === 'en_attente').length,
+            accepted: userApplications.filter(app => app.status === 'accepte').length,
+            rejected: userApplications.filter(app => app.status === 'rejete').length
+        };
+    } catch (error) {
+        console.error('Erreur comptage candidatures:', error);
+        return { total: 0, pending: 0, accepted: 0, rejected: 0 };
+    }
+}
+
+function generateUserDetailsContent(user, userPosts, userApplications) {
+    const registrationDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
+    const lastVisit = user.lastVisit ? new Date(user.lastVisit).toLocaleDateString('fr-FR') : 'Jamais';
+    const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString('fr-FR') : 'Jamais';
+    
+    return `
+        <div class="user-details-container">
+            <div class="row">
+                <!-- Informations personnelles -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user me-2"></i>
+                                Informations Personnelles
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Nom complet:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.prenom} ${user.nom}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Email:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.email}
+                                    ${user.emailVerified ? '<span class="badge bg-success ms-2">Vérifié</span>' : '<span class="badge bg-warning ms-2">Non vérifié</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Téléphone:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.phone || '<span class="text-muted">Non renseigné</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Ville:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.city || '<span class="text-muted">Non renseignée</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Profession:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.profession || '<span class="text-muted">Non renseignée</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statut et activité -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Statut & Activité
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Statut:</strong>
+                                </div>
+                                <div class="col-6">
+                                    ${user.isBlocked ? 
+                                        '<span class="badge bg-danger">🚫 Bloqué</span>' : 
+                                        '<span class="badge bg-success">✅ Actif</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Rôle:</strong>
+                                </div>
+                                <div class="col-6">
+                                    ${user.role === 'admin' ? 
+                                        '<span class="badge bg-primary">👑 Administrateur</span>' : 
+                                        '<span class="badge bg-secondary">👤 Utilisateur</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Premium:</strong>
+                                </div>
+                                <div class="col-6">
+                                    ${user.hasPremium ? 
+                                        '<span class="badge bg-warning">⭐ Actif</span>' : 
+                                        '<span class="badge bg-secondary">Basic</span>'}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Visites:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="badge bg-info">${user.visitCount || 0}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Dernière visite:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small>${lastVisit}</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Dernière connexion:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small>${lastLogin}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques des annonces -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bullhorn me-2"></i>
+                                Annonces Publées
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h4 mb-0 text-primary">${userPosts.total}</div>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0">${userPosts.marketplace}</div>
+                                        <small class="text-muted">Marketplace</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0">${userPosts.realestate}</div>
+                                        <small class="text-muted">Immobilier</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row text-center mt-2">
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0">${userPosts.jobs}</div>
+                                        <small class="text-muted">Emplois</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0">${userPosts.freelancers}</div>
+                                        <small class="text-muted">Freelance</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0">${userPosts.professionals}</div>
+                                        <small class="text-muted">Pros</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidatures -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Candidatures
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h4 mb-0">${userApplications.total}</div>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0 text-warning">${userApplications.pending}</div>
+                                        <small class="text-muted">En attente</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0 text-success">${userApplications.accepted}</div>
+                                        <small class="text-muted">Acceptées</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2 bg-light">
+                                        <div class="h6 mb-0 text-danger">${userApplications.rejected}</div>
+                                        <small class="text-muted">Rejetées</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informations Système
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <strong>ID Utilisateur:</strong>
+                                        <div class="text-muted font-monospace small">${user.id}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <strong>Date d'inscription:</strong>
+                                        <div>${registrationDate}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <strong>Dernière mise à jour:</strong>
+                                        <div>${user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('fr-FR') : 'Inconnue'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            ${user.blockedAt ? `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-ban me-2"></i>
+                                <strong>Utilisateur bloqué</strong>
+                                <div>Le ${new Date(user.blockedAt).toLocaleDateString('fr-FR')} par ${user.blockedBy || 'système'}</div>
+                                ${user.blockReason ? `<div>Raison: ${user.blockReason}</div>` : ''}
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showUserDetailsModal(content, userId) {
+    const modalHTML = `
+        <div class="modal fade" id="userDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-circle me-2"></i>
+                            Détails de l'Utilisateur
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        ${content}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Fermer
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="editUser('${userId}')">
+                            <i class="fas fa-edit me-2"></i>Modifier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Supprimer le modal existant
+    const existingModal = document.getElementById('userDetailsModal');
+    if (existingModal) existingModal.remove();
+
+    // Ajouter le nouveau modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    modal.show();
+}
+
+// ========== FONCTION EDIT USER CORRIGÉE ==========
+
+async function editUser(userId) {
+    if (!checkAdminAccess()) return;
+    
+    console.log(`✏️ Édition utilisateur: ${userId}`);
+    
+    try {
+        const user = await btpDB.get('users', userId);
+        
+        if (!user) {
+            showAlert('❌ Utilisateur non trouvé', 'error');
+            return;
+        }
+
+        showEditUserModal(user);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement utilisateur:', error);
+        showAlert('❌ Erreur lors du chargement des données utilisateur', 'error');
+    }
+}
+
+function showEditUserModal(user) {
+    const modalHTML = `
+        <div class="modal fade" id="editUserModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>
+                            Modifier l'Utilisateur
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editPrenom" class="form-label">Prénom *</label>
+                                        <input type="text" class="form-control" id="editPrenom" value="${user.prenom || ''}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editNom" class="form-label">Nom *</label>
+                                        <input type="text" class="form-control" id="editNom" value="${user.nom || ''}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="editEmail" value="${user.email || ''}" required>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editPhone" class="form-label">Téléphone</label>
+                                        <input type="tel" class="form-control" id="editPhone" value="${user.phone || ''}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="editCity" class="form-label">Ville</label>
+                                        <input type="text" class="form-control" id="editCity" value="${user.city || ''}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="editProfession" class="form-label">Profession</label>
+                                <input type="text" class="form-control" id="editProfession" value="${user.profession || ''}">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Statut</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="editStatus" id="editStatusActive" value="active" ${!user.isBlocked ? 'checked' : ''}>
+                                                <label class="form-check-label" for="editStatusActive">Actif</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="editStatus" id="editStatusBlocked" value="blocked" ${user.isBlocked ? 'checked' : ''}>
+                                                <label class="form-check-label" for="editStatusBlocked">Bloqué</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Rôle</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="editRole" id="editRoleUser" value="user" ${user.role !== 'admin' ? 'checked' : ''}>
+                                                <label class="form-check-label" for="editRoleUser">Utilisateur</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="editRole" id="editRoleAdmin" value="admin" ${user.role === 'admin' ? 'checked' : ''}>
+                                                <label class="form-check-label" for="editRoleAdmin">Admin</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Premium</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="editPremium" ${user.hasPremium ? 'checked' : ''}>
+                                            <label class="form-check-label" for="editPremium">Abonnement actif</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${user.isBlocked ? `
+                            <div class="mb-3">
+                                <label for="editBlockReason" class="form-label">Raison du blocage</label>
+                                <textarea class="form-control" id="editBlockReason" rows="2">${user.blockReason || ''}</textarea>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Les modifications seront appliquées immédiatement après sauvegarde.
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="saveUserChanges('${user.id}')">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Supprimer le modal existant
+    const existingModal = document.getElementById('editUserModal');
+    if (existingModal) existingModal.remove();
+
+    // Ajouter le nouveau modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+}
+
+async function saveUserChanges(userId) {
+    if (!checkAdminAccess()) return;
+    
+    const form = document.getElementById('editUserForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const updates = {
+        prenom: document.getElementById('editPrenom').value.trim(),
+        nom: document.getElementById('editNom').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        city: document.getElementById('editCity').value.trim(),
+        profession: document.getElementById('editProfession').value.trim(),
+        isBlocked: document.querySelector('input[name="editStatus"]:checked').value === 'blocked',
+        role: document.querySelector('input[name="editRole"]:checked').value,
+        hasPremium: document.getElementById('editPremium').checked,
+        updatedAt: new Date().toISOString(),
+        updatedBy: appState.currentUser.id
+    };
+    
+    if (updates.isBlocked) {
+        updates.blockReason = document.getElementById('editBlockReason')?.value.trim() || 'Modifié par administrateur';
+        updates.blockedAt = new Date().toISOString();
+        updates.blockedBy = appState.currentUser.id;
+    } else {
+        updates.blockReason = null;
+        updates.blockedAt = null;
+        updates.blockedBy = null;
+    }
+    
+    console.log(`💾 Sauvegarde modifications utilisateur ${userId}:`, updates);
+    
+    try {
+        await btpDB.put('users', userId, updates);
+        
+        // Fermer le modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+        modal.hide();
+        
+        showAlert('✅ Utilisateur modifié avec succès', 'success');
+        
+        // Recharger le tableau des utilisateurs
+        setTimeout(() => {
+            loadUsersTable();
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde utilisateur:', error);
+        showAlert('❌ Erreur lors de la sauvegarde', 'error');
+    }
+}
+
 // ========== MODÉRATION DES ANNONCES ==========
 async function loadPendingModeration() {
     if (!checkAdminAccess()) return;
@@ -1126,14 +1734,6 @@ async function makeAdmin(userId) {
     }
 }
 
-function editUser(userId) {
-    showAlert(`👤 Édition de l'utilisateur ${userId} - Fonctionnalité en développement`, 'info');
-}
-
-function viewUserDetails(userId) {
-    showAlert(`📊 Détails de l'utilisateur ${userId} - Fonctionnalité en développement`, 'info');
-}
-
 // ========== FONCTIONS POUR LES CANDIDATURES EMPLOI (ADMIN) ==========
 
 async function loadJobApplicationsAdmin() {
@@ -1600,291 +2200,6 @@ function getCollectionLabel(collection) {
     return labels[collection] || collection;
 }
 
-// ========== NOUVELLES FONCTIONNALITÉS NEWSLETTER ==========
-
-// Initialiser les fonctionnalités newsletter
-function initNewsletterFeatures() {
-    console.log('📧 Initialisation des fonctionnalités newsletter...');
-    
-    // Ajouter la carte d'import de destinataires
-    addImportRecipientsCard();
-    
-    // Charger l'historique des newsletters
-    if (typeof newsletterManager !== 'undefined') {
-        newsletterManager.loadNewsletterHistory();
-    }
-}
-
-// Ajouter la carte d'import de destinataires
-function addImportRecipientsCard() {
-    const newsletterContainer = document.querySelector('#admin-section .card-body .row');
-    if (!newsletterContainer) {
-        console.warn('❌ Container newsletter non trouvé');
-        return;
-    }
-    
-    // Vérifier si la carte existe déjà
-    const existingImportCard = document.querySelector('[data-card-type="import-recipients"]');
-    if (existingImportCard) {
-        return;
-    }
-    
-    const importCardHTML = `
-        <div class="col-md-4" data-card-type="import-recipients">
-            <div class="card text-center h-100">
-                <div class="card-body">
-                    <i class="fas fa-file-import fa-2x text-info mb-3"></i>
-                    <h5>Destinataires importés</h5>
-                    <p class="text-muted">Envoyer à une liste personnalisée</p>
-                    <button class="btn btn-info btn-sm" onclick="showImportRecipientsModal()">
-                        <i class="fas fa-upload me-1"></i>Importer & Envoyer
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    newsletterContainer.insertAdjacentHTML('beforeend', importCardHTML);
-}
-
-// Afficher le modal d'import de destinataires
-function showImportRecipientsModal() {
-    if (!checkAdminAccess()) return;
-    
-    const modalHTML = `
-        <div class="modal fade" id="importRecipientsModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-file-import me-2"></i>Importer des destinataires
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Importez un fichier CSV ou Excel avec les colonnes: Email, Prénom, Nom, Ville
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Fichier à importer *</label>
-                            <input type="file" class="form-control" id="recipientsImportFile" accept=".csv,.xlsx,.xls" required>
-                            <div class="form-text">
-                                Formats acceptés: CSV, Excel (.xlsx, .xls)
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Ou saisir manuellement</label>
-                            <textarea class="form-control" id="manualRecipients" rows="4" placeholder="Saisissez les emails, un par ligne&#10;exemple@email.com&#10;autre@email.com"></textarea>
-                            <div class="form-text">
-                                Un email par ligne. Format: email ou email;prénom;nom;ville
-                            </div>
-                        </div>
-                        
-                        <div id="importPreview" class="d-none">
-                            <h6>Aperçu des destinataires:</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Email</th>
-                                            <th>Prénom</th>
-                                            <th>Nom</th>
-                                            <th>Ville</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="importPreviewBody"></tbody>
-                                </table>
-                            </div>
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <span id="importStats">Vérifiez les données avant import</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="button" class="btn btn-primary" id="confirmImportBtn" disabled onclick="processRecipientsImport()">
-                            <i class="fas fa-upload me-2"></i>Importer les destinataires
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Ajouter le modal au DOM
-    const existingModal = document.getElementById('importRecipientsModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    const modal = new bootstrap.Modal(document.getElementById('importRecipientsModal'));
-    modal.show();
-    
-    // Écouter les changements de fichier
-    document.getElementById('recipientsImportFile').addEventListener('change', handleFileImport);
-    document.getElementById('manualRecipients').addEventListener('input', handleManualInput);
-}
-
-// Gérer l'import de fichier
-function handleFileImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        try {
-            const content = e.target.result;
-            const recipients = parseCSVContent(content);
-            showImportPreview(recipients);
-        } catch (error) {
-            console.error('❌ Erreur lecture fichier:', error);
-            showAlert('❌ Erreur lors de la lecture du fichier', 'error');
-        }
-    };
-    
-    reader.onerror = function() {
-        showAlert('❌ Erreur de lecture du fichier', 'error');
-    };
-    
-    if (file.name.endsWith('.csv')) {
-        reader.readAsText(file);
-    } else {
-        // Pour Excel, on utilise une approche simplifiée
-        showAlert('❌ Format Excel non supporté pour le moment. Veuillez utiliser un fichier CSV.', 'error');
-    }
-}
-
-// Gérer la saisie manuelle
-function handleManualInput(event) {
-    const content = event.target.value.trim();
-    if (!content) {
-        document.getElementById('importPreview').classList.add('d-none');
-        document.getElementById('confirmImportBtn').disabled = true;
-        return;
-    }
-    
-    const recipients = parseManualInput(content);
-    showImportPreview(recipients);
-}
-
-// Parser le contenu CSV
-function parseCSVContent(csvText) {
-    const lines = csvText.split('\n').filter(line => line.trim());
-    if (lines.length < 2) throw new Error('Fichier vide ou invalide');
-    
-    const recipients = [];
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        const email = values[0];
-        
-        if (email && isValidEmail(email)) {
-            recipients.push({
-                email: email,
-                prenom: values[1] || '',
-                nom: values[2] || '',
-                city: values[3] || ''
-            });
-        }
-    }
-    
-    return recipients;
-}
-
-// Parser la saisie manuelle
-function parseManualInput(text) {
-    const lines = text.split('\n').filter(line => line.trim());
-    const recipients = [];
-    
-    lines.forEach(line => {
-        const parts = line.split(';').map(p => p.trim());
-        const email = parts[0];
-        
-        if (email && isValidEmail(email)) {
-            recipients.push({
-                email: email,
-                prenom: parts[1] || '',
-                nom: parts[2] || '',
-                city: parts[3] || ''
-            });
-        }
-    });
-    
-    return recipients;
-}
-
-// Valider un email
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Afficher l'aperçu de l'import
-function showImportPreview(recipients) {
-    const previewContainer = document.getElementById('importPreview');
-    const previewBody = document.getElementById('importPreviewBody');
-    const importStats = document.getElementById('importStats');
-    const confirmBtn = document.getElementById('confirmImportBtn');
-    
-    if (!recipients || recipients.length === 0) {
-        previewContainer.classList.add('d-none');
-        confirmBtn.disabled = true;
-        return;
-    }
-    
-    // Afficher les 5 premiers destinataires
-    const previewData = recipients.slice(0, 5);
-    let html = '';
-    
-    previewData.forEach(recipient => {
-        html += `
-            <tr>
-                <td>${recipient.email}</td>
-                <td>${recipient.prenom || '-'}</td>
-                <td>${recipient.nom || '-'}</td>
-                <td>${recipient.city || '-'}</td>
-            </tr>
-        `;
-    });
-    
-    previewBody.innerHTML = html;
-    importStats.textContent = `${recipients.length} destinataires trouvés • ${previewData.length} affichés en aperçu`;
-    
-    previewContainer.classList.remove('d-none');
-    confirmBtn.disabled = false;
-    
-    // Stocker les destinataires pour le traitement
-    window.importedRecipients = recipients;
-}
-
-// Traiter l'import des destinataires
-function processRecipientsImport() {
-    if (!window.importedRecipients || window.importedRecipients.length === 0) {
-        showAlert('❌ Aucun destinataire à importer', 'error');
-        return;
-    }
-    
-    // Fermer le modal d'import
-    const modal = bootstrap.Modal.getInstance(document.getElementById('importRecipientsModal'));
-    modal.hide();
-    
-    // Ouvrir le modal de newsletter avec les destinataires importés
-    if (typeof newsletterManager !== 'undefined') {
-        newsletterManager.currentRecipients = window.importedRecipients;
-        newsletterManager.showNewsletterModal('import');
-    } else {
-        showAlert('❌ Système de newsletter non disponible', 'error');
-    }
-}
-
 // ========== FONCTIONS UTILITAIRES ==========
 function checkAdminAccess() {
     console.log('🔐 Vérification accès admin (admin.js):', {
@@ -2001,4 +2316,7 @@ window.importBackup = importBackup;
 window.sendBackupByEmail = sendBackupByEmail;
 window.showBackupSection = showBackupSection;
 
-console.log('✅ admin.js COMPLET - Toutes les fonctionnalités intégrées, modération détaillée OPÉRATIONNELLE');
+// Nouvelles fonctions pour la gestion des utilisateurs
+window.saveUserChanges = saveUserChanges;
+
+console.log('✅ admin.js COMPLET - Toutes les fonctionnalités intégrées, Détails et Modifier utilisateurs OPÉRATIONNELS');
