@@ -277,8 +277,30 @@ class BTPDatabase {
                 }
             ],
 
-            // ========== COLLECTIONS AJOUTÉES POUR LE SYSTÈME EMPLOI ==========
-            
+            // ========== COLLECTION MANQUANTE - NEWSLETTER HISTORY ==========
+            newsletter_history: [
+                {
+                    id: "1",
+                    subject: "Bienvenue sur BTP Pro Maroc 🇲🇦",
+                    content: "Cher(e) {name}, Bienvenue sur BTP Pro Maroc, la plateforme de référence des professionnels du BTP marocain ! Nous sommes ravis de vous compter parmi nous. Cordialement, L'équipe BTP Pro Maroc 🇲🇦",
+                    recipientType: "all",
+                    recipientsCount: 3,
+                    sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                    sentBy: "1",
+                    status: "sent"
+                },
+                {
+                    id: "2", 
+                    subject: "🚀 Promotion Premium - Offre spéciale !",
+                    content: "Cher(e) {name}, Ne manquez pas notre offre spéciale Premium ! Avec l'abonnement Premium, bénéficiez de : ⭐ Annonces illimitées ⭐ Mise en avant de vos annonces ⭐ Statistiques détaillées Profitez de 30% de réduction pour votre premier mois ! Cordialement, L'équipe BTP Pro Maroc 🇲🇦",
+                    recipientType: "premium",
+                    recipientsCount: 2,
+                    sentAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    sentBy: "1",
+                    status: "sent"
+                }
+            ],
+
             job_applications: [
                 {
                     id: "1",
@@ -403,7 +425,7 @@ class BTPDatabase {
         };
         
         this.saveLocalData(initialData);
-        console.log('✅ Données de démonstration initialisées avec collections emploi');
+        console.log('✅ Données de démonstration initialisées avec newsletter_history');
     }
 
     // ========== OPÉRATIONS CRUD ==========
@@ -930,4 +952,4 @@ class BTPDatabase {
 const btpDB = new BTPDatabase();
 window.btpDB = btpDB;
 
-console.log('✅ database.js CORRIGÉ - Collections emploi AJOUTÉES avec données de démonstration');
+console.log('✅ database.js COMPLET CORRIGÉ - Collection newsletter_history AJOUTÉE');
