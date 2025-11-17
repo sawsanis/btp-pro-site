@@ -1,4 +1,4 @@
-// newsletter.js - Système de newsletter et communication (Version corrigée)
+// newsletter.js - Système de newsletter et communication (Version complète corrigée)
 class NewsletterManager {
     constructor() {
         this.templates = {
@@ -34,6 +34,20 @@ Profitez de 30% de réduction pour votre premier mois !
 Cordialement,
 L'équipe BTP Pro Maroc
 🇲🇦`
+            },
+            announcement: {
+                id: 'announcement',
+                name: 'Annonce générale',
+                subject: '📢 Nouvelle fonctionnalité sur BTP Pro Maroc',
+                content: `Cher(e) {name},
+
+Nous avons le plaisir de vous annoncer une nouvelle fonctionnalité sur notre plateforme !
+
+Restez connecté pour découvrir les prochaines améliorations.
+
+Cordialement,
+L'équipe BTP Pro Maroc
+🇲🇦`
             }
         };
         this.currentRecipients = [];
@@ -63,15 +77,21 @@ L'équipe BTP Pro Maroc
                 title = 'Envoyer à des destinataires importés';
                 defaultTemplate = 'premium_promo';
                 break;
+            case 'announcement':
+                title = 'Annonce générale';
+                defaultTemplate = 'announcement';
+                break;
         }
 
         const modalHTML = `
             <div class="modal fade" id="newsletterModal" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">${title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-paper-plane me-2"></i>${title}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <form id="newsletterForm">
@@ -91,8 +111,8 @@ L'équipe BTP Pro Maroc
                                     <label class="form-label">Importer des destinataires</label>
                                     <div class="input-group">
                                         <input type="file" class="form-control" id="recipientsFile" accept=".csv,.xlsx,.xls">
-                                        <button class="btn btn-outline-secondary" type="button" onclick="newsletterManager.importRecipientsFromFile()">
-                                            <i class="fas fa-upload"></i>
+                                        <button class="btn btn-outline-primary" type="button" onclick="newsletterManager.importRecipientsFromFile()">
+                                            <i class="fas fa-upload me-1"></i>Importer
                                         </button>
                                     </div>
                                     <div class="form-text">
@@ -119,13 +139,15 @@ L'équipe BTP Pro Maroc
                                     <label class="form-label">Destinataires</label>
                                     <div id="recipientsInfo" class="alert alert-info">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        <span id="recipientsCount">Chargement...</span>
+                                        <span id="recipientsCount">Chargement des destinataires...</span>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i>Annuler
+                            </button>
                             <button type="button" class="btn btn-primary" onclick="newsletterManager.sendNewsletter()" id="sendNewsletterBtn">
                                 <i class="fas fa-paper-plane me-2"></i>Envoyer l'email
                             </button>
@@ -178,7 +200,7 @@ L'équipe BTP Pro Maroc
             this.showAlert(`${recipients.length} destinataires importés avec succès`, 'success');
         }).catch(error => {
             console.error('Erreur import:', error);
-            this.showAlert('Erreur lors de l\'import du fichier', 'error');
+            this.showAlert('Erreur lors de l\'import du fichier: ' + error.message, 'error');
         });
     }
 
@@ -225,6 +247,11 @@ L'équipe BTP Pro Maroc
                         }
                     }
 
+                    if (recipients.length === 0) {
+                        reject(new Error('Aucun email valide trouvé dans le fichier'));
+                        return;
+                    }
+
                     resolve(recipients);
                 } catch (error) {
                     reject(error);
@@ -267,11 +294,11 @@ L'équipe BTP Pro Maroc
                 message = 'Importez un fichier CSV pour ajouter des destinataires';
                 count = 0;
             } else {
-                const usersSnapshot = await firebase.firestore().collection('users').get();
+                // Utiliser btpDB au lieu de Firebase directement
+                const users = await btpDB.get('users');
                 let recipients = [];
 
-                usersSnapshot.forEach(doc => {
-                    const user = doc.data();
+                users.forEach(user => {
                     if (this.filterRecipient(user, type)) {
                         recipients.push(user);
                         count++;
@@ -286,15 +313,18 @@ L'équipe BTP Pro Maroc
                         const oneWeekAgo = new Date();
                         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                         const newUsers = recipients.filter(user => 
-                            user.createdAt && user.createdAt.toDate() > oneWeekAgo
+                            user.createdAt && new Date(user.createdAt) > oneWeekAgo
                         );
                         message = `Email sera envoyé à ${newUsers.length} nouveaux utilisateurs (7 derniers jours)`;
                         count = newUsers.length;
                         break;
                     case 'premium':
-                        const standardUsers = recipients.filter(user => !user.isPremium);
+                        const standardUsers = recipients.filter(user => !user.hasPremium);
                         message = `Email sera envoyé à ${standardUsers.length} utilisateurs standard (non Premium)`;
                         count = standardUsers.length;
+                        break;
+                    case 'announcement':
+                        message = `Email sera envoyé à ${count} utilisateurs`;
                         break;
                 }
 
@@ -306,20 +336,26 @@ L'équipe BTP Pro Maroc
         } catch (error) {
             console.error('Erreur chargement destinataires:', error);
             document.getElementById('recipientsCount').textContent = 'Erreur lors du chargement des destinataires';
+            document.getElementById('recipientsCount').className = 'text-danger';
         }
     }
 
     // Filtrer les destinataires selon le type
     filterRecipient(user, type) {
+        if (user.isBlocked) return false;
+        if (!user.email || !user.email.includes('@')) return false;
+
         switch(type) {
             case 'all':
                 return true;
             case 'new':
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                return user.createdAt && user.createdAt.toDate() > oneWeekAgo;
+                return user.createdAt && new Date(user.createdAt) > oneWeekAgo;
             case 'premium':
-                return !user.isPremium;
+                return !user.hasPremium;
+            case 'announcement':
+                return true;
             default:
                 return true;
         }
@@ -352,12 +388,13 @@ L'équipe BTP Pro Maroc
                 content,
                 recipientType: this.currentRecipientType,
                 recipientsCount: this.currentRecipients.length,
-                sentAt: new Date(),
-                sentBy: firebase.auth().currentUser.uid,
+                sentAt: new Date().toISOString(),
+                sentBy: appState.currentUser?.id || 'system',
                 status: 'sent'
             };
 
-            await firebase.firestore().collection('newsletter_history').add(emailRecord);
+            // Sauvegarder dans btpDB
+            await btpDB.post('newsletter_history', emailRecord);
 
             // Simuler l'envoi
             let sentCount = 0;
@@ -372,7 +409,7 @@ L'équipe BTP Pro Maroc
                         .replace(/{city}/g, user.city || '');
 
                     // Simulation d'envoi d'email
-                    console.log(`Email envoyé à ${user.email}:`, {
+                    console.log(`📧 Email envoyé à ${user.email}:`, {
                         subject,
                         content: personalizedContent.substring(0, 100) + '...'
                     });
@@ -380,7 +417,7 @@ L'équipe BTP Pro Maroc
                     sentCount++;
 
                 } catch (error) {
-                    console.error(`Erreur envoi à ${user.email}:`, error);
+                    console.error(`❌ Erreur envoi à ${user.email}:`, error);
                     errors.push(user.email);
                 }
             }
@@ -391,17 +428,21 @@ L'équipe BTP Pro Maroc
                     'warning'
                 );
             } else {
-                this.showAlert(`Email envoyé à ${sentCount} destinataires`, 'success');
+                this.showAlert(`✅ Email envoyé avec succès à ${sentCount} destinataires`, 'success');
             }
 
             // Recharger l'historique
             this.loadNewsletterHistory();
 
-            bootstrap.Modal.getInstance(document.getElementById('newsletterModal')).hide();
+            // Fermer le modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newsletterModal'));
+            if (modal) {
+                modal.hide();
+            }
 
         } catch (error) {
-            console.error('Erreur envoi newsletter:', error);
-            this.showAlert('Erreur lors de l\'envoi de l\'email', 'error');
+            console.error('❌ Erreur envoi newsletter:', error);
+            this.showAlert('Erreur lors de l\'envoi de l\'email: ' + error.message, 'error');
         } finally {
             sendBtn.innerHTML = originalText;
             sendBtn.disabled = false;
@@ -411,42 +452,56 @@ L'équipe BTP Pro Maroc
     // Charger l'historique des newsletters (CORRIGÉ)
     async loadNewsletterHistory() {
         try {
-            console.log('Chargement historique newsletters...');
+            console.log('📋 Chargement historique newsletters...');
             
-            const historySnapshot = await firebase.firestore()
-                .collection('newsletter_history')
-                .orderBy('sentAt', 'desc')
-                .limit(10)
-                .get();
-
             const historyContainer = document.getElementById('newsletter-history-container');
             if (!historyContainer) {
-                console.log('Container historique non trouvé');
+                console.log('❌ Container historique non trouvé');
                 return;
             }
 
-            if (historySnapshot.empty) {
+            // Afficher le chargement immédiatement
+            historyContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="text-muted mt-2">Chargement de l'historique...</p>
+                </div>
+            `;
+
+            // Utiliser btpDB
+            const history = await btpDB.get('newsletter_history');
+            
+            if (!history || history.length === 0) {
                 historyContainer.innerHTML = `
                     <div class="text-center py-4">
                         <i class="fas fa-envelope fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun email envoyé pour le moment</p>
+                        <small class="text-info">
+                            Les emails envoyés apparaîtront ici automatiquement
+                        </small>
                     </div>
                 `;
                 return;
             }
 
+            // Trier par date (plus récent d'abord)
+            const sortedHistory = history.sort((a, b) => 
+                new Date(b.sentAt) - new Date(a.sentAt)
+            ).slice(0, 10); // Limiter aux 10 derniers
+
             let historyHTML = '';
-            historySnapshot.forEach(doc => {
-                const email = doc.data();
-                const sentDate = email.sentAt?.toDate ? email.sentAt.toDate() : new Date(email.sentAt);
+            sortedHistory.forEach((email, index) => {
+                const sentDate = email.sentAt ? new Date(email.sentAt) : new Date();
                 
                 historyHTML += `
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1">${email.subject}</h6>
-                                    <p class="text-muted mb-2 small">${email.content.substring(0, 150)}...</p>
+                                    <h6 class="mb-1">${email.subject || 'Sans sujet'}</h6>
+                                    <p class="text-muted mb-2 small">${(email.content || '').substring(0, 150)}...</p>
                                     <div class="d-flex flex-wrap gap-3">
                                         <small class="text-muted">
                                             <i class="fas fa-users me-1"></i>${email.recipientsCount || 0} destinataires
@@ -467,16 +522,22 @@ L'équipe BTP Pro Maroc
             });
 
             historyContainer.innerHTML = historyHTML;
-            console.log('Historique chargé avec succès');
+            console.log('✅ Historique chargé avec succès');
 
         } catch (error) {
-            console.error('Erreur chargement historique:', error);
+            console.error('❌ Erreur chargement historique:', error);
             const historyContainer = document.getElementById('newsletter-history-container');
             if (historyContainer) {
                 historyContainer.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Erreur lors du chargement de l'historique
+                        <br>
+                        <small class="text-muted">${error.message}</small>
+                        <br>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="newsletterManager.loadNewsletterHistory()">
+                            <i class="fas fa-redo me-1"></i>Réessayer
+                        </button>
                     </div>
                 `;
             }
@@ -512,5 +573,230 @@ L'équipe BTP Pro Maroc
     }
 }
 
+// ========== FONCTIONS DE CHARGEMENT CORRIGÉES ==========
+
+// Charger les abonnés newsletter (CORRIGÉ)
+async function loadNewsletterSubscribers() {
+    if (!checkAdminAccess()) return;
+    
+    console.log('👥 Chargement des abonnés newsletter...');
+    
+    try {
+        const users = await btpDB.get('users');
+        const subscribersContainer = document.getElementById('newsletter-subscribers-container');
+        
+        if (!subscribersContainer) {
+            console.warn('❌ Container abonnés newsletter non trouvé');
+            return;
+        }
+        
+        // Afficher le chargement immédiatement
+        subscribersContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="text-muted mt-2">Chargement des abonnés...</p>
+            </div>
+        `;
+        
+        // Filtrer les utilisateurs avec email valide
+        const validSubscribers = users.filter(user => 
+            user.email && 
+            user.email.includes('@') && 
+            !user.isBlocked
+        );
+        
+        let html = '';
+        
+        if (validSubscribers.length === 0) {
+            html = `
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun abonné newsletter</p>
+                </div>
+            `;
+        } else {
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users me-2 text-primary"></i>
+                        ${validSubscribers.length} Abonnés
+                    </h6>
+                    <div class="text-muted small">
+                        Dernière mise à jour: ${new Date().toLocaleDateString('fr-FR')}
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Ville</th>
+                                <th>Inscription</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${validSubscribers.slice(0, 50).map(user => `
+                                <tr>
+                                    <td>
+                                        <strong>${user.prenom || ''} ${user.nom || ''}</strong>
+                                    </td>
+                                    <td>
+                                        <small>${user.email}</small>
+                                        ${user.emailVerified ? 
+                                            '<span class="badge bg-success ms-1" title="Email vérifié">✓</span>' : 
+                                            '<span class="badge bg-warning ms-1" title="Email non vérifié">?</span>'
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>${user.city || 'Non renseignée'}</small>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            ${user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Inconnue'}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        ${user.hasPremium ? 
+                                            '<span class="badge bg-warning">⭐ Premium</span>' : 
+                                            '<span class="badge bg-secondary">Standard</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ${validSubscribers.length > 50 ? `
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Affichage des 50 premiers abonnés sur ${validSubscribers.length} au total
+                        </small>
+                    </div>
+                ` : ''}
+            `;
+        }
+        
+        subscribersContainer.innerHTML = html;
+        console.log(`✅ ${validSubscribers.length} abonnés newsletter chargés`);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement abonnés:', error);
+        const subscribersContainer = document.getElementById('newsletter-subscribers-container');
+        if (subscribersContainer) {
+            subscribersContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur lors du chargement des abonnés
+                    <br>
+                    <small class="text-muted">${error.message}</small>
+                    <br>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="loadNewsletterSubscribers()">
+                        <i class="fas fa-redo me-1"></i>Réessayer
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Initialiser les fonctionnalités newsletter
+function initNewsletterFeatures() {
+    if (!checkAdminAccess()) return;
+    
+    console.log('📧 Initialisation des fonctionnalités newsletter...');
+    
+    try {
+        loadNewsletterSubscribers();
+        loadNewsletterHistory();
+    } catch (error) {
+        console.error('❌ Erreur initialisation newsletter:', error);
+    }
+}
+
+// ========== FONCTIONS GLOBALES POUR L'INTERFACE ==========
+
+// Fonction pour afficher le modal newsletter
+function showNewsletterModal(type) {
+    if (typeof newsletterManager !== 'undefined') {
+        newsletterManager.showNewsletterModal(type);
+    } else {
+        console.error('❌ NewsletterManager non initialisé');
+        showAlert('Erreur: Système de newsletter non disponible', 'error');
+    }
+}
+
+// Vérifier l'accès admin (fonction de secours)
+function checkAdminAccess() {
+    if (typeof window.checkAdminAccess === 'function') {
+        return window.checkAdminAccess();
+    }
+    
+    // Fallback si la fonction n'existe pas
+    if (!appState || !appState.currentUser || !appState.isAdmin) {
+        console.warn('⚠️ Accès admin non vérifié - utilisation fallback');
+        return false;
+    }
+    
+    return true;
+}
+
+// Afficher une alerte (fonction de secours)
+function showAlert(message, type = 'info') {
+    if (typeof window.showAlert === 'function') {
+        window.showAlert(message, type);
+        return;
+    }
+    
+    // Fallback basique
+    alert(`${type.toUpperCase()}: ${message}`);
+}
+
+// ========== ÉVÉNEMENTS DE CHARGEMENT ==========
+
+// Initialiser quand la page est prête
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📧 Newsletter.js chargé');
+    
+    // Initialiser automatiquement si on est dans la section admin
+    setTimeout(() => {
+        const adminSection = document.getElementById('admin-section');
+        if (adminSection && adminSection.classList.contains('active')) {
+            console.log('🏗️ Section admin active - initialisation newsletter');
+            initNewsletterFeatures();
+        }
+    }, 1000);
+});
+
+// Surveiller les changements de section
+let currentSection = '';
+const observer = new MutationObserver(() => {
+    const adminSection = document.getElementById('admin-section');
+    if (adminSection && adminSection.classList.contains('active') && currentSection !== 'admin') {
+        currentSection = 'admin';
+        console.log('🔍 Section admin détectée - initialisation newsletter');
+        setTimeout(initNewsletterFeatures, 500);
+    }
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+});
+
+// ========== EXPORT DES FONCTIONS ==========
+window.loadNewsletterSubscribers = loadNewsletterSubscribers;
+window.loadNewsletterHistory = loadNewsletterHistory;
+window.initNewsletterFeatures = initNewsletterFeatures;
+window.showNewsletterModal = showNewsletterModal;
+
 // Initialiser le manager de newsletter
 const newsletterManager = new NewsletterManager();
+
+console.log('✅ newsletter.js COMPLET - Système de newsletter initialisé');
