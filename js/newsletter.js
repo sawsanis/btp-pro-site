@@ -52,6 +52,7 @@ L'équipe BTP Pro Maroc
         };
         this.currentRecipients = [];
         this.importedRecipients = [];
+        this.currentRecipientType = 'all';
     }
 
     // Afficher le modal de newsletter
@@ -298,12 +299,14 @@ L'équipe BTP Pro Maroc
                 const users = await btpDB.get('users');
                 let recipients = [];
 
-                users.forEach(user => {
-                    if (this.filterRecipient(user, type)) {
-                        recipients.push(user);
-                        count++;
-                    }
-                });
+                if (users && Array.isArray(users)) {
+                    users.forEach(user => {
+                        if (this.filterRecipient(user, type)) {
+                            recipients.push(user);
+                            count++;
+                        }
+                    });
+                }
 
                 switch(type) {
                     case 'all':
@@ -342,7 +345,7 @@ L'équipe BTP Pro Maroc
 
     // Filtrer les destinataires selon le type
     filterRecipient(user, type) {
-        if (user.isBlocked) return false;
+        if (!user || user.isBlocked) return false;
         if (!user.email || !user.email.includes('@')) return false;
 
         switch(type) {
@@ -389,7 +392,7 @@ L'équipe BTP Pro Maroc
                 recipientType: this.currentRecipientType,
                 recipientsCount: this.currentRecipients.length,
                 sentAt: new Date().toISOString(),
-                sentBy: appState.currentUser?.id || 'system',
+                sentBy: (window.appState && window.appState.currentUser) ? window.appState.currentUser.id : 'system',
                 status: 'sent'
             };
 
@@ -601,11 +604,12 @@ async function loadNewsletterSubscribers() {
         `;
         
         // Filtrer les utilisateurs avec email valide
-        const validSubscribers = users.filter(user => 
+        const validSubscribers = users ? users.filter(user => 
+            user && 
             user.email && 
             user.email.includes('@') && 
             !user.isBlocked
-        );
+        ) : [];
         
         let html = '';
         
@@ -712,7 +716,7 @@ function initNewsletterFeatures() {
     
     try {
         loadNewsletterSubscribers();
-        loadNewsletterHistory();
+        newsletterManager.loadNewsletterHistory();
     } catch (error) {
         console.error('❌ Erreur initialisation newsletter:', error);
     }
@@ -732,71 +736,95 @@ function showNewsletterModal(type) {
 
 // Vérifier l'accès admin (fonction de secours)
 function checkAdminAccess() {
-    if (typeof window.checkAdminAccess === 'function') {
-        return window.checkAdminAccess();
+    // Vérifier si appState existe
+    if (typeof window.appState !== 'undefined' && window.appState.currentUser && window.appState.isAdmin) {
+        return true;
     }
     
-    // Fallback si la fonction n'existe pas
-    if (!appState || !appState.currentUser || !appState.isAdmin) {
-        console.warn('⚠️ Accès admin non vérifié - utilisation fallback');
-        return false;
+    // Vérifier dans localStorage
+    const userData = localStorage.getItem('btp_user');
+    if (userData) {
+        try {
+            const user = JSON.parse(userData);
+            return user.isAdmin === true;
+        } catch (e) {
+            console.error('Erreur parsing user data:', e);
+        }
     }
     
-    return true;
+    console.warn('⚠️ Accès admin refusé');
+    return false;
 }
 
 // Afficher une alerte (fonction de secours)
 function showAlert(message, type = 'info') {
-    if (typeof window.showAlert === 'function') {
-        window.showAlert(message, type);
-        return;
-    }
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                      type === 'success' ? 'alert-success' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
     
-    // Fallback basique
-    alert(`${type.toUpperCase()}: ${message}`);
+    const alertHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 1060;">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+    
+    setTimeout(() => {
+        const alert = document.querySelector('.alert.position-fixed');
+        if (alert) {
+            bootstrap.Alert.getOrCreateInstance(alert).close();
+        }
+    }, 5000);
 }
 
 // ========== ÉVÉNEMENTS DE CHARGEMENT ==========
 
 // Initialiser quand la page est prête
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📧 Newsletter.js chargé');
+    console.log('📧 Newsletter.js chargé - DOM prêt');
     
-    // Initialiser automatiquement si on est dans la section admin
+    // Initialiser le manager
+    window.newsletterManager = new NewsletterManager();
+    
+    // Vérifier si on est dans l'admin et initialiser
     setTimeout(() => {
         const adminSection = document.getElementById('admin-section');
-        if (adminSection && adminSection.classList.contains('active')) {
-            console.log('🏗️ Section admin active - initialisation newsletter');
+        const newsletterTab = document.getElementById('newsletter-tab');
+        
+        if ((adminSection && adminSection.style.display !== 'none') || 
+            (newsletterTab && newsletterTab.classList.contains('active'))) {
+            console.log('🏗️ Section admin/newsletter active - initialisation');
             initNewsletterFeatures();
         }
     }, 1000);
 });
 
-// Surveiller les changements de section
-let currentSection = '';
-const observer = new MutationObserver(() => {
-    const adminSection = document.getElementById('admin-section');
-    if (adminSection && adminSection.classList.contains('active') && currentSection !== 'admin') {
-        currentSection = 'admin';
-        console.log('🔍 Section admin détectée - initialisation newsletter');
-        setTimeout(initNewsletterFeatures, 500);
+// Surveiller les changements d'onglets
+document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-bs-toggle="tab"]') || 
+        e.target.closest('[data-bs-toggle="tab"]')) {
+        const target = e.target.getAttribute('data-bs-target') || 
+                      e.target.closest('[data-bs-toggle="tab"]').getAttribute('data-bs-target');
+        
+        if (target && target.includes('newsletter')) {
+            console.log('📧 Onglet newsletter activé');
+            setTimeout(initNewsletterFeatures, 300);
+        }
     }
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class']
 });
 
 // ========== EXPORT DES FONCTIONS ==========
 window.loadNewsletterSubscribers = loadNewsletterSubscribers;
-window.loadNewsletterHistory = loadNewsletterHistory;
+window.loadNewsletterHistory = function() { 
+    if (window.newsletterManager) {
+        window.newsletterManager.loadNewsletterHistory(); 
+    }
+};
 window.initNewsletterFeatures = initNewsletterFeatures;
 window.showNewsletterModal = showNewsletterModal;
-
-// Initialiser le manager de newsletter
-const newsletterManager = new NewsletterManager();
+window.newsletterManager = new NewsletterManager();
 
 console.log('✅ newsletter.js COMPLET - Système de newsletter initialisé');
