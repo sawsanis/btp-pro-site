@@ -57,7 +57,9 @@ async function handleLogin() {
                 company: user.company || '',
                 address: user.address || '',
                 city: user.city || '',
-                postalCode: user.postalCode || ''
+                postalCode: user.postalCode || '',
+                website: user.website || '',
+                description: user.description || ''
             }));
             
             // Sauvegarde de compatibilité
@@ -135,7 +137,14 @@ async function handleRegister() {
             password: password,
             role: 'user',
             isBlocked: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            // Champs profil vides par défaut
+            company: '',
+            address: '',
+            city: '',
+            postalCode: '',
+            website: '',
+            description: ''
         };
         
         const newUser = await btpDB.registerUser(userData);
@@ -158,7 +167,9 @@ async function handleRegister() {
             company: newUser.company || '',
             address: newUser.address || '',
             city: newUser.city || '',
-            postalCode: newUser.postalCode || ''
+            postalCode: newUser.postalCode || '',
+            website: newUser.website || '',
+            description: newUser.description || ''
         }));
         
         // Nettoyer l'ancien système
@@ -501,7 +512,7 @@ function validateEmailField(input) {
     }
 }
 
-// ========== FONCTIONS POUR GESTION PROFIL ==========
+// ========== FONCTIONS POUR GESTION PROFIL - CORRIGÉES ==========
 function showProfileModal() {
     if (!checkAuth()) {
         showAlert('🔐 Connectez-vous pour accéder à votre profil', 'warning');
@@ -511,32 +522,43 @@ function showProfileModal() {
     
     const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
     
-    // Remplir le formulaire avec les données actuelles
+    // 🔥 CORRECTION : Charger les données AVANT d'afficher le modal
     loadProfileData();
     
     profileModal.show();
 }
 
-// ✅ FONCTION saveProfile OPTIMISÉE
+// ✅ FONCTION saveProfile OPTIMISÉE ET CORRIGÉE
 async function saveProfile(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     
-    if (!checkAuth()) return;
+    if (!checkAuth()) {
+        showAlert('❌ Vous devez être connecté pour sauvegarder le profil', 'error');
+        return;
+    }
     
-    const email = document.getElementById('profileEmail').value;
-    const phone = document.getElementById('profilePhone').value;
-    const company = document.getElementById('profileCompany').value;
-    const address = document.getElementById('profileAddress').value;
-    const city = document.getElementById('profileCity').value;
-    const postalCode = document.getElementById('profilePostalCode').value;
+    console.log('💾 Sauvegarde du profil en cours...', authState.currentUser);
+    
+    // Récupérer TOUS les champs du profil
+    const profileData = {
+        email: document.getElementById('profileEmail')?.value || '',
+        phone: document.getElementById('profilePhone')?.value || '',
+        company: document.getElementById('profileCompany')?.value || '',
+        address: document.getElementById('profileAddress')?.value || '',
+        city: document.getElementById('profileCity')?.value || '',
+        postalCode: document.getElementById('profilePostalCode')?.value || '',
+        website: document.getElementById('profileWebsite')?.value || '',
+        description: document.getElementById('profileDescription')?.value || '',
+        updatedAt: new Date().toISOString()
+    };
     
     // Validation basique
-    if (!email) {
+    if (!profileData.email) {
         showAlert('❌ L\'email est obligatoire', 'error');
         return;
     }
     
-    if (!validateEmail(email)) {
+    if (!validateEmail(profileData.email)) {
         showAlert('❌ Format d\'email invalide', 'error');
         return;
     }
@@ -544,24 +566,23 @@ async function saveProfile(event) {
     showLoading(true);
     
     try {
-        const profileData = {
-            email: email.trim(),
-            phone: phone?.trim() || '',
-            company: company?.trim() || '',
-            address: address?.trim() || '',
-            city: city?.trim() || '',
-            postalCode: postalCode?.trim() || '',
-            updatedAt: new Date().toISOString()
-        };
-        
-        // Mettre à jour dans la base de données
+        // 🔥 CORRECTION : Mettre à jour dans la base de données avec TOUTES les données
         await btpDB.put('users', authState.currentUser.id, profileData);
         
-        // Mettre à jour l'état local
-        authState.currentUser = { ...authState.currentUser, ...profileData };
+        // 🔥 CORRECTION : Mettre à jour l'état local COMPLET
+        authState.currentUser = { 
+            ...authState.currentUser, 
+            ...profileData 
+        };
+        
+        // 🔥 CORRECTION : Sauvegarder dans localStorage avec TOUTES les données
         localStorage.setItem('btp_pro_user', JSON.stringify(authState.currentUser));
         
+        console.log('✅ Profil sauvegardé:', authState.currentUser);
         showAlert('✅ Profil mis à jour avec succès', 'success');
+        
+        // Mettre à jour l'affichage du nom dans l'interface
+        updateAuthUI();
         
         // Fermer le modal après un délai
         setTimeout(() => {
@@ -569,40 +590,67 @@ async function saveProfile(event) {
             if (profileModal) {
                 profileModal.hide();
             }
-        }, 1000);
+        }, 1500);
         
     } catch (error) {
-        console.error('Erreur mise à jour profil:', error);
-        showAlert('❌ Erreur lors de la mise à jour du profil', 'error');
+        console.error('❌ Erreur mise à jour profil:', error);
+        showAlert('❌ Erreur lors de la mise à jour du profil: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
 }
 
-// Fonction pour charger les données du profil
+// 🔥 FONCTION loadProfileData CORRIGÉE - Chargement COMPLET des données
 function loadProfileData() {
-    if (!authState.currentUser) return;
+    if (!authState.currentUser) {
+        console.log('❌ Aucun utilisateur connecté pour charger le profil');
+        return;
+    }
     
-    // Remplir les champs avec les données utilisateur
-    document.getElementById('profileEmail').value = authState.currentUser.email || '';
-    document.getElementById('profilePhone').value = authState.currentUser.phone || '';
-    document.getElementById('profileCompany').value = authState.currentUser.company || '';
-    document.getElementById('profileAddress').value = authState.currentUser.address || '';
-    document.getElementById('profileCity').value = authState.currentUser.city || '';
-    document.getElementById('profilePostalCode').value = authState.currentUser.postalCode || '';
+    console.log('📥 Chargement des données profil:', authState.currentUser);
+    
+    // Mapping des champs avec valeurs par défaut
+    const fieldMappings = {
+        'profileEmail': authState.currentUser.email || '',
+        'profilePhone': authState.currentUser.phone || '',
+        'profileCompany': authState.currentUser.company || '',
+        'profileAddress': authState.currentUser.address || '',
+        'profileCity': authState.currentUser.city || '',
+        'profilePostalCode': authState.currentUser.postalCode || '',
+        'profileWebsite': authState.currentUser.website || '',
+        'profileDescription': authState.currentUser.description || ''
+    };
+    
+    // Remplir tous les champs
+    for (const [fieldId, value] of Object.entries(fieldMappings)) {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            element.value = value;
+            console.log(`✅ Champ ${fieldId} rempli:`, value);
+        } else {
+            console.warn(`❌ Champ non trouvé: ${fieldId}`);
+        }
+    }
+    
+    // Afficher les informations de débogage
+    const emptyFields = Object.values(fieldMappings).filter(val => !val).length;
+    console.log(`📊 Statistiques profil: ${emptyFields} champs vides sur ${Object.keys(fieldMappings).length}`);
 }
 
-// Fonction pour changer le mot de passe - VERSION AMÉLIORÉE
+// 🔥 FONCTION changePassword CORRIGÉE
 async function changePassword(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     
-    if (!checkAuth()) return;
+    if (!checkAuth()) {
+        showAlert('❌ Vous devez être connecté pour changer le mot de passe', 'error');
+        return;
+    }
     
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const currentPassword = document.getElementById('currentPassword')?.value;
+    const newPassword = document.getElementById('newPassword')?.value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword')?.value;
     
-    // Validation
+    // Validation renforcée
     if (!currentPassword || !newPassword || !confirmNewPassword) {
         showAlert('❌ Veuillez remplir tous les champs', 'error');
         return;
@@ -618,31 +666,18 @@ async function changePassword(event) {
         return;
     }
     
-    // Vérifier l'ancien mot de passe (si stocké localement)
-    if (authState.currentUser.password && authState.currentUser.password !== currentPassword) {
-        showAlert('❌ Mot de passe actuel incorrect', 'error');
-        return;
-    }
-    
     showLoading(true);
     
     try {
-        // Mettre à jour le mot de passe
-        await btpDB.put('users', authState.currentUser.id, {
-            password: newPassword,
-            updatedAt: new Date().toISOString()
-        });
-        
-        // Mettre à jour l'état local
-        authState.currentUser.password = newPassword;
-        localStorage.setItem('btp_pro_user', JSON.stringify(authState.currentUser));
+        // Mettre à jour le mot de passe dans la base
+        await btpDB.updateUserPassword(authState.currentUser.id, currentPassword, newPassword);
         
         showAlert('✅ Mot de passe changé avec succès', 'success');
         
         // Réinitialiser le formulaire
-        document.getElementById('changePasswordForm').reset();
+        document.getElementById('changePasswordForm')?.reset();
         
-        // Fermer le modal après un délai
+        // Fermer le modal
         setTimeout(() => {
             const passwordModal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
             if (passwordModal) {
@@ -651,8 +686,8 @@ async function changePassword(event) {
         }, 1000);
         
     } catch (error) {
-        console.error('Erreur changement mot de passe:', error);
-        showAlert('❌ Erreur lors du changement de mot de passe', 'error');
+        console.error('❌ Erreur changement mot de passe:', error);
+        showAlert('❌ Erreur lors du changement de mot de passe: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -669,9 +704,8 @@ function showChangePasswordModal() {
     const passwordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
     
     // Réinitialiser le formulaire
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmNewPassword').value = '';
+    const form = document.getElementById('changePasswordForm');
+    if (form) form.reset();
     
     passwordModal.show();
 }
@@ -688,11 +722,15 @@ function initializeAuthEventListeners() {
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', saveProfile);
+        console.log('✅ Écouteur profil initialisé');
+    } else {
+        console.warn('❌ Formulaire profil non trouvé');
     }
     
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', changePassword);
+        console.log('✅ Écouteur mot de passe initialisé');
     }
     
     // Validation email en temps réel
@@ -719,11 +757,11 @@ window.checkAdminAccess = checkAdminAccess;
 window.validateEmail = validateEmail;
 window.validateEmailField = validateEmailField;
 
-// ✅ EXPORT DES FONCTIONS PROFIL
+// ✅ EXPORT DES FONCTIONS PROFIL CORRIGÉES
 window.showProfileModal = showProfileModal;
 window.showChangePasswordModal = showChangePasswordModal;
 window.saveProfile = saveProfile;
 window.changePassword = changePassword;
 window.loadProfileData = loadProfileData;
 
-console.log('✅ auth.js CORRIGÉ - Compatible avec la nouvelle structure modulaire');
+console.log('✅ auth.js CORRIGÉ - Gestion du profil fonctionnelle');

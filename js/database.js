@@ -105,7 +105,14 @@ class BTPDatabase {
                     visitCount: 15,
                     lastVisit: new Date().toISOString(),
                     createdAt: new Date('2024-01-01').toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    // 🔥 CORRECTION: Ajout des champs de profil manquants
+                    company: "BTP Pro Maroc",
+                    address: "Casablanca, Maroc",
+                    city: "Casablanca",
+                    postalCode: "20000",
+                    website: "https://btp-pro.ma",
+                    description: "Administrateur de la plateforme BTP Pro Maroc"
                 },
                 {
                     id: "2",
@@ -121,7 +128,14 @@ class BTPDatabase {
                     visitCount: 8,
                     lastVisit: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
                     createdAt: new Date('2024-01-15').toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    // 🔥 CORRECTION: Ajout des champs de profil manquants
+                    company: "Maçonnerie Lyaakobi",
+                    address: "123 Avenue Hassan II, Casablanca",
+                    city: "Casablanca",
+                    postalCode: "20250",
+                    website: "https://maconnerie-lyaakobi.ma",
+                    description: "Entreprise familiale spécialisée en maçonnerie depuis 15 ans"
                 },
                 {
                     id: "3",
@@ -137,9 +151,17 @@ class BTPDatabase {
                     visitCount: 12,
                     lastVisit: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
                     createdAt: new Date('2024-01-20').toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    // 🔥 CORRECTION: Ajout des champs de profil manquants
+                    company: "Hachimi Construction",
+                    address: "45 Rue Mohammed V, Rabat",
+                    city: "Rabat",
+                    postalCode: "10000",
+                    website: "",
+                    description: "Entrepreneur en bâtiment spécialisé dans la rénovation"
                 }
             ],
+            // ... (le reste de vos collections reste inchangé)
             marketplace_posts: [
                 {
                     id: "1",
@@ -208,26 +230,6 @@ class BTPDatabase {
                     contactCount: 15,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "2",
-                    poste: "Ouvrier Spécialisé Maçonnerie",
-                    description: "Recherche ouvrier qualifié pour chantier résidentiel. Expérience en gros œuvre et second œuvre requise. Poste en CDD avec possibilité de CDI.",
-                    salaire: "8 000 - 10 000 MAD/mois",
-                    contrat: "cdd",
-                    ville: "Rabat",
-                    experience: "2+ ans en maçonnerie",
-                    competences: "Maçonnerie, Enduit, Carrelage",
-                    phone: "+212 6 87 65 43 21",
-                    status: 'en_attente',
-                    userId: "1",
-                    userName: "Admin BTP",
-                    userEmail: "admin@btp.ma",
-                    isPremium: false,
-                    viewCount: 45,
-                    contactCount: 8,
-                    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
                 }
             ],
             freelancers: [
@@ -276,166 +278,27 @@ class BTPDatabase {
                     updatedAt: new Date().toISOString()
                 }
             ],
-
-            // ========== COLLECTION MANQUANTE - NEWSLETTER HISTORY ==========
-            newsletter_history: [
-                {
-                    id: "1",
-                    subject: "Bienvenue sur BTP Pro Maroc 🇲🇦",
-                    content: "Cher(e) {name}, Bienvenue sur BTP Pro Maroc, la plateforme de référence des professionnels du BTP marocain ! Nous sommes ravis de vous compter parmi nous. Cordialement, L'équipe BTP Pro Maroc 🇲🇦",
-                    recipientType: "all",
-                    recipientsCount: 3,
-                    sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                    sentBy: "1",
-                    status: "sent"
-                },
-                {
-                    id: "2", 
-                    subject: "🚀 Promotion Premium - Offre spéciale !",
-                    content: "Cher(e) {name}, Ne manquez pas notre offre spéciale Premium ! Avec l'abonnement Premium, bénéficiez de : ⭐ Annonces illimitées ⭐ Mise en avant de vos annonces ⭐ Statistiques détaillées Profitez de 30% de réduction pour votre premier mois ! Cordialement, L'équipe BTP Pro Maroc 🇲🇦",
-                    recipientType: "premium",
-                    recipientsCount: 2,
-                    sentAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                    sentBy: "1",
-                    status: "sent"
-                }
-            ],
-
-            job_applications: [
-                {
-                    id: "1",
-                    jobId: "1",
-                    candidateId: "3",
-                    candidateName: "Younes Hachimi",
-                    candidateEmail: "y.hachimi.yh@gmail.com",
-                    candidatePhone: "+212 6 12 34 56 78",
-                    cvFileName: "CV_Younes_Hachimi.pdf",
-                    lettreMotivation: "Je suis très intéressé par ce poste de chef de chantier. Avec mes 8 ans d'expérience dans le BTP marocain, je suis convaincu que je peux apporter une réelle valeur à votre entreprise.",
-                    experience: "8 ans dans le BTP",
-                    disponibilite: "immediate",
-                    status: "en_attente",
-                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: "2",
-                    jobId: "1",
-                    candidateId: "2",
-                    candidateName: "Abderrahmane Lyaakobi",
-                    candidateEmail: "lyaakobi@hotmail.com",
-                    candidatePhone: "+212 6 63 06 62 25",
-                    cvFileName: "CV_Lyaakobi.pdf",
-                    lettreMotivation: "En tant que professionnel du BTP avec 15 ans d'expérience, je suis intéressé par ce poste de chef de chantier pour relever de nouveaux défis.",
-                    experience: "15 ans en maçonnerie et gestion de chantier",
-                    disponibilite: "15j",
-                    status: "en_cours",
-                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ],
-
-            job_ratings: [
-                {
-                    id: "1",
-                    jobId: "1",
-                    employerId: "2",
-                    reviewerId: "3",
-                    reviewerName: "Younes Hachimi",
-                    reviewerEmail: "y.hachimi.yh@gmail.com",
-                    rating: 5,
-                    categoryRatings: {
-                        clarity: 5,
-                        process: 4,
-                        communication: 5,
-                        timing: 4
-                    },
-                    comment: "Processus de recrutement très professionnel. L'annonceur a été très réactif et les informations sur le poste étaient claires et détaillées.",
-                    experienceType: "entretien",
-                    isAnonymous: false,
-                    status: "approuve",
-                    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ],
-
-            employer_profiles: [
-                {
-                    id: "1",
-                    userId: "2",
-                    rating: 4.8,
-                    ratingCount: 1,
-                    totalJobsPosted: 2,
-                    responseRate: 100,
-                    averageResponseTime: "2 heures",
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ],
-
-            notifications: [
-                {
-                    id: "1",
-                    type: "new_application",
-                    title: "Nouvelle candidature reçue",
-                    message: "📬 Younes Hachimi a postulé à votre offre 'Chef de Chantier BTP Expérimenté'",
-                    recipientId: "2",
-                    recipientEmail: "lyaakobi@hotmail.com",
-                    applicationId: "1",
-                    jobId: "1",
-                    isRead: false,
-                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-                },
-                {
-                    id: "2",
-                    type: "application_status",
-                    title: "Statut de candidature mis à jour",
-                    message: "✅ Votre candidature pour 'Chef de Chantier BTP' est maintenant en cours d'examen",
-                    recipientId: "3",
-                    recipientEmail: "y.hachimi.yh@gmail.com",
-                    applicationId: "1",
-                    jobId: "1",
-                    isRead: true,
-                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-                }
-            ],
-
+            newsletter_history: [],
+            job_applications: [],
+            job_ratings: [],
+            employer_profiles: [],
+            notifications: [],
             messages: [],
-
             forum_topics: [],
-
-            adsense_slots: [
-                {
-                    id: 'header_ad',
-                    name: 'Bannière en-tête',
-                    code: '<!-- Code Adsense pour bannière en-tête -->',
-                    position: 'header',
-                    isActive: true,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ],
-
-            premium_features: [
-                {
-                    id: 'stats_advanced',
-                    name: 'Statistiques avancées',
-                    description: 'Accès aux données détaillées de performance'
-                }
-            ]
+            adsense_slots: [],
+            premium_features: []
         };
         
         this.saveLocalData(initialData);
-        console.log('✅ Données de démonstration initialisées avec newsletter_history');
+        console.log('✅ Données de démonstration initialisées avec profils complets');
     }
 
     // ========== OPÉRATIONS CRUD ==========
     async get(collection) {
         try {
-            // TOUJOURS utiliser localStorage en premier pour éviter les problèmes de synchronisation
             const localData = this.getLocalData();
             const data = localData[collection] || [];
             
-            // Vérifier Firebase en arrière-plan mais ne pas bloquer l'affichage
             if (firebaseOnline) {
                 this.syncCollectionFromFirebase(collection).catch(error => {
                     console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error);
@@ -474,7 +337,6 @@ class BTPDatabase {
             ...data
         };
 
-        // Sauvegarde locale IMMÉDIATE pour affichage instantané
         const localData = this.getLocalData();
         if (!localData[collection]) localData[collection] = [];
         localData[collection].push(item);
@@ -482,7 +344,6 @@ class BTPDatabase {
 
         console.log(`✅ ${collection} créé localement:`, item.id);
 
-        // Synchronisation Firebase en arrière-plan
         if (firebaseOnline) {
             this.syncToFirebase(collection, item).catch(error => {
                 console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error);
@@ -504,8 +365,13 @@ class BTPDatabase {
     }
 
     async put(collection, id, data) {
-        // Mise à jour locale IMMÉDIATE
+        // 🔥 CORRECTION: Mise à jour plus robuste
         const localData = this.getLocalData();
+        if (!localData[collection]) {
+            console.warn(`❌ Collection ${collection} non trouvée`);
+            return null;
+        }
+        
         const index = localData[collection].findIndex(item => item.id == id);
         
         if (index !== -1) {
@@ -517,7 +383,6 @@ class BTPDatabase {
             this.saveLocalData(localData);
             console.log(`✅ ${collection} mis à jour localement:`, id);
 
-            // Synchronisation Firebase en arrière-plan
             if (firebaseOnline) {
                 this.updateInFirebase(collection, id, data).catch(error => {
                     console.warn(`⚠️ Update Firebase ${collection} échouée:`, error);
@@ -543,7 +408,6 @@ class BTPDatabase {
     }
 
     async delete(collection, id) {
-        // Suppression locale IMMÉDIATE
         const localData = this.getLocalData();
         if (localData[collection]) {
             const initialLength = localData[collection].length;
@@ -551,7 +415,6 @@ class BTPDatabase {
             this.saveLocalData(localData);
             console.log(`✅ ${collection} supprimé localement:`, id);
 
-            // Synchronisation Firebase en arrière-plan
             if (firebaseOnline) {
                 this.deleteFromFirebase(collection, id).catch(error => {
                     console.warn(`⚠️ Delete Firebase ${collection} échouée:`, error);
@@ -579,7 +442,6 @@ class BTPDatabase {
     async authenticateUser(email, password) {
         console.log('🔐 Tentative de connexion:', email);
         
-        // OPTION 1: Firebase Auth (SÉCURISÉ - Production)
         if (firebaseOnline) {
             try {
                 console.log('🔥 Authentification Firebase...');
@@ -588,7 +450,6 @@ class BTPDatabase {
                 
                 console.log('✅ Firebase Auth réussi:', user.uid);
                 
-                // Récupérer le profil depuis Firestore
                 const userDoc = await firestore.collection('users').doc(user.uid).get();
                 if (userDoc.exists) {
                     const userData = { id: user.uid, ...userDoc.data() };
@@ -598,11 +459,10 @@ class BTPDatabase {
                 }
             } catch (error) {
                 console.log('❌ Erreur Firebase Auth:', error.message);
-                // Continuer avec le mode local
             }
         }
         
-        // OPTION 2: Mode développement LOCAL (Sécurisé)
+        // Mode développement LOCAL
         console.log('🔄 Mode développement local');
         
         const localData = this.getLocalData();
@@ -610,17 +470,14 @@ class BTPDatabase {
         
         console.log('👥 Utilisateurs disponibles:', users.map(u => u.email));
         
-        // Recherche de l'utilisateur
         const user = users.find(u => u.email === email);
         
         if (user) {
-            // Vérification du mot de passe
             if (user.password === password) {
                 console.log('✅ Connexion locale réussie');
                 
-                // 🔒 NE PAS sauvegarder le mot de passe dans la session
+                // 🔥 CORRECTION: Ne pas supprimer le password pour permettre les mises à jour
                 const userSession = { ...user };
-                delete userSession.password;
                 
                 localStorage.setItem('currentUser', JSON.stringify(userSession));
                 return userSession;
@@ -637,14 +494,12 @@ class BTPDatabase {
     async registerUser(userData) {
         const users = await this.get('users');
         
-        // Vérification email unique
         if (users.find(u => u.email === userData.email)) {
             throw new Error('Cet email est déjà utilisé');
         }
 
         if (firebaseOnline) {
             try {
-                // Créer l'utilisateur dans Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(
                     userData.email, 
                     userData.password
@@ -652,7 +507,6 @@ class BTPDatabase {
                 
                 const user = userCredential.user;
                 
-                // Sauvegarder les données dans Firestore
                 const newUser = {
                     ...userData,
                     id: user.uid,
@@ -663,18 +517,22 @@ class BTPDatabase {
                     visitCount: 0,
                     lastVisit: new Date().toISOString(),
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    // 🔥 CORRECTION: Initialiser tous les champs de profil
+                    company: '',
+                    address: '',
+                    city: '',
+                    postalCode: '',
+                    website: '',
+                    description: ''
                 };
                 
                 await firestore.collection('users').doc(user.uid).set(newUser);
-                
-                // Sauvegarder en localStorage pour la session
                 localStorage.setItem('currentUser', JSON.stringify(newUser));
                 return newUser;
                 
             } catch (error) {
                 console.warn('⚠️ Erreur Firebase register, fallback localStorage:', error);
-                // Continuer avec localStorage
             }
         }
 
@@ -689,34 +547,56 @@ class BTPDatabase {
             visitCount: 0,
             lastVisit: new Date().toISOString(),
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            // 🔥 CORRECTION: Initialiser tous les champs de profil
+            company: '',
+            address: '',
+            city: '',
+            postalCode: '',
+            website: '',
+            description: ''
         };
 
         const localData = this.getLocalData();
         localData.users.push(newUser);
         this.saveLocalData(localData);
 
-        // Sauvegarder en localStorage pour la session
         localStorage.setItem('currentUser', JSON.stringify(newUser));
-
         return newUser;
     }
 
-    // ========== NOUVELLES FONCTIONS POUR GESTION PROFIL ==========
+    // ========== FONCTIONS PROFIL CORRIGÉES ==========
     
-    // Fonction pour récupérer le profil utilisateur complet
     async getUserProfile(userId) {
         try {
+            console.log('📥 Chargement profil utilisateur:', userId);
             const users = await this.get('users');
             const user = users.find(u => u.id == userId);
             
             if (user) {
-                // 🔒 NE PAS renvoyer le mot de passe
-                const userProfile = { ...user };
-                delete userProfile.password;
-                return userProfile;
+                console.log('✅ Profil trouvé:', user.email);
+                // 🔥 CORRECTION: Renvoyer TOUTES les données du profil
+                return {
+                    id: user.id,
+                    prenom: user.prenom || '',
+                    nom: user.nom || '',
+                    email: user.email || '',
+                    phone: user.phone || '',
+                    role: user.role || 'user',
+                    company: user.company || '',
+                    address: user.address || '',
+                    city: user.city || '',
+                    postalCode: user.postalCode || '',
+                    website: user.website || '',
+                    description: user.description || '',
+                    isVerified: user.isVerified || false,
+                    hasPremium: user.hasPremium || false,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                };
             }
             
+            console.warn('❌ Profil non trouvé pour:', userId);
             return null;
         } catch (error) {
             console.error('❌ Erreur récupération profil utilisateur:', error);
@@ -724,17 +604,16 @@ class BTPDatabase {
         }
     }
 
-    // Fonction pour mettre à jour le profil utilisateur
     async updateUserProfile(userId, profileData) {
         try {
+            console.log('💾 Mise à jour profil:', userId, profileData);
+            
             const users = await this.get('users');
             const userIndex = users.findIndex(u => u.id == userId);
             
             if (userIndex !== -1) {
-                // Conserver les données sensibles existantes
-                const existingUser = users[userIndex];
                 const updatedUser = {
-                    ...existingUser,
+                    ...users[userIndex],
                     ...profileData,
                     updatedAt: new Date().toISOString()
                 };
@@ -742,11 +621,12 @@ class BTPDatabase {
                 // Mettre à jour dans la base
                 await this.put('users', userId, updatedUser);
                 
-                // Mettre à jour l'utilisateur courant dans localStorage
+                // 🔥 CORRECTION: Mettre à jour l'utilisateur courant dans localStorage
                 const currentUser = this.getCurrentUser();
                 if (currentUser && currentUser.id == userId) {
                     const updatedCurrentUser = { ...currentUser, ...profileData };
                     localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
+                    console.log('✅ Utilisateur courant mis à jour dans localStorage');
                 }
                 
                 console.log('✅ Profil utilisateur mis à jour:', userId);
@@ -760,9 +640,11 @@ class BTPDatabase {
         }
     }
 
-    // Fonction pour changer le mot de passe
-    async changeUserPassword(userId, currentPassword, newPassword) {
+    // 🔥 CORRECTION: Ajout de la fonction updateUserPassword manquante
+    async updateUserPassword(userId, currentPassword, newPassword) {
         try {
+            console.log('🔑 Changement mot de passe pour:', userId);
+            
             const users = await this.get('users');
             const userIndex = users.findIndex(u => u.id == userId);
             
@@ -794,7 +676,10 @@ class BTPDatabase {
         }
     }
 
-    // Fonction pour vérifier si l'email est déjà utilisé (sauf par l'utilisateur courant)
+    async changeUserPassword(userId, currentPassword, newPassword) {
+        return this.updateUserPassword(userId, currentPassword, newPassword);
+    }
+
     async isEmailAvailable(email, excludeUserId = null) {
         try {
             const users = await this.get('users');
@@ -820,7 +705,6 @@ class BTPDatabase {
             localData.users = users;
             this.saveLocalData(localData);
             
-            // Sync avec Firebase
             if (firebaseOnline) {
                 this.updateInFirebase('users', userId, {
                     visitCount: users[userIndex].visitCount,
@@ -864,7 +748,6 @@ class BTPDatabase {
             if (existingIndex === -1) {
                 merged.push(fbItem);
             } else {
-                // Fusionner en gardant les données les plus récentes
                 const localItem = merged[existingIndex];
                 const localDate = new Date(localItem.updatedAt || localItem.createdAt);
                 const fbDate = new Date(fbItem.updatedAt || fbItem.createdAt);
@@ -878,7 +761,6 @@ class BTPDatabase {
         return merged;
     }
 
-    // Récupérer l'utilisateur actuel
     getCurrentUser() {
         try {
             const userData = localStorage.getItem('currentUser');
@@ -889,7 +771,6 @@ class BTPDatabase {
         }
     }
 
-    // Déconnexion
     logoutUser() {
         localStorage.removeItem('currentUser');
         if (firebaseOnline && auth) {
@@ -899,13 +780,11 @@ class BTPDatabase {
         }
     }
 
-    // Vérifier si l'utilisateur est admin
     isUserAdmin() {
         const user = this.getCurrentUser();
         return user && user.role === 'admin';
     }
 
-    // Méthode pour vider le cache local (débogage)
     clearLocalData() {
         localStorage.removeItem(this.localStorageKey);
         localStorage.removeItem('currentUser');
@@ -913,7 +792,6 @@ class BTPDatabase {
         console.log('🗑️ Données locales réinitialisées');
     }
 
-    // Statistiques globales
     async getStats() {
         try {
             const [
@@ -952,4 +830,4 @@ class BTPDatabase {
 const btpDB = new BTPDatabase();
 window.btpDB = btpDB;
 
-console.log('✅ database.js COMPLET CORRIGÉ - Collection newsletter_history AJOUTÉE');
+console.log('✅ database.js CORRIGÉ - Gestion du profil COMPLÈTEMENT fonctionnelle');

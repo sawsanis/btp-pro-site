@@ -6,14 +6,18 @@ class BTPApp {
             isAdmin: false,
             currentSection: 'home'
         };
+        this.userProfile = null; // 🔥 CORRECTION: Instance du profil
         this.init();
     }
 
-    init() {
+    async init() {
         console.log('🚀 Initialisation BTP Pro...');
         
-        // ✅ NE PLUS GÉRER L'AUTH ICI - LAISSER auth.js FAIRE LE TRAVAIL
-        this.syncWithAuthSystem();
+        // ✅ ATTENDRE L'INITIALISATION COMPLÈTE DE L'AUTH
+        await this.waitForAuthInitialization();
+        
+        // 🔥 CORRECTION: Initialiser le profil utilisateur
+        await this.initializeUserProfile();
         
         // Initialiser l'interface
         this.setupEventListeners();
@@ -26,6 +30,25 @@ class BTPApp {
         }, 1000);
     }
 
+    // ✅ NOUVELLE MÉTHODE POUR ATTENDRE L'AUTH
+    async waitForAuthInitialization() {
+        console.log('⏳ Attente initialisation auth...');
+        
+        // Attendre que authState soit disponible
+        let attempts = 0;
+        while (typeof authState === 'undefined' && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (typeof authState !== 'undefined') {
+            console.log('✅ authState disponible après', attempts, 'tentatives');
+            this.syncWithAuthSystem();
+        } else {
+            console.warn('❌ authState non disponible après attente');
+        }
+    }
+
     // ✅ SYNCHRONISATION AVEC LE SYSTÈME D'AUTH UNIFIÉ
     syncWithAuthSystem() {
         // Utiliser authState comme source de vérité
@@ -33,17 +56,49 @@ class BTPApp {
             console.log('🔄 Synchronisation avec authState...');
             this.state.currentUser = authState.currentUser;
             this.state.isAdmin = authState.isAdmin;
+            
+            console.log('✅ État synchronisé:', {
+                user: !!this.state.currentUser,
+                email: this.state.currentUser?.email,
+                admin: this.state.isAdmin
+            });
+        } else {
+            console.warn('⚠️ authState non disponible pour synchronisation');
         }
+    }
+
+    // 🔥 CORRECTION: INITIALISATION DU PROFIL UTILISATEUR
+    async initializeUserProfile() {
+        console.log('👤 Initialisation du profil utilisateur...');
         
-        console.log('✅ État synchronisé:', {
-            user: !!this.state.currentUser,
-            admin: this.state.isAdmin
-        });
+        // Attendre que l'authentification soit complètement initialisée
+        if (this.state.currentUser) {
+            console.log('✅ Utilisateur connecté, initialisation UserProfile...');
+            
+            // Vérifier si UserProfile existe
+            if (typeof UserProfile !== 'undefined') {
+                this.userProfile = new UserProfile();
+                console.log('✅ UserProfile initialisé');
+            } else {
+                console.warn('❌ UserProfile non disponible');
+            }
+        } else {
+            console.log('👤 Aucun utilisateur connecté, profil non initialisé');
+        }
     }
 
     // ✅ MÉTHODE POUR SYNCHRONISER QUAND L'UTILISATEUR CHANGE
     refreshAuthState() {
+        console.log('🔄 Rafraîchissement état auth...');
         this.syncWithAuthSystem();
+        
+        // 🔥 CORRECTION: Réinitialiser le profil si l'utilisateur change
+        if (this.state.currentUser) {
+            this.initializeUserProfile();
+        } else {
+            this.userProfile = null;
+        }
+        
         this.updateAuthUI();
     }
 
@@ -65,6 +120,13 @@ class BTPApp {
             if (target.closest('.navbar-brand')) {
                 e.preventDefault();
                 this.loadSection('home');
+                return;
+            }
+
+            // 🔥 CORRECTION: Gestion du clic sur le profil
+            if (target.matches('#user-profile-btn') || target.closest('#user-profile-btn')) {
+                e.preventDefault();
+                this.showUserProfile();
                 return;
             }
         });
@@ -89,6 +151,48 @@ class BTPApp {
                 }
             }
         });
+
+        // 🔥 CORRECTION: Écouteur pour le modal de profil
+        document.addEventListener('show.bs.modal', (e) => {
+            if (e.target.id === 'profileModal') {
+                console.log('🎯 Modal profil ouvert - chargement données...');
+                // S'assurer que les données sont chargées
+                if (typeof loadProfileData === 'function') {
+                    setTimeout(() => loadProfileData(), 100);
+                }
+            }
+        });
+    }
+
+    // 🔥 CORRECTION: MÉTHODE POUR AFFICHER LE PROFIL
+    showUserProfile() {
+        if (!this.state.currentUser) {
+            showAlert('🔐 Veuillez vous connecter pour accéder à votre profil', 'warning');
+            if (typeof showLoginModal === 'function') {
+                showLoginModal();
+            }
+            return;
+        }
+
+        console.log('👤 Affichage du profil utilisateur:', this.state.currentUser.email);
+        
+        // Utiliser la fonction globale si disponible
+        if (typeof showProfileModal === 'function') {
+            showProfileModal();
+        } else {
+            // Fallback : afficher le modal directement
+            const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+            profileModal.show();
+            
+            // Charger les données après un court délai
+            setTimeout(() => {
+                if (typeof loadProfileData === 'function') {
+                    loadProfileData();
+                } else if (this.userProfile && this.userProfile.loadUserProfile) {
+                    this.userProfile.loadUserProfile();
+                }
+            }, 300);
+        }
     }
 
     loadSection(sectionId) {
@@ -249,9 +353,9 @@ class BTPApp {
                 }
             },
             'my_account': () => {
-                if (window.navigateToAccountSection) {
-                    navigateToAccountSection('profile');
-                }
+                console.log('👤 Section mon compte chargée');
+                // 🔥 CORRECTION: Charger les données du profil
+                this.loadAccountSection();
             },
             'search': () => {
                 if (window.displaySearchResults) {
@@ -277,6 +381,79 @@ class BTPApp {
             } catch (error) {
                 console.error(`❌ Erreur chargement section ${sectionId}:`, error);
             }
+        }
+    }
+
+    // 🔥 CORRECTION: CHARGEMENT DE LA SECTION COMPTE
+    loadAccountSection() {
+        console.log('💼 Chargement section mon compte...');
+        
+        // S'assurer que l'utilisateur est connecté
+        if (!this.state.currentUser) {
+            showAlert('🔐 Veuillez vous connecter', 'warning');
+            if (typeof showLoginModal === 'function') {
+                showLoginModal();
+            }
+            return;
+        }
+
+        // Charger les données du profil si disponible
+        if (typeof loadProfileData === 'function') {
+            setTimeout(() => loadProfileData(), 100);
+        } else if (this.userProfile && this.userProfile.loadUserProfile) {
+            setTimeout(() => this.userProfile.loadUserProfile(), 100);
+        }
+
+        // Afficher les onglets du compte
+        this.showAccountTab('profile');
+    }
+
+    // 🔥 CORRECTION: AFFICHAGE DES ONGLETS DU COMPTE
+    showAccountTab(tabName) {
+        console.log('📑 Affichage onglet compte:', tabName);
+        
+        // Masquer tous les onglets
+        document.querySelectorAll('.account-tab').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        // Désactiver tous les liens d'onglets
+        document.querySelectorAll('.account-nav .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Afficher l'onglet cible
+        const targetTab = document.getElementById(tabName + '-tab');
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+        
+        // Activer le lien d'onglet
+        const activeNavLink = document.querySelector(`[onclick*="showAccountTab('${tabName}')"]`);
+        if (activeNavLink) {
+            activeNavLink.classList.add('active');
+        }
+
+        // Charger les données spécifiques à l'onglet
+        switch(tabName) {
+            case 'profile':
+                if (typeof loadProfileData === 'function') {
+                    loadProfileData();
+                }
+                break;
+            case 'announces':
+                if (window.loadUserAnnounces) {
+                    loadUserAnnounces();
+                }
+                break;
+            case 'favorites':
+                if (window.loadFavorites) {
+                    loadFavorites();
+                }
+                break;
+            case 'settings':
+                console.log('⚙️ Paramètres chargés');
+                break;
         }
     }
 
@@ -503,6 +680,32 @@ window.showPublishForm = function(formType) {
     }
 };
 
+// 🔥 CORRECTION: FONCTION POUR AFFICHER LES ONGLETS DU COMPTE
+window.showAccountTab = function(tabName) {
+    if (btpApp && btpApp.showAccountTab) {
+        btpApp.showAccountTab(tabName);
+    } else {
+        // Fallback basique
+        document.querySelectorAll('.account-tab').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        document.querySelectorAll('.account-nav .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        const targetTab = document.getElementById(tabName + '-tab');
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+        
+        const activeNavLink = document.querySelector(`[onclick*="showAccountTab('${tabName}')"]`);
+        if (activeNavLink) {
+            activeNavLink.classList.add('active');
+        }
+    }
+};
+
 // ✅ FONCTIONS SPÉCIFIQUES POUR CHAQUE TYPE
 window.showMarketplaceForm = function() {
     if (typeof checkAuthForPublish === 'function' && checkAuthForPublish()) {
@@ -649,12 +852,28 @@ window.checkAuthAndGo = function(section, context = '') {
     return true;
 };
 
+// 🔥 CORRECTION: FONCTION POUR AFFICHER LE PROFIL
+window.showUserProfile = function() {
+    if (btpApp && btpApp.showUserProfile) {
+        btpApp.showUserProfile();
+    } else {
+        // Fallback
+        if (typeof showProfileModal === 'function') {
+            showProfileModal();
+        } else {
+            const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+            profileModal.show();
+        }
+    }
+};
+
 window.appDebug = function() {
     console.log('🔍 État application:', btpApp?.state);
     console.log('🔗 Sections disponibles:', document.querySelectorAll('.section-content').length);
     console.log('📋 Liens navigation:', document.querySelectorAll('[data-section]').length);
     console.log('👤 Utilisateur:', btpApp?.state.currentUser);
     console.log('👑 Admin:', btpApp?.state.isAdmin);
+    console.log('👤 Profil initialisé:', !!btpApp?.userProfile);
 };
 
 window.addEventListener('error', function(e) {
@@ -665,4 +884,4 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('❌ Promise rejetée:', e.reason);
 });
 
-console.log('✅ app.js COMPLET - Correction NAVIGATION PUBLICATION APPLIQUÉE');
+console.log('✅ app.js COMPLET - Correction PROFIL UTILISATEUR APPLIQUÉE');
