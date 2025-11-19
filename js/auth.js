@@ -39,9 +39,12 @@ async function handleLogin() {
                 return;
             }
             
+            // 🔥 CORRECTION: Vérification STRICTE du rôle admin
+            const userIsAdmin = user.role === 'admin';
+            
             // Mettre à jour l'état global UNIFIÉ
             authState.currentUser = user;
-            authState.isAdmin = user.role === 'admin';
+            authState.isAdmin = userIsAdmin;
             authState.isAuthenticated = true;
             syncAuthState();
             
@@ -62,11 +65,13 @@ async function handleLogin() {
                 description: user.description || ''
             }));
             
-            // Sauvegarde de compatibilité
-            if (authState.isAdmin) {
+            // 🔥 CORRECTION: Nettoyage STRICT du flag admin
+            if (userIsAdmin) {
                 localStorage.setItem('btp_pro_admin', 'true');
+                console.log('👑 Utilisateur admin détecté - flag admin activé');
             } else {
                 localStorage.removeItem('btp_pro_admin');
+                console.log('👤 Utilisateur standard - flag admin désactivé');
             }
             
             showAlert('✅ Connexion réussie !', 'success');
@@ -135,7 +140,7 @@ async function handleRegister() {
             email: email.toLowerCase().trim(),
             phone: phone?.trim() || '',
             password: password,
-            role: 'user',
+            role: 'user', // 🔥 TOUJOURS 'user' pour les nouvelles inscriptions
             isBlocked: false,
             createdAt: new Date().toISOString(),
             // Champs profil vides par défaut
@@ -151,7 +156,7 @@ async function handleRegister() {
         
         // Mettre à jour l'état global UNIFIÉ
         authState.currentUser = newUser;
-        authState.isAdmin = false;
+        authState.isAdmin = false; // 🔥 FORCÉ à false pour les nouveaux utilisateurs
         authState.isAuthenticated = true;
         syncAuthState();
         
@@ -172,7 +177,7 @@ async function handleRegister() {
             description: newUser.description || ''
         }));
         
-        // Nettoyer l'ancien système
+        // 🔥 CORRECTION: Nettoyage GARANTI du flag admin
         localStorage.removeItem('btp_pro_admin');
         
         showAlert('✅ Inscription réussie ! Bienvenue sur BTP Pro 🇲🇦', 'success');
@@ -268,7 +273,11 @@ function updateAuthUI() {
     const adminMenuItem = document.getElementById('admin-menu-item');
     const becomeProfessionalBtn = document.getElementById('becomeProfessionalBtn');
     
-    console.log('🔄 Mise à jour interface auth:', authState);
+    console.log('🔄 Mise à jour interface auth:', {
+        user: authState.currentUser?.email,
+        isAdmin: authState.isAdmin,
+        isAuthenticated: authState.isAuthenticated
+    });
     
     if (authState.currentUser && authState.isAuthenticated) {
         // Masquer boutons connexion, afficher menu utilisateur
@@ -290,26 +299,39 @@ function updateAuthUI() {
             userInitials.textContent = initials.toUpperCase() || 'U';
         }
         
-        // Gérer l'affichage admin
-        if (authState.isAdmin) {
+        // 🔥 CORRECTION: Gestion STRICTE de l'affichage admin
+        const shouldShowAdmin = authState.isAdmin;
+        
+        console.log('🔐 Vérification affichage admin:', {
+            shouldShowAdmin: shouldShowAdmin,
+            userRole: authState.currentUser.role,
+            authStateIsAdmin: authState.isAdmin
+        });
+        
+        if (shouldShowAdmin) {
+            // AFFICHER les éléments admin
             if (adminBadge) {
                 adminBadge.style.display = 'inline-block';
                 adminBadge.classList.remove('d-none');
                 adminBadge.textContent = 'ADMIN';
+                console.log('✅ Badge admin affiché');
             }
             if (adminNavItem) {
                 adminNavItem.style.display = 'block';
                 adminNavItem.classList.remove('d-none');
+                console.log('✅ Navigation admin affichée');
             }
             if (adminMenuItem) {
                 adminMenuItem.style.display = 'block';
                 adminMenuItem.classList.remove('d-none');
+                console.log('✅ Menu admin affiché');
             }
-            localStorage.setItem('btp_pro_admin', 'true');
         } else {
+            // MASQUER COMPLÈTEMENT les éléments admin
             if (adminBadge) {
                 adminBadge.style.display = 'none';
                 adminBadge.classList.add('d-none');
+                adminBadge.textContent = '';
             }
             if (adminNavItem) {
                 adminNavItem.style.display = 'none';
@@ -319,7 +341,7 @@ function updateAuthUI() {
                 adminMenuItem.style.display = 'none';
                 adminMenuItem.classList.add('d-none');
             }
-            localStorage.removeItem('btp_pro_admin');
+            console.log('❌ Éléments admin masqués - utilisateur non admin');
         }
         
         // Gérer le bouton "Devenir Professionnel"
@@ -340,12 +362,15 @@ function updateAuthUI() {
             userMenu.classList.add('d-none');
         }
         
-        // Masquer tous les éléments admin
+        // 🔥 CORRECTION: Masquer ABSOLUMENT tous les éléments admin
         const adminElements = [adminBadge, adminNavItem, adminMenuItem];
         adminElements.forEach(element => {
             if (element) {
                 element.style.display = 'none';
                 element.classList.add('d-none');
+                if (element === adminBadge) {
+                    element.textContent = '';
+                }
             }
         });
         
@@ -357,6 +382,8 @@ function updateAuthUI() {
         // RÉINITIALISER COMPLÈTEMENT L'ÉTAT ADMIN
         authState.isAdmin = false;
         localStorage.removeItem('btp_pro_admin');
+        
+        console.log('🚪 Déconnecté - état admin réinitialisé');
     }
 }
 
@@ -411,12 +438,28 @@ function initializeAuth() {
             const user = JSON.parse(savedUser);
             
             if (user && !user.isBlocked) {
+                // 🔥 CORRECTION: Vérification STRICTE du rôle admin
+                const userIsAdmin = user.role === 'admin';
+                
                 authState.currentUser = user;
-                authState.isAdmin = user.role === 'admin';
+                authState.isAdmin = userIsAdmin;
                 authState.isAuthenticated = true;
                 syncAuthState();
                 
-                console.log('✅ Utilisateur restauré:', user.email);
+                console.log('✅ Utilisateur restauré:', {
+                    email: user.email,
+                    role: user.role,
+                    isAdmin: userIsAdmin
+                });
+                
+                // 🔥 CORRECTION: Nettoyage du flag admin si incohérent
+                if (userIsAdmin && adminFlag !== 'true') {
+                    localStorage.setItem('btp_pro_admin', 'true');
+                    console.log('🔄 Flag admin corrigé pour utilisateur admin');
+                } else if (!userIsAdmin && adminFlag === 'true') {
+                    localStorage.removeItem('btp_pro_admin');
+                    console.log('🔄 Flag admin supprimé pour utilisateur non admin');
+                }
             } else {
                 console.log('❌ Utilisateur bloqué ou invalide');
                 logout();
@@ -431,6 +474,9 @@ function initializeAuth() {
         authState.isAdmin = false;
         authState.isAuthenticated = false;
         syncAuthState();
+        
+        // 🔥 CORRECTION: Nettoyage GARANTI du flag admin
+        localStorage.removeItem('btp_pro_admin');
     }
     
     updateAuthUI();
@@ -764,4 +810,4 @@ window.saveProfile = saveProfile;
 window.changePassword = changePassword;
 window.loadProfileData = loadProfileData;
 
-console.log('✅ auth.js CORRIGÉ - Gestion du profil fonctionnelle');
+console.log('✅ auth.js CORRIGÉ - Gestion admin STRICTE appliquée');
