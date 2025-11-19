@@ -137,6 +137,9 @@ async function handlePublishRealEstate(event) {
             throw new Error('Utilisateur non authentifié');
         }
         
+        // 🔥 NOUVEAU: Gestion des photos uploadées
+        const uploadedPhotos = await handlePhotoUpload(form);
+        
         const propertyData = {
             title: data.title.trim(),
             type: data.type,
@@ -152,7 +155,7 @@ async function handlePublishRealEstate(event) {
             userEmail: currentUser.email,
             status: 'en_attente',
             isPremium: false,
-            photos: [],
+            photos: uploadedPhotos, // 🔥 Photos uploadées
             viewCount: 0,
             contactCount: 0,
             createdAt: new Date().toISOString(),
@@ -170,6 +173,9 @@ async function handlePublishRealEstate(event) {
         // Réinitialiser le formulaire
         form.reset();
         
+        // 🔥 NOUVEAU: Réinitialiser les photos preview
+        resetPhotoPreview();
+        
         // Rediriger vers la section immobilier
         setTimeout(() => {
             goToSection('realestate');
@@ -180,6 +186,454 @@ async function handlePublishRealEstate(event) {
     } catch (error) {
         console.error('❌ Erreur publication immobilier:', error);
         showAlert('❌ Erreur lors de la publication: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// 🔥 NOUVELLE FONCTION: GESTION UPLOAD PHOTOS
+async function handlePhotoUpload(form) {
+    const photoInput = form.querySelector('input[type="file"]');
+    const uploadedPhotos = [];
+    
+    if (photoInput && photoInput.files.length > 0) {
+        console.log('📸 Upload de photos détecté:', photoInput.files.length, 'fichiers');
+        
+        // Limiter à 5 photos maximum
+        const files = Array.from(photoInput.files).slice(0, 5);
+        
+        for (const file of files) {
+            try {
+                // Vérifier la taille du fichier (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showAlert(`❌ La photo "${file.name}" est trop volumineuse (max 5MB)`, 'error');
+                    continue;
+                }
+                
+                // Vérifier le type de fichier
+                if (!file.type.startsWith('image/')) {
+                    showAlert(`❌ Le fichier "${file.name}" n'est pas une image valide`, 'error');
+                    continue;
+                }
+                
+                // 🔥 SIMULATION UPLOAD - À REMPLACER PAR VOTRE LOGIQUE UPLOAD
+                const fakeUploadUrl = await simulatePhotoUpload(file);
+                uploadedPhotos.push(fakeUploadUrl);
+                
+                console.log(`✅ Photo uploadée: ${file.name}`);
+                
+            } catch (error) {
+                console.error(`❌ Erreur upload photo ${file.name}:`, error);
+                showAlert(`❌ Erreur lors de l'upload de "${file.name}"`, 'error');
+            }
+        }
+    }
+    
+    return uploadedPhotos;
+}
+
+// 🔥 FONCTION SIMULATION UPLOAD (À ADAPTER AVEC VOTRE SOLUTION)
+async function simulatePhotoUpload(file) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // Simuler une URL d'image uploadée
+            const fakeUrl = `https://picsum.photos/400/300?random=${Math.random()}`;
+            resolve(fakeUrl);
+        }, 1000);
+    });
+}
+
+// 🔥 NOUVELLE FONCTION: PRÉVISUALISATION DES PHOTOS
+function setupPhotoPreview() {
+    const photoInput = document.getElementById('realestatePhotos');
+    const previewContainer = document.getElementById('photoPreview');
+    
+    if (!photoInput || !previewContainer) return;
+    
+    photoInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        previewContainer.innerHTML = '';
+        
+        if (files.length > 5) {
+            showAlert('❌ Maximum 5 photos autorisées', 'error');
+            this.value = '';
+            return;
+        }
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'photo-preview-item position-relative';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" class="img-thumbnail" alt="Preview">
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removePhotoPreview(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                previewContainer.appendChild(preview);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// 🔥 NOUVELLE FONCTION: SUPPRIMER PHOTO PREVIEW
+function removePhotoPreview(button) {
+    const previewItem = button.closest('.photo-preview-item');
+    previewItem.remove();
+    
+    // Mettre à jour l'input file
+    const photoInput = document.getElementById('realestatePhotos');
+    // Réinitialiser l'input (limitation technique des inputs file)
+    photoInput.value = '';
+}
+
+// 🔥 NOUVELLE FONCTION: RÉINITIALISER PREVIEW PHOTOS
+function resetPhotoPreview() {
+    const previewContainer = document.getElementById('photoPreview');
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+    
+    const photoInput = document.getElementById('realestatePhotos');
+    if (photoInput) {
+        photoInput.value = '';
+    }
+}
+
+// 🔥 NOUVELLE FONCTION: ÉDITION D'ANNONCE
+async function editRealEstateAnnounce(announceId) {
+    console.log('✏️ Édition annonce immobilier:', announceId);
+    
+    if (!checkAuth()) {
+        showAlert('🔐 Veuillez vous connecter pour modifier une annonce', 'warning');
+        return;
+    }
+    
+    try {
+        const properties = await btpDB.get('realestate_posts');
+        const property = properties.find(p => p.id == announceId);
+        
+        if (!property) {
+            showAlert('❌ Annonce non trouvée', 'error');
+            return;
+        }
+        
+        // Vérifier que l'utilisateur est le propriétaire ou admin
+        const currentUser = authState.currentUser;
+        if (property.userId !== currentUser.id && !authState.isAdmin) {
+            showAlert('❌ Vous ne pouvez modifier que vos propres annonces', 'error');
+            return;
+        }
+        
+        // Afficher le modal d'édition
+        showEditRealEstateModal(property);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement annonce:', error);
+        showAlert('❌ Erreur lors du chargement de l\'annonce', 'error');
+    }
+}
+
+// 🔥 NOUVELLE FONCTION: AFFICHER MODAL ÉDITION
+function showEditRealEstateModal(property) {
+    // Créer ou récupérer le modal d'édition
+    let editModal = document.getElementById('editRealEstateModal');
+    
+    if (!editModal) {
+        editModal = document.createElement('div');
+        editModal.className = 'modal fade';
+        editModal.id = 'editRealEstateModal';
+        editModal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Modifier l'annonce
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editRealEstateForm" onsubmit="handleEditRealEstate(event)">
+                            <input type="hidden" id="editPropertyId" name="id">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Titre *</label>
+                                    <input type="text" class="form-control" id="editTitle" name="title" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Type de bien *</label>
+                                    <select class="form-control" id="editType" name="type" required>
+                                        <option value="">Choisir un type</option>
+                                        <option value="villa">Villa</option>
+                                        <option value="appartement">Appartement</option>
+                                        <option value="maison">Maison</option>
+                                        <option value="terrain">Terrain</option>
+                                        <option value="local">Local commercial</option>
+                                        <option value="bureau">Bureau</option>
+                                        <option value="duplex">Duplex</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Prix (MAD) *</label>
+                                    <input type="number" class="form-control" id="editPrice" name="price" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Surface (m²)</label>
+                                    <input type="number" class="form-control" id="editSurface" name="surface">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Nombre de pièces</label>
+                                    <input type="number" class="form-control" id="editRooms" name="rooms">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Adresse *</label>
+                                <input type="text" class="form-control" id="editAddress" name="address" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Ville</label>
+                                <input type="text" class="form-control" id="editCity" name="city">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Description *</label>
+                                <textarea class="form-control" id="editDescription" name="description" rows="4" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone *</label>
+                                <input type="tel" class="form-control" id="editPhone" name="phone" required>
+                            </div>
+                            
+                            <!-- SECTION PHOTOS EXISTANTES -->
+                            <div class="mb-3">
+                                <label class="form-label">Photos actuelles</label>
+                                <div id="existingPhotos" class="d-flex flex-wrap gap-2 mb-3"></div>
+                            </div>
+                            
+                            <!-- SECTION NOUVELLES PHOTOS -->
+                            <div class="mb-3">
+                                <label class="form-label">Ajouter de nouvelles photos (max 5)</label>
+                                <input type="file" class="form-control" id="editPhotos" name="photos" multiple accept="image/*">
+                                <div class="form-text">Formats acceptés: JPG, PNG, WebP. Max 5MB par photo.</div>
+                                <div id="editPhotoPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" form="editRealEstateForm" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(editModal);
+        
+        // Initialiser la prévisualisation des photos
+        setupEditPhotoPreview();
+    }
+    
+    // Remplir le formulaire avec les données existantes
+    document.getElementById('editPropertyId').value = property.id;
+    document.getElementById('editTitle').value = property.title || '';
+    document.getElementById('editType').value = property.type || '';
+    document.getElementById('editPrice').value = property.price || '';
+    document.getElementById('editSurface').value = property.surface || '';
+    document.getElementById('editRooms').value = property.rooms || '';
+    document.getElementById('editAddress').value = property.address || '';
+    document.getElementById('editCity').value = property.city || '';
+    document.getElementById('editDescription').value = property.description || '';
+    document.getElementById('editPhone').value = property.phone || '';
+    
+    // Afficher les photos existantes
+    displayExistingPhotos(property.photos || []);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(editModal);
+    modal.show();
+}
+
+// 🔥 NOUVELLE FONCTION: AFFICHER PHOTOS EXISTANTES
+function displayExistingPhotos(photos) {
+    const container = document.getElementById('existingPhotos');
+    container.innerHTML = '';
+    
+    if (!photos || photos.length === 0) {
+        container.innerHTML = '<p class="text-muted">Aucune photo</p>';
+        return;
+    }
+    
+    photos.forEach((photo, index) => {
+        const photoElement = document.createElement('div');
+        photoElement.className = 'position-relative';
+        photoElement.innerHTML = `
+            <img src="${photo}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" alt="Photo ${index + 1}">
+            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removeExistingPhoto('${photo}', ${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(photoElement);
+    });
+}
+
+// 🔥 NOUVELLE FONCTION: SUPPRIMER PHOTO EXISTANTE
+function removeExistingPhoto(photoUrl, index) {
+    // Marquer la photo pour suppression
+    const propertyId = document.getElementById('editPropertyId').value;
+    const removedPhotos = JSON.parse(sessionStorage.getItem('removedPhotos') || '{}');
+    if (!removedPhotos[propertyId]) {
+        removedPhotos[propertyId] = [];
+    }
+    removedPhotos[propertyId].push(photoUrl);
+    sessionStorage.setItem('removedPhotos', JSON.stringify(removedPhotos));
+    
+    // Masquer la photo dans l'interface
+    const photoElements = document.querySelectorAll('#existingPhotos .position-relative');
+    if (photoElements[index]) {
+        photoElements[index].style.display = 'none';
+    }
+}
+
+// 🔥 NOUVELLE FONCTION: PRÉVISUALISATION PHOTOS ÉDITION
+function setupEditPhotoPreview() {
+    const photoInput = document.getElementById('editPhotos');
+    const previewContainer = document.getElementById('editPhotoPreview');
+    
+    if (!photoInput || !previewContainer) return;
+    
+    photoInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        previewContainer.innerHTML = '';
+        
+        if (files.length > 5) {
+            showAlert('❌ Maximum 5 photos autorisées', 'error');
+            this.value = '';
+            return;
+        }
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'photo-preview-item position-relative';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" alt="Preview">
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removeEditPhotoPreview(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                previewContainer.appendChild(preview);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// 🔥 NOUVELLE FONCTION: SUPPRIMER PHOTO PREVIEW ÉDITION
+function removeEditPhotoPreview(button) {
+    const previewItem = button.closest('.photo-preview-item');
+    previewItem.remove();
+}
+
+// 🔥 NOUVELLE FONCTION: GESTION ÉDITION ANNONCE
+async function handleEditRealEstate(event) {
+    event.preventDefault();
+    
+    console.log('💾 Sauvegarde modifications annonce...');
+    
+    if (!checkAuth()) {
+        showAlert('🔐 Session expirée, veuillez vous reconnecter', 'error');
+        return;
+    }
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const propertyId = data.id;
+    
+    showLoading(true);
+    
+    try {
+        // Récupérer l'annonce existante
+        const properties = await btpDB.get('realestate_posts');
+        const existingProperty = properties.find(p => p.id == propertyId);
+        
+        if (!existingProperty) {
+            throw new Error('Annonce non trouvée');
+        }
+        
+        // Vérifier les permissions
+        const currentUser = authState.currentUser;
+        if (existingProperty.userId !== currentUser.id && !authState.isAdmin) {
+            throw new Error('Permission refusée');
+        }
+        
+        // Gérer les nouvelles photos
+        const newPhotos = await handlePhotoUpload(form);
+        
+        // Gérer les photos supprimées
+        const removedPhotos = JSON.parse(sessionStorage.getItem('removedPhotos') || '{}');
+        const photosToRemove = removedPhotos[propertyId] || [];
+        let updatedPhotos = existingProperty.photos || [];
+        
+        // Supprimer les photos marquées pour suppression
+        updatedPhotos = updatedPhotos.filter(photo => !photosToRemove.includes(photo));
+        
+        // Ajouter les nouvelles photos
+        updatedPhotos = [...updatedPhotos, ...newPhotos];
+        
+        const updateData = {
+            title: data.title.trim(),
+            type: data.type,
+            price: parseFloat(data.price),
+            surface: data.surface ? parseFloat(data.surface) : null,
+            rooms: data.rooms ? parseInt(data.rooms) : null,
+            address: data.address.trim(),
+            city: data.city ? data.city.trim() : '',
+            description: data.description.trim(),
+            phone: data.phone.trim(),
+            photos: updatedPhotos,
+            updatedAt: new Date().toISOString()
+        };
+        
+        console.log('💾 Mise à jour annonce:', updateData);
+        
+        await btpDB.put('realestate_posts', propertyId, updateData);
+        
+        // Nettoyer les photos supprimées du sessionStorage
+        delete removedPhotos[propertyId];
+        sessionStorage.setItem('removedPhotos', JSON.stringify(removedPhotos));
+        
+        showAlert('✅ Annonce modifiée avec succès', 'success');
+        
+        // Fermer le modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editRealEstateModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Recharger les annonces
+        setTimeout(() => loadRealEstateAnnounces(), 500);
+        
+    } catch (error) {
+        console.error('❌ Erreur modification annonce:', error);
+        showAlert('❌ Erreur lors de la modification: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -212,6 +666,9 @@ function showPublishRealEstate() {
                 form.style.display = 'none';
             }
         });
+        
+        // Initialiser la prévisualisation des photos
+        setupPhotoPreview();
     }, 100);
 }
 
@@ -356,6 +813,10 @@ function displayRealEstatePosts(properties) {
         const favoriteBtnClass = isFavorite ? 'text-danger' : 'text-muted';
         const favoriteIcon = isFavorite ? 'fas' : 'far';
         
+        // Vérifier si l'utilisateur peut éditer cette annonce
+        const canEdit = authState.currentUser && 
+                       (authState.currentUser.id === property.userId || authState.isAdmin);
+        
         html += `
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 realestate-card">
@@ -443,10 +904,15 @@ function displayRealEstatePosts(properties) {
                         <small class="text-muted">${formatDate(property.createdAt)}</small>
                     </div>
                     
-                    <!-- BOUTONS ADMIN -->
-                    ${authState.isAdmin ? `
-                    <div class="admin-actions mt-2">
+                    <!-- BOUTONS ADMIN ET ÉDITION -->
+                    <div class="actions mt-2">
                         <div class="btn-group btn-group-sm w-100">
+                            ${canEdit ? `
+                            <button class="btn btn-outline-primary btn-sm" onclick="editRealEstateAnnounce('${property.id}')" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ` : ''}
+                            ${authState.isAdmin ? `
                             <button class="btn btn-outline-warning btn-sm" onclick="toggleAnnounceStatus('${property.id}', 'realestate', '${property.status === 'en_pause' ? 'approuve' : 'en_pause'}')" 
                                     title="${property.status === 'en_pause' ? 'Activer' : 'Mettre en pause'}">
                                 <i class="fas fa-${property.status === 'en_pause' ? 'play' : 'pause'}"></i>
@@ -458,9 +924,9 @@ function displayRealEstatePosts(properties) {
                             <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce('${property.id}', 'realestate')" title="Supprimer">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            ` : ''}
                         </div>
                     </div>
-                    ` : ''}
                 </div>
                 <div class="card-footer bg-transparent">
                     <div class="d-flex gap-2">
@@ -550,4 +1016,12 @@ window.clearRealEstateFilters = clearRealEstateFilters;
 window.getPropertyTypeLabel = getPropertyTypeLabel;
 window.showPublishRealEstate = showPublishRealEstate;
 
-console.log('✅ realestate.js CORRIGÉ - Double authentification RÉSOLUE');
+// 🔥 EXPORT DES NOUVELLES FONCTIONS
+window.editRealEstateAnnounce = editRealEstateAnnounce;
+window.handleEditRealEstate = handleEditRealEstate;
+window.removePhotoPreview = removePhotoPreview;
+window.removeEditPhotoPreview = removeEditPhotoPreview;
+window.removeExistingPhoto = removeExistingPhoto;
+window.setupPhotoPreview = setupPhotoPreview;
+
+console.log('✅ realestate.js CORRIGÉ - Édition annonces + Upload photos IMPLÉMENTÉ');
