@@ -23,6 +23,9 @@ class BTPApp {
         this.setupEventListeners();
         this.loadSection('home');
         
+        // 🔥 CORRECTION: Initialiser les types de biens immobiliers
+        this.initializeRealEstateTypes();
+        
         // Cacher le loader
         setTimeout(() => {
             const loader = document.querySelector('.loading-overlay');
@@ -60,7 +63,8 @@ class BTPApp {
             console.log('✅ État synchronisé:', {
                 user: !!this.state.currentUser,
                 email: this.state.currentUser?.email,
-                admin: this.state.isAdmin
+                admin: this.state.isAdmin,
+                userRole: this.state.currentUser?.role
             });
         } else {
             console.warn('⚠️ authState non disponible pour synchronisation');
@@ -85,6 +89,19 @@ class BTPApp {
         } else {
             console.log('👤 Aucun utilisateur connecté, profil non initialisé');
         }
+    }
+
+    // 🔥 CORRECTION: INITIALISER LES TYPES DE BIENS IMMOBILIERS
+    initializeRealEstateTypes() {
+        console.log('🏠 Initialisation des types de biens immobiliers...');
+        
+        // S'assurer que les types sont disponibles dans tous les formulaires
+        setTimeout(() => {
+            if (typeof initializeRealEstateFormTypes === 'function') {
+                initializeRealEstateFormTypes();
+                console.log('✅ Types de biens immobiliers initialisés');
+            }
+        }, 500);
     }
 
     // ✅ MÉTHODE POUR SYNCHRONISER QUAND L'UTILISATEUR CHANGE
@@ -157,7 +174,9 @@ class BTPApp {
             if (e.target.id === 'profileModal') {
                 console.log('🎯 Modal profil ouvert - chargement données...');
                 // S'assurer que les données sont chargées
-                if (typeof loadProfileData === 'function') {
+                if (typeof userProfileManager !== 'undefined') {
+                    setTimeout(() => userProfileManager.loadUserProfile(), 100);
+                } else if (typeof loadProfileData === 'function') {
                     setTimeout(() => loadProfileData(), 100);
                 }
             }
@@ -186,10 +205,10 @@ class BTPApp {
             
             // Charger les données après un court délai
             setTimeout(() => {
-                if (typeof loadProfileData === 'function') {
+                if (typeof userProfileManager !== 'undefined') {
+                    userProfileManager.loadUserProfile();
+                } else if (typeof loadProfileData === 'function') {
                     loadProfileData();
-                } else if (this.userProfile && this.userProfile.loadUserProfile) {
-                    this.userProfile.loadUserProfile();
                 }
             }, 300);
         }
@@ -308,6 +327,8 @@ class BTPApp {
         const sectionLoaders = {
             'home': () => {
                 console.log('🏠 Section accueil chargée');
+                // 🔥 CORRECTION: Initialiser Adsense si nécessaire
+                this.initializeAdsense();
             },
             'marketplace': () => {
                 if (window.loadMarketplaceAnnounces) {
@@ -318,6 +339,8 @@ class BTPApp {
                 if (window.loadRealEstateAnnounces) {
                     loadRealEstateAnnounces();
                 }
+                // 🔥 CORRECTION: S'assurer que les types de biens sont initialisés
+                this.initializeRealEstateTypes();
             },
             'jobs': () => {
                 if (window.loadJobsAnnounces) {
@@ -344,12 +367,17 @@ class BTPApp {
                 this.initializePublishSection();
             },
             'admin': () => {
-                if (this.state.isAdmin && window.refreshAdminData) {
-                    refreshAdminData();
+                // 🔥 CORRECTION: Vérification ADMIN RENFORCÉE
+                if (this.checkAdminAccess()) {
+                    if (window.refreshAdminData) {
+                        refreshAdminData();
+                    } else {
+                        console.warn('❌ Fonction refreshAdminData non disponible');
+                        showAlert('❌ Module administration non chargé', 'error');
+                    }
                 } else {
-                    console.warn('❌ Accès admin refusé');
+                    console.warn('❌ Accès admin refusé - redirection vers accueil');
                     this.loadSection('home');
-                    showAlert('❌ Accès réservé aux administrateurs', 'error');
                 }
             },
             'my_account': () => {
@@ -384,6 +412,44 @@ class BTPApp {
         }
     }
 
+    // 🔥 CORRECTION: INITIALISATION ADSENSE
+    initializeAdsense() {
+        console.log('📢 Initialisation Adsense...');
+        
+        // S'assurer que les slots Adsense sont initialisés
+        if (typeof btpDB !== 'undefined' && btpDB.initializeAdsenseSlots) {
+            setTimeout(() => {
+                btpDB.initializeAdsenseSlots().then(slots => {
+                    console.log(`✅ ${slots.length} slots Adsense initialisés`);
+                });
+            }, 1000);
+        }
+    }
+
+    // 🔥 CORRECTION: VÉRIFICATION ADMIN RENFORCÉE
+    checkAdminAccess() {
+        console.log('🔐 Vérification accès admin...', {
+            hasUser: !!this.state.currentUser,
+            isAdmin: this.state.isAdmin,
+            userRole: this.state.currentUser?.role
+        });
+        
+        if (!this.state.currentUser) {
+            console.warn('❌ Tentative d\'accès admin sans utilisateur connecté');
+            showAlert('❌ Vous devez être connecté pour accéder à l\'administration', 'error');
+            return false;
+        }
+        
+        if (!this.state.isAdmin) {
+            console.warn('❌ Tentative d\'accès admin sans permission administrateur');
+            showAlert('❌ Accès réservé aux administrateurs', 'error');
+            return false;
+        }
+        
+        console.log('✅ Accès admin autorisé');
+        return true;
+    }
+
     // 🔥 CORRECTION: CHARGEMENT DE LA SECTION COMPTE
     loadAccountSection() {
         console.log('💼 Chargement section mon compte...');
@@ -398,10 +464,10 @@ class BTPApp {
         }
 
         // Charger les données du profil si disponible
-        if (typeof loadProfileData === 'function') {
+        if (typeof userProfileManager !== 'undefined') {
+            setTimeout(() => userProfileManager.loadUserProfile(), 100);
+        } else if (typeof loadProfileData === 'function') {
             setTimeout(() => loadProfileData(), 100);
-        } else if (this.userProfile && this.userProfile.loadUserProfile) {
-            setTimeout(() => this.userProfile.loadUserProfile(), 100);
         }
 
         // Afficher les onglets du compte
@@ -437,7 +503,9 @@ class BTPApp {
         // Charger les données spécifiques à l'onglet
         switch(tabName) {
             case 'profile':
-                if (typeof loadProfileData === 'function') {
+                if (typeof userProfileManager !== 'undefined') {
+                    userProfileManager.loadUserProfile();
+                } else if (typeof loadProfileData === 'function') {
                     loadProfileData();
                 }
                 break;
@@ -475,6 +543,9 @@ class BTPApp {
             this.loadMarketplaceCategories();
         }
         
+        // 🔥 CORRECTION: Initialiser les types de biens immobiliers
+        this.initializeRealEstateFormTypes();
+        
         // ✅ FORCER L'AFFICHAGE DU PREMIER FORMULAIRE AU CHARGEMENT
         setTimeout(() => {
             const hasActiveForm = document.querySelector('.publish-form[style*="display: block"]');
@@ -485,6 +556,57 @@ class BTPApp {
             // ✅ INITIALISER LES ÉCOUTEURS D'ÉVÉNEMENTS POUR LA NAVIGATION
             this.initializePublishNavigation();
         }, 200);
+    }
+
+    // 🔥 CORRECTION: INITIALISER LES TYPES DE BIENS DANS LE FORMULAIRE
+    initializeRealEstateFormTypes() {
+        console.log('🏠 Initialisation types de biens formulaire...');
+        
+        if (typeof initializeRealEstateFormTypes === 'function') {
+            initializeRealEstateFormTypes();
+        } else {
+            // Fallback manuel
+            const typeSelect = document.getElementById('realestateType');
+            if (typeSelect && typeSelect.children.length <= 1) {
+                const propertyTypes = [
+                    'villa', 'appartement', 'maison', 'ferme', 'bungalow', 'usine',
+                    'entrepot', 'bureau', 'local', 'terrain', 'duplex', 'studio',
+                    'riad', 'chalet', 'residence', 'immeuble'
+                ];
+                
+                propertyTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = this.getPropertyTypeLabel(type);
+                    typeSelect.appendChild(option);
+                });
+                
+                console.log(`✅ ${propertyTypes.length} types de biens ajoutés`);
+            }
+        }
+    }
+
+    // 🔥 CORRECTION: LABELS DES TYPES DE BIENS
+    getPropertyTypeLabel(type) {
+        const labels = {
+            'villa': 'Villa',
+            'appartement': 'Appartement',
+            'maison': 'Maison',
+            'ferme': 'Ferme',
+            'bungalow': 'Bungalow',
+            'usine': 'Usine',
+            'entrepot': 'Entrepôt',
+            'bureau': 'Bureau',
+            'local': 'Local commercial',
+            'terrain': 'Terrain',
+            'duplex': 'Duplex',
+            'studio': 'Studio',
+            'riad': 'Riad',
+            'chalet': 'Chalet',
+            'residence': 'Résidence',
+            'immeuble': 'Immeuble'
+        };
+        return labels[type] || type;
     }
 
     // ✅ NOUVELLE MÉTHODE POUR AFFICHER LES FORMULAIRES
@@ -629,6 +751,41 @@ class BTPApp {
         // ✅ DÉLÉGUER COMPLÈTEMENT À auth.js
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
+        } else {
+            console.warn('⚠️ updateAuthUI non disponible - fallback manuel');
+            // Fallback manuel basique
+            this.fallbackUpdateAuthUI();
+        }
+    }
+
+    // 🔥 CORRECTION: FALLBACK POUR UPDATE AUTH UI
+    fallbackUpdateAuthUI() {
+        console.log('🔄 Fallback mise à jour interface auth...');
+        
+        const authButtons = document.getElementById('auth-buttons');
+        const userMenu = document.getElementById('user-menu');
+        const adminNavItem = document.getElementById('admin-nav-item');
+        const adminMenuItem = document.getElementById('admin-menu-item');
+        
+        if (this.state.currentUser && this.state.isAuthenticated) {
+            // Utilisateur connecté
+            if (authButtons) authButtons.style.display = 'none';
+            if (userMenu) userMenu.style.display = 'flex';
+            
+            // 🔥 CORRECTION: Masquer admin si pas admin
+            if (this.state.isAdmin) {
+                if (adminNavItem) adminNavItem.style.display = 'block';
+                if (adminMenuItem) adminMenuItem.style.display = 'block';
+            } else {
+                if (adminNavItem) adminNavItem.style.display = 'none';
+                if (adminMenuItem) adminMenuItem.style.display = 'none';
+            }
+        } else {
+            // Utilisateur déconnecté
+            if (authButtons) authButtons.style.display = 'flex';
+            if (userMenu) userMenu.style.display = 'none';
+            if (adminNavItem) adminNavItem.style.display = 'none';
+            if (adminMenuItem) adminMenuItem.style.display = 'none';
         }
     }
 
@@ -644,12 +801,11 @@ class BTPApp {
     }
 
     requireAdmin(callback) {
-        if (!this.state.currentUser || !this.state.isAdmin) {
-            showAlert('❌ Accès réservé aux administrateurs', 'error');
-            return false;
+        if (this.checkAdminAccess()) {
+            if (callback) callback();
+            return true;
         }
-        if (callback) callback();
-        return true;
+        return false;
     }
 }
 
@@ -874,6 +1030,14 @@ window.appDebug = function() {
     console.log('👤 Utilisateur:', btpApp?.state.currentUser);
     console.log('👑 Admin:', btpApp?.state.isAdmin);
     console.log('👤 Profil initialisé:', !!btpApp?.userProfile);
+    
+    // 🔥 CORRECTION: Debug détaillé admin
+    console.log('🔐 Debug admin détaillé:', {
+        authStateAdmin: authState?.isAdmin,
+        appStateAdmin: btpApp?.state.isAdmin,
+        userRole: btpApp?.state.currentUser?.role,
+        localStorageAdmin: localStorage.getItem('btp_pro_admin')
+    });
 };
 
 window.addEventListener('error', function(e) {
@@ -884,4 +1048,4 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('❌ Promise rejetée:', e.reason);
 });
 
-console.log('✅ app.js COMPLET - Correction PROFIL UTILISATEUR APPLIQUÉE');
+console.log('✅ app.js COMPLET - Correction PROFIL et IMMOBILIER APPLIQUÉE');

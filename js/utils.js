@@ -1,4 +1,4 @@
-// ========== FONCTIONS UTILITAIRES SYNCHRONISÉES ==========
+// ========== FONCTIONS UTILITAIRES SYNCHRONISÉES ET CORRIGÉES ==========
 
 // ✅ GESTION D'ÉTAT UNIFIÉE - Utiliser authState comme source de vérité
 function getAppState() {
@@ -194,7 +194,7 @@ function debugAllFilters() {
     });
 }
 
-// Fonction pour afficher les alertes
+// 🔥 CORRECTION: FONCTION POUR AFFICHER LES ALERTES AMÉLIORÉE
 function showAlert(message, type = 'info') {
     // Supprimer les alertes existantes
     const existingAlerts = document.querySelectorAll('.custom-alert');
@@ -202,6 +202,15 @@ function showAlert(message, type = 'info') {
 
     const alertDiv = document.createElement('div');
     alertDiv.className = `custom-alert alert alert-${type} alert-dismissible fade show`;
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
     alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -217,7 +226,7 @@ function showAlert(message, type = 'info') {
     }, 5000);
 }
 
-// Fonction pour afficher le loading
+// 🔥 CORRECTION: FONCTION POUR AFFICHER LE LOADING AMÉLIORÉE
 function showLoading(show = true) {
     let loader = document.getElementById('loading-spinner');
     
@@ -225,9 +234,20 @@ function showLoading(show = true) {
         if (!loader) {
             loader = document.createElement('div');
             loader.id = 'loading-spinner';
-            loader.className = 'loading-spinner';
+            loader.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            `;
             loader.innerHTML = `
-                <div class="spinner-border text-primary" role="status">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Chargement...</span>
                 </div>
             `;
@@ -525,6 +545,81 @@ function goToFavoriteItem(type, id) {
     }
 }
 
+// ========== GESTION UPLOAD PHOTOS CORRIGÉE ==========
+
+// 🔥 CORRECTION: FONCTION POUR CONVERTIR LES FICHIERS EN BASE64
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+// 🔥 CORRECTION: FONCTION POUR GÉRER L'UPLOAD DES PHOTOS
+async function handlePhotoUpload(form) {
+    const photoInput = form.querySelector('input[type="file"]');
+    const uploadedPhotos = [];
+    
+    if (photoInput && photoInput.files.length > 0) {
+        console.log('📸 Upload de photos détecté:', photoInput.files.length, 'fichiers');
+        
+        // Limiter à 5 photos maximum
+        const files = Array.from(photoInput.files).slice(0, 5);
+        
+        for (const file of files) {
+            try {
+                // Vérifier la taille du fichier (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showAlert(`❌ La photo "${file.name}" est trop volumineuse (max 5MB)`, 'error');
+                    continue;
+                }
+                
+                // Vérifier le type de fichier
+                if (!file.type.startsWith('image/')) {
+                    showAlert(`❌ Le fichier "${file.name}" n'est pas une image valide`, 'error');
+                    continue;
+                }
+                
+                // 🔥 CORRECTION: Stockage local des images (Base64)
+                const base64Image = await convertFileToBase64(file);
+                uploadedPhotos.push(base64Image);
+                
+                console.log(`✅ Photo convertie en Base64: ${file.name}`);
+                
+            } catch (error) {
+                console.error(`❌ Erreur conversion photo ${file.name}:`, error);
+                showAlert(`❌ Erreur lors du traitement de "${file.name}"`, 'error');
+            }
+        }
+    }
+    
+    return uploadedPhotos;
+}
+
+// 🔥 CORRECTION: FONCTION POUR VALIDER LES FICHIERS IMAGES
+function validateImageFile(file) {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    
+    if (!allowedTypes.includes(file.type)) {
+        return {
+            valid: false,
+            message: 'Type de fichier non supporté. Utilisez JPG, PNG ou WebP.'
+        };
+    }
+    
+    if (file.size > maxSize) {
+        return {
+            valid: false,
+            message: 'Fichier trop volumineux. Maximum 5MB.'
+        };
+    }
+    
+    return { valid: true };
+}
+
 // ========== FONCTIONS DE RECHERCHE GLOBALE ==========
 function handleGlobalSearch() {
     const searchTerm = document.getElementById('globalSearch')?.value || 
@@ -746,10 +841,16 @@ function navigateToAccountSection(sectionId) {
 function loadAccountSectionData(sectionId) {
     switch(sectionId) {
         case 'profile':
-            loadProfileData();
+            if (typeof userProfileManager !== 'undefined') {
+                userProfileManager.loadUserProfile();
+            } else if (typeof loadProfileData === 'function') {
+                loadProfileData();
+            }
             break;
         case 'announces':
-            loadUserAnnounces();
+            if (window.loadUserAnnounces) {
+                loadUserAnnounces();
+            }
             break;
         case 'favorites':
             loadFavorites();
@@ -1159,6 +1260,18 @@ style.textContent = `
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
     }
+    .photo-preview-item {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+    .photo-preview-item img {
+        border: 2px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    .photo-preview-item:hover img {
+        border-color: #0d6efd;
+    }
     @keyframes slideInRight {
         from {
             transform: translateX(100%);
@@ -1198,6 +1311,11 @@ window.validateEmail = validateEmail;
 window.validatePhone = validatePhone;
 window.validatePassword = validatePassword;
 
+// 🔥 EXPORT DES FONCTIONS UPLOAD PHOTOS CORRIGÉES
+window.convertFileToBase64 = convertFileToBase64;
+window.handlePhotoUpload = handlePhotoUpload;
+window.validateImageFile = validateImageFile;
+
 // ✅ EXPORT DES FONCTIONS DE RÉINITIALISATION CORRIGÉES
 window.resetSectionFilters = resetSectionFilters;
 window.resetMarketplaceFilters = resetMarketplaceFilters;
@@ -1218,4 +1336,4 @@ window.updateProfile = updateProfile;
 window.loadFavorites = loadFavorites;
 window.loadUserAnnounces = loadUserAnnounces;
 
-console.log('✅ utils.js SYNCHRONISÉ - Toutes les fonctionnalités restaurées');
+console.log('✅ utils.js COMPLET - Upload photos CORRIGÉ et synchronisé');

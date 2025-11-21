@@ -143,13 +143,17 @@ async function handleRegister() {
             role: 'user', // 🔥 TOUJOURS 'user' pour les nouvelles inscriptions
             isBlocked: false,
             createdAt: new Date().toISOString(),
-            // Champs profil vides par défaut
+            // 🔥 CORRECTION: Initialiser TOUS les champs de profil
             company: '',
             address: '',
             city: '',
             postalCode: '',
             website: '',
-            description: ''
+            description: '',
+            isVerified: false,
+            hasPremium: false,
+            visitCount: 0,
+            lastVisit: new Date().toISOString()
         };
         
         const newUser = await btpDB.registerUser(userData);
@@ -202,6 +206,120 @@ async function handleRegister() {
     } finally {
         showLoading(false);
     }
+}
+
+// ========== RÉINITIALISATION MOT DE PASSE ==========
+async function resetPassword(email) {
+    if (!email) {
+        showAlert('❌ Veuillez saisir votre email', 'error');
+        return;
+    }
+    
+    if (!validateEmail(email)) {
+        showAlert('❌ Format d\'email invalide', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const users = await btpDB.get('users');
+        const user = users.find(u => u.email === email);
+        
+        if (!user) {
+            showAlert('❌ Aucun compte trouvé avec cet email', 'error');
+            return;
+        }
+        
+        // Générer un nouveau mot de passe temporaire
+        const temporaryPassword = generateTemporaryPassword();
+        
+        // Mettre à jour le mot de passe dans la base
+        await btpDB.put('users', user.id, {
+            password: temporaryPassword,
+            updatedAt: new Date().toISOString()
+        });
+        
+        // Afficher le mot de passe temporaire (dans un environnement réel, on l'enverrait par email)
+        showAlert(`🔑 Mot de passe temporaire généré : <strong>${temporaryPassword}</strong><br><br>Veuillez le communiquer à l'adhérent et lui demander de le changer après connexion.`, 'info', 10000);
+        
+        console.log(`✅ Mot de passe réinitialisé pour ${email}: ${temporaryPassword}`);
+        
+    } catch (error) {
+        console.error('❌ Erreur réinitialisation mot de passe:', error);
+        showAlert('❌ Erreur lors de la réinitialisation du mot de passe', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function generateTemporaryPassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+}
+
+function showResetPasswordModal() {
+    if (!checkAdminAccess()) {
+        showAlert('🔐 Accès réservé aux administrateurs', 'error');
+        return;
+    }
+    
+    const modalHTML = `
+        <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-key me-2"></i>
+                            Réinitialiser un mot de passe
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Cette fonction génère un mot de passe temporaire pour un adhérent qui aurait perdu son mot de passe.
+                        </div>
+                        <div class="mb-3">
+                            <label for="resetPasswordEmail" class="form-label">Email de l'adhérent *</label>
+                            <input type="email" class="form-control" id="resetPasswordEmail" placeholder="email@exemple.com" required>
+                        </div>
+                        <div class="form-text">
+                            Un mot de passe temporaire sera généré et affiché à l'écran.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="handleResetPassword()">
+                            <i class="fas fa-key me-2"></i>Générer un mot de passe temporaire
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Supprimer le modal existant
+    const existingModal = document.getElementById('resetPasswordModal');
+    if (existingModal) existingModal.remove();
+
+    // Ajouter le nouveau modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Afficher le modal
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+async function handleResetPassword() {
+    const email = document.getElementById('resetPasswordEmail')?.value.trim();
+    await resetPassword(email);
 }
 
 // ✅ FONCTION UNIFIÉE POUR LA PUBLICATION - VERSION RENFORCÉE
@@ -559,6 +677,8 @@ function validateEmailField(input) {
 }
 
 // ========== FONCTIONS POUR GESTION PROFIL - CORRIGÉES ==========
+
+// 🔥 CORRECTION : LES DEUX PROFILS FONCTIONNENT
 function showProfileModal() {
     if (!checkAuth()) {
         showAlert('🔐 Connectez-vous pour accéder à votre profil', 'warning');
@@ -613,30 +733,39 @@ async function saveProfile(event) {
     
     try {
         // 🔥 CORRECTION : Mettre à jour dans la base de données avec TOUTES les données
-        await btpDB.put('users', authState.currentUser.id, profileData);
+        const updatedUser = await btpDB.updateUserProfile(authState.currentUser.id, profileData);
         
-        // 🔥 CORRECTION : Mettre à jour l'état local COMPLET
-        authState.currentUser = { 
-            ...authState.currentUser, 
-            ...profileData 
-        };
-        
-        // 🔥 CORRECTION : Sauvegarder dans localStorage avec TOUTES les données
-        localStorage.setItem('btp_pro_user', JSON.stringify(authState.currentUser));
-        
-        console.log('✅ Profil sauvegardé:', authState.currentUser);
-        showAlert('✅ Profil mis à jour avec succès', 'success');
-        
-        // Mettre à jour l'affichage du nom dans l'interface
-        updateAuthUI();
-        
-        // Fermer le modal après un délai
-        setTimeout(() => {
-            const profileModal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
-            if (profileModal) {
-                profileModal.hide();
+        if (updatedUser) {
+            // 🔥 CORRECTION : Mettre à jour l'état local COMPLET
+            authState.currentUser = { 
+                ...authState.currentUser, 
+                ...profileData 
+            };
+            
+            // 🔥 CORRECTION : Sauvegarder dans localStorage avec TOUTES les données
+            localStorage.setItem('btp_pro_user', JSON.stringify(authState.currentUser));
+            
+            console.log('✅ Profil sauvegardé:', authState.currentUser);
+            showAlert('✅ Profil mis à jour avec succès', 'success');
+            
+            // Mettre à jour l'affichage du nom dans l'interface
+            updateAuthUI();
+            
+            // Rafraîchir également le profil principal si il est ouvert
+            if (typeof userProfileInstance !== 'undefined' && userProfileInstance) {
+                userProfileInstance.loadUserProfile();
             }
-        }, 1500);
+            
+            // Fermer le modal après un délai
+            setTimeout(() => {
+                const profileModal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+                if (profileModal) {
+                    profileModal.hide();
+                }
+            }, 1500);
+        } else {
+            throw new Error('Échec de la mise à jour du profil');
+        }
         
     } catch (error) {
         console.error('❌ Erreur mise à jour profil:', error);
@@ -653,7 +782,7 @@ function loadProfileData() {
         return;
     }
     
-    console.log('📥 Chargement des données profil:', authState.currentUser);
+    console.log('📥 Chargement des données profil (auth.js):', authState.currentUser);
     
     // Mapping des champs avec valeurs par défaut
     const fieldMappings = {
@@ -668,19 +797,23 @@ function loadProfileData() {
     };
     
     // Remplir tous les champs
+    let filledFields = 0;
     for (const [fieldId, value] of Object.entries(fieldMappings)) {
         const element = document.getElementById(fieldId);
         if (element) {
             element.value = value;
+            filledFields++;
             console.log(`✅ Champ ${fieldId} rempli:`, value);
         } else {
             console.warn(`❌ Champ non trouvé: ${fieldId}`);
         }
     }
     
+    console.log(`📊 Formulaire auth.js rempli: ${filledFields} champs sur ${Object.keys(fieldMappings).length}`);
+    
     // Afficher les informations de débogage
     const emptyFields = Object.values(fieldMappings).filter(val => !val).length;
-    console.log(`📊 Statistiques profil: ${emptyFields} champs vides sur ${Object.keys(fieldMappings).length}`);
+    console.log(`📊 Statistiques profil auth.js: ${emptyFields} champs vides sur ${Object.keys(fieldMappings).length}`);
 }
 
 // 🔥 FONCTION changePassword CORRIGÉE
@@ -768,9 +901,9 @@ function initializeAuthEventListeners() {
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', saveProfile);
-        console.log('✅ Écouteur profil initialisé');
+        console.log('✅ Écouteur profil auth.js initialisé');
     } else {
-        console.warn('❌ Formulaire profil non trouvé');
+        console.warn('❌ Formulaire profil auth.js non trouvé');
     }
     
     const changePasswordForm = document.getElementById('changePasswordForm');
@@ -810,4 +943,9 @@ window.saveProfile = saveProfile;
 window.changePassword = changePassword;
 window.loadProfileData = loadProfileData;
 
-console.log('✅ auth.js CORRIGÉ - Gestion admin STRICTE appliquée');
+// 🔥 NOUVELLES FONCTIONS RÉINITIALISATION MOT DE PASSE
+window.showResetPasswordModal = showResetPasswordModal;
+window.handleResetPassword = handleResetPassword;
+window.resetPassword = resetPassword;
+
+console.log('✅ auth.js CORRIGÉ - Les deux profils fonctionnent maintenant');

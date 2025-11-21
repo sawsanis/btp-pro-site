@@ -1,152 +1,4 @@
-// ========== FONCTIONS ADMIN CORRIGÉES ==========
-
-// Fonction de validation et nettoyage des données utilisateur
-function validateAndCleanUser(user) {
-    if (!user) {
-        console.error('❌ Utilisateur null ou undefined');
-        return createDefaultUser();
-    }
-    
-    // Créer une copie pour éviter la mutation
-    const cleanedUser = { ...user };
-    
-    // VALIDATION DES CHAMPS OBLIGATOIRES
-    const requiredFields = ['prenom', 'nom', 'email'];
-    requiredFields.forEach(field => {
-        if (!cleanedUser[field] || cleanedUser[field].trim() === '') {
-            console.warn(`⚠️ Champ ${field} manquant pour l'utilisateur ${cleanedUser.id}`, cleanedUser);
-            
-            // Valeurs par défaut intelligentes
-            switch(field) {
-                case 'prenom':
-                    cleanedUser.prenom = 'Prénom';
-                    break;
-                case 'nom':
-                    cleanedUser.nom = 'Nom';
-                    break;
-                case 'email':
-                    cleanedUser.email = 'email@manquant.com';
-                    break;
-            }
-        } else {
-            // Nettoyage des chaînes
-            cleanedUser[field] = cleanedUser[field].trim();
-        }
-    });
-    
-    // VALIDATION DES CHAMPS OPTIONNELS
-    const optionalFields = ['phone', 'city', 'profession'];
-    optionalFields.forEach(field => {
-        if (cleanedUser[field] === null || cleanedUser[field] === undefined) {
-            cleanedUser[field] = '';
-        } else {
-            cleanedUser[field] = String(cleanedUser[field]).trim();
-        }
-    });
-    
-    // VALIDATION DES BOOLÉENS
-    cleanedUser.isBlocked = Boolean(cleanedUser.isBlocked);
-    cleanedUser.hasPremium = Boolean(cleanedUser.hasPremium);
-    cleanedUser.emailVerified = Boolean(cleanedUser.emailVerified);
-    
-    // VALIDATION DES NOMBRES
-    cleanedUser.visitCount = Number(cleanedUser.visitCount) || 0;
-    
-    // VALIDATION DES DATES
-    const dateFields = ['createdAt', 'lastVisit', 'lastLogin', 'updatedAt'];
-    dateFields.forEach(field => {
-        if (cleanedUser[field] && !isNaN(new Date(cleanedUser[field]).getTime())) {
-            // Date valide - la conserver
-            cleanedUser[field] = cleanedUser[field];
-        } else if (field === 'createdAt' && !cleanedUser[field]) {
-            // createdAt est obligatoire
-            cleanedUser[field] = new Date().toISOString();
-        } else {
-            // Date invalide - la supprimer
-            cleanedUser[field] = null;
-        }
-    });
-    
-    // VALIDATION DU ROLE
-    if (!cleanedUser.role || !['user', 'admin'].includes(cleanedUser.role)) {
-        cleanedUser.role = 'user';
-    }
-    
-    console.log(`✅ Utilisateur ${cleanedUser.id} validé:`, {
-        prenom: cleanedUser.prenom,
-        nom: cleanedUser.nom,
-        email: cleanedUser.email
-    });
-    
-    return cleanedUser;
-}
-
-function createDefaultUser() {
-    return {
-        id: 'default-' + Date.now(),
-        prenom: 'Utilisateur',
-        nom: 'Inconnu',
-        email: 'inconnu@btppro.com',
-        phone: '',
-        city: '',
-        profession: '',
-        role: 'user',
-        isBlocked: false,
-        hasPremium: false,
-        emailVerified: false,
-        visitCount: 0,
-        createdAt: new Date().toISOString(),
-        lastVisit: null,
-        lastLogin: null
-    };
-}
-
-// Fonction de réparation des données utilisateur
-async function repairUserData() {
-    if (!checkAdminAccess()) return;
-    
-    console.log('🔧 Début de la réparation des données utilisateur...');
-    
-    try {
-        const users = await btpDB.get('users');
-        let repairedCount = 0;
-        
-        for (const user of users) {
-            const userBefore = { ...user };
-            const userAfter = validateAndCleanUser(user);
-            
-            // Vérifier si des corrections ont été apportées
-            const needsRepair = JSON.stringify(userBefore) !== JSON.stringify(userAfter);
-            
-            if (needsRepair) {
-                console.log(`🔧 Réparation utilisateur ${user.id}:`, {
-                    avant: userBefore,
-                    après: userAfter
-                });
-                
-                // Sauvegarder les corrections
-                await btpDB.put('users', user.id, userAfter);
-                repairedCount++;
-            }
-        }
-        
-        if (repairedCount > 0) {
-            showAlert(`✅ ${repairedCount} utilisateur(s) réparé(s) avec succès`, 'success');
-            console.log(`✅ Réparation terminée: ${repairedCount} utilisateurs corrigés`);
-        } else {
-            showAlert('ℹ️ Aucune réparation nécessaire - données déjà valides', 'info');
-            console.log('ℹ️ Aucune réparation nécessaire');
-        }
-        
-        // Recharger le tableau
-        loadUsersTable();
-        
-    } catch (error) {
-        console.error('❌ Erreur lors de la réparation:', error);
-        showAlert('❌ Erreur lors de la réparation des données', 'error');
-    }
-}
-
+// ========== FONCTIONS ADMIN ==========
 async function loadAdminStats() {
     console.log('🔍 Vérification accès admin...', {
         currentUser: !!appState.currentUser,
@@ -239,39 +91,10 @@ function animateCounter(element, targetValue) {
 async function loadUsersTable() {
     if (!checkAdminAccess()) return;
     
-    console.log('👥 DEBUG - Chargement tableau utilisateurs avec corrections');
+    console.log('👥 Chargement du tableau des utilisateurs...');
     
     try {
         const users = await btpDB.get('users');
-        
-        // DEBUG COMPLET - Analyser la structure des données
-        console.group('🔍 DEBUG STRUCTURE UTILISATEURS');
-        console.log('📊 Nombre total d\'utilisateurs:', users.length);
-        
-        if (users.length > 0) {
-            // Analyser le premier utilisateur en détail
-            const firstUser = users[0];
-            console.log('👤 Premier utilisateur complet:', firstUser);
-            console.log('📋 Structure des clés:', Object.keys(firstUser));
-            
-            // Vérifier chaque champ important
-            const importantFields = ['prenom', 'nom', 'email', 'phone', 'city', 'profession'];
-            importantFields.forEach(field => {
-                console.log(`📍 ${field}:`, {
-                    value: firstUser[field],
-                    exists: field in firstUser,
-                    type: typeof firstUser[field],
-                    isNull: firstUser[field] === null,
-                    isUndefined: firstUser[field] === undefined,
-                    isEmptyString: firstUser[field] === ''
-                });
-            });
-        }
-        console.groupEnd();
-        
-        // VALIDATION DE TOUS LES UTILISATEURS
-        const validatedUsers = users.map(user => validateAndCleanUser(user));
-        
         const tableBody = document.getElementById('users-table-body');
         
         if (!tableBody) {
@@ -281,31 +104,15 @@ async function loadUsersTable() {
         
         let html = '';
         
-        if (validatedUsers.length === 0) {
+        if (users.length === 0) {
             html = '<tr><td colspan="7" class="text-center text-muted py-4">Aucun utilisateur inscrit</td></tr>';
         } else {
-            validatedUsers.forEach((user, index) => {
-                // DEBUG AVANT AFFICHAGE
-                console.log(`👤 DEBUG Affichage utilisateur ${index}:`, {
-                    id: user.id,
-                    prenom: user.prenom,
-                    nom: user.nom,
-                    email: user.email,
-                    hasPrenom: !!user.prenom,
-                    hasNom: !!user.nom,
-                    hasEmail: !!user.email
-                });
-                
-                // UTILISATION DES DONNÉES VALIDÉES - PLUS BESOIN DE "Non renseigné"
-                const prenom = user.prenom;
-                const nom = user.nom;
-                const email = user.email;
+            users.forEach(user => {
+                // CORRECTION : Gestion sécurisée des données utilisateur
+                const prenom = user.prenom || 'Non renseigné';
+                const nom = user.nom || 'Non renseigné';
+                const email = user.email || 'Non renseigné';
                 const phone = user.phone || '';
-                
-                // Log si des champs étaient manquants avant validation
-                if (user.prenom === 'Prénom' || user.nom === 'Nom' || user.email === 'email@manquant.com') {
-                    console.warn(`⚠️ Données corrigées pour utilisateur ${user.id}`);
-                }
                 
                 const statusBadge = user.isBlocked ? 
                     '<span class="badge bg-danger">🚫 Bloqué</span>' : 
@@ -330,7 +137,7 @@ async function loadUsersTable() {
                         <div class="d-flex align-items-center">
                             <div class="user-avatar-small me-2">
                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">
-                                    ${(prenom[0] || 'U') + (nom[0] || '')}
+                                    ${(prenom[0] || '') + (nom[0] || '')}
                                 </div>
                             </div>
                             <div>
@@ -382,7 +189,7 @@ async function loadUsersTable() {
         }
         
         tableBody.innerHTML = html;
-        console.log(`✅ ${validatedUsers.length} utilisateurs validés chargés dans le tableau`);
+        console.log(`✅ ${users.length} utilisateurs chargés dans le tableau`);
         
     } catch (error) {
         console.error('❌ Erreur chargement utilisateurs:', error);
@@ -393,8 +200,6 @@ async function loadUsersTable() {
                     <td colspan="7" class="text-center text-danger py-4">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Erreur lors du chargement des utilisateurs
-                        <br>
-                        <small class="text-muted">${error.message}</small>
                         <br>
                         <button class="btn btn-sm btn-primary mt-2" onclick="loadUsersTable()">
                             <i class="fas fa-redo me-1"></i>Réessayer
@@ -414,15 +219,13 @@ async function viewUserDetails(userId) {
     
     try {
         // Récupérer les données utilisateur complètes
-        const user = await btpDB.get('users', userId);
+        const users = await btpDB.get('users');
+        const user = users.find(u => u.id == userId);
         
         if (!user) {
             showAlert('❌ Utilisateur non trouvé', 'error');
             return;
         }
-
-        // VALIDER LES DONNÉES AVANT AFFICHAGE
-        const validatedUser = validateAndCleanUser(user);
 
         // Récupérer les statistiques de l'utilisateur
         const [userPosts, userApplications] = await Promise.all([
@@ -430,8 +233,8 @@ async function viewUserDetails(userId) {
             getUserApplicationsCount(userId)
         ]);
 
-        // Générer le contenu détaillé avec données validées
-        const userDetailsHTML = generateUserDetailsContent(validatedUser, userPosts, userApplications);
+        // Générer le contenu détaillé
+        const userDetailsHTML = generateUserDetailsContent(user, userPosts, userApplications);
         
         // Afficher le modal
         showUserDetailsModal(userDetailsHTML, userId);
@@ -490,18 +293,18 @@ async function getUserApplicationsCount(userId) {
 }
 
 function generateUserDetailsContent(user, userPosts, userApplications) {
-    // UTILISATION DES DONNÉES DÉJÀ VALIDÉES - PLUS BESOIN DE "Non renseigné"
-    const prenom = user.prenom;
-    const nom = user.nom;
-    const email = user.email;
+    // 🔥 CORRECTION : Utiliser les bons noms de champs depuis la base de données
+    const prenom = user.prenom || 'Non renseigné';
+    const nom = user.nom || 'Non renseigné';
+    const email = user.email || 'Non renseigné';
     const phone = user.phone || 'Non renseigné';
     const city = user.city || 'Non renseignée';
-    const profession = user.profession || 'Non renseignée';
+    const company = user.company || 'Non renseignée';
     
     const registrationDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
     const lastVisit = user.lastVisit ? new Date(user.lastVisit).toLocaleDateString('fr-FR') : 'Jamais';
     const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString('fr-FR') : 'Jamais';
-    
+
     return `
         <div class="user-details-container">
             <div class="row">
@@ -529,7 +332,7 @@ function generateUserDetailsContent(user, userPosts, userApplications) {
                                 </div>
                                 <div class="col-8">
                                     ${email}
-                                    ${user.emailVerified ? '<span class="badge bg-success ms-2">Vérifié</span>' : '<span class="badge bg-warning ms-2">Non vérifié</span>'}
+                                    ${user.isVerified ? '<span class="badge bg-success ms-2">Vérifié</span>' : '<span class="badge bg-warning ms-2">Non vérifié</span>'}
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -550,12 +353,52 @@ function generateUserDetailsContent(user, userPosts, userApplications) {
                             </div>
                             <div class="row mb-3">
                                 <div class="col-4">
-                                    <strong>Profession:</strong>
+                                    <strong>Entreprise:</strong>
                                 </div>
                                 <div class="col-8">
-                                    ${profession}
+                                    ${company}
                                 </div>
                             </div>
+                            ${user.address ? `
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Adresse:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.address}
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${user.postalCode ? `
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Code postal:</strong>
+                                </div>
+                                <div class="col-8">
+                                    ${user.postalCode}
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${user.website ? `
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Site web:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <a href="${user.website}" target="_blank">${user.website}</a>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${user.description ? `
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Description:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <div class="border p-2 bg-light rounded">${user.description}</div>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -622,6 +465,14 @@ function generateUserDetailsContent(user, userPosts, userApplications) {
                                 </div>
                                 <div class="col-6">
                                     <small>${lastLogin}</small>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <strong>Date d'inscription:</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small>${registrationDate}</small>
                                 </div>
                             </div>
                         </div>
@@ -820,16 +671,15 @@ async function editUser(userId) {
     console.log(`✏️ Édition utilisateur: ${userId}`);
     
     try {
-        const user = await btpDB.get('users', userId);
+        const users = await btpDB.get('users');
+        const user = users.find(u => u.id == userId);
         
         if (!user) {
             showAlert('❌ Utilisateur non trouvé', 'error');
             return;
         }
 
-        // VALIDER LES DONNÉES AVANT ÉDITION
-        const validatedUser = validateAndCleanUser(user);
-        showEditUserModal(validatedUser);
+        showEditUserModal(user);
         
     } catch (error) {
         console.error('❌ Erreur chargement utilisateur:', error);
@@ -838,13 +688,13 @@ async function editUser(userId) {
 }
 
 function showEditUserModal(user) {
-    // UTILISATION DES DONNÉES VALIDÉES
-    const prenom = user.prenom;
-    const nom = user.nom;
-    const email = user.email;
+    // CORRECTION : Gestion sécurisée des données avec valeurs par défaut
+    const prenom = user.prenom || '';
+    const nom = user.nom || '';
+    const email = user.email || '';
     const phone = user.phone || '';
     const city = user.city || '';
-    const profession = user.profession || '';
+    const company = user.company || '';
     
     const modalHTML = `
         <div class="modal fade" id="editUserModal" tabindex="-1">
@@ -895,8 +745,8 @@ function showEditUserModal(user) {
                             </div>
                             
                             <div class="mb-3">
-                                <label for="editProfession" class="form-label">Profession</label>
-                                <input type="text" class="form-control" id="editProfession" value="${profession}">
+                                <label for="editCompany" class="form-label">Entreprise</label>
+                                <input type="text" class="form-control" id="editCompany" value="${company}">
                             </div>
                             
                             <div class="row">
@@ -994,29 +844,13 @@ async function saveUserChanges(userId) {
         email: document.getElementById('editEmail').value.trim(),
         phone: document.getElementById('editPhone').value.trim(),
         city: document.getElementById('editCity').value.trim(),
-        profession: document.getElementById('editProfession').value.trim(),
+        company: document.getElementById('editCompany').value.trim(),
         isBlocked: document.querySelector('input[name="editStatus"]:checked').value === 'blocked',
         role: document.querySelector('input[name="editRole"]:checked').value,
         hasPremium: document.getElementById('editPremium').checked,
         updatedAt: new Date().toISOString(),
         updatedBy: appState.currentUser.id
     };
-    
-    // VALIDER LES DONNÉES AVANT SAUVEGARDE
-    if (!updates.prenom || updates.prenom.trim() === '') {
-        showAlert('❌ Le prénom est obligatoire', 'error');
-        return;
-    }
-    
-    if (!updates.nom || updates.nom.trim() === '') {
-        showAlert('❌ Le nom est obligatoire', 'error');
-        return;
-    }
-    
-    if (!updates.email || updates.email.trim() === '') {
-        showAlert('❌ L\'email est obligatoire', 'error');
-        return;
-    }
     
     if (updates.isBlocked) {
         updates.blockReason = document.getElementById('editBlockReason')?.value.trim() || 'Modifié par administrateur';
@@ -1299,7 +1133,8 @@ async function viewAdDetails(adId, adType) {
     
     try {
         const collectionName = getCollectionName(adType);
-        const ad = await btpDB.get(collectionName, adId);
+        const ads = await btpDB.get(collectionName);
+        const ad = ads.find(a => a.id == adId);
         
         if (!ad) {
             showAlert('❌ Annonce non trouvée', 'error');
@@ -1307,7 +1142,8 @@ async function viewAdDetails(adId, adType) {
         }
 
         // Récupérer les informations utilisateur
-        const user = await btpDB.get('users', ad.userId);
+        const users = await btpDB.get('users');
+        const user = users.find(u => u.id == ad.userId);
         const userName = user ? `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Utilisateur inconnu' : 'Utilisateur inconnu';
         const userEmail = user ? user.email : 'Email non disponible';
         const userPhone = user ? user.phone : 'Téléphone non disponible';
@@ -1735,14 +1571,23 @@ function getCollectionName(adType) {
     return collections[adType] || adType;
 }
 
-// ========== GESTION ADSENSE ==========
+// ========== GESTION ADSENSE CORRIGÉE ==========
 async function loadAdsenseSlots() {
     if (!checkAdminAccess()) return;
     
     console.log('📢 Chargement des slots Adsense...');
     
     try {
-        const slots = await btpDB.get('adsense_slots');
+        // CORRECTION : Vérifier si la collection existe, sinon l'initialiser
+        let slots = await btpDB.get('adsense_slots');
+        
+        // Si pas de slots, initialiser les slots par défaut
+        if (!slots || slots.length === 0) {
+            console.log('🔄 Initialisation automatique des slots Adsense...');
+            await initializeAdsenseSlots();
+            slots = await btpDB.get('adsense_slots');
+        }
+        
         const container = document.getElementById('adsense-slots-container');
         
         if (!container) {
@@ -1760,7 +1605,7 @@ async function loadAdsenseSlots() {
                 <small>Configurez vos emplacements publicitaires</small>
                 <div class="mt-3">
                     <button class="btn btn-primary" onclick="initializeAdsenseSlots()">
-                        <i class="fas fa-plus me-1"></i>Initialiser les slots
+                        <i class="fas fa-plus me-1"></i>Initialiser les slots par défaut
                     </button>
                 </div>
             </div>`;
@@ -1822,26 +1667,46 @@ async function initializeAdsenseSlots() {
             id: 'header_ad',
             name: 'Bannière Header',
             position: 'header',
-            code: '',
-            isActive: false
+            code: '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto"></ins>',
+            isActive: true,
+            createdAt: new Date().toISOString()
         },
         {
             id: 'sidebar_ad', 
             name: 'Sidebar Droite',
             position: 'sidebar',
-            code: '',
-            isActive: false
+            code: '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="rectangle"></ins>',
+            isActive: true,
+            createdAt: new Date().toISOString()
         },
         {
             id: 'footer_ad',
             name: 'Bannière Footer',
             position: 'footer', 
-            code: '',
-            isActive: false
+            code: '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto"></ins>',
+            isActive: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'content_ad',
+            name: 'Intégré Contenu',
+            position: 'content',
+            code: '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto"></ins>',
+            isActive: true,
+            createdAt: new Date().toISOString()
         }
     ];
     
     try {
+        // Vérifier si les slots existent déjà
+        const existingSlots = await btpDB.get('adsense_slots');
+        
+        if (existingSlots && existingSlots.length > 0) {
+            showAlert('ℹ️ Les slots Adsense sont déjà initialisés', 'info');
+            return;
+        }
+        
+        // Créer les slots par défaut
         for (const slot of defaultSlots) {
             await btpDB.post('adsense_slots', slot);
         }
@@ -1851,7 +1716,7 @@ async function initializeAdsenseSlots() {
         
     } catch (error) {
         console.error('❌ Erreur initialisation slots:', error);
-        showAlert('❌ Erreur lors de l\'initialisation', 'error');
+        showAlert('❌ Erreur lors de l\'initialisation des slots Adsense', 'error');
     }
 }
 
@@ -2486,11 +2351,6 @@ function refreshAdminData() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('👑 Initialisation du module admin...');
     
-    // Ajouter le bouton de réparation
-    setTimeout(() => {
-        addRepairButton();
-    }, 2000);
-    
     // Initialiser les fonctionnalités newsletter lorsque l'admin est chargé
     setTimeout(() => {
         if (document.getElementById('admin-section')?.classList.contains('active')) {
@@ -2498,20 +2358,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000);
 });
-
-// Ajouter le bouton de réparation dans l'interface
-function addRepairButton() {
-    const adminHeader = document.querySelector('#admin-section .card-header');
-    if (adminHeader && !document.getElementById('repair-data-btn')) {
-        const repairBtn = document.createElement('button');
-        repairBtn.id = 'repair-data-btn';
-        repairBtn.className = 'btn btn-warning btn-sm ms-2';
-        repairBtn.innerHTML = '<i class="fas fa-tools me-1"></i>Réparer données';
-        repairBtn.onclick = repairUserData;
-        repairBtn.title = 'Réparer les données utilisateur manquantes';
-        adminHeader.appendChild(repairBtn);
-    }
-}
 
 // Surveiller les changements de section pour initialiser les fonctionnalités newsletter
 let currentSection = '';
@@ -2575,9 +2421,3 @@ window.showBackupSection = showBackupSection;
 
 // Nouvelles fonctions pour la gestion des utilisateurs
 window.saveUserChanges = saveUserChanges;
-
-// Nouvelles fonctions de réparation des données
-window.validateAndCleanUser = validateAndCleanUser;
-window.repairUserData = repairUserData;
-
-console.log('✅ admin.js COMPLET - Toutes les fonctionnalités intégrées, Détails et Modifier utilisateurs OPÉRATIONNELS, Système de réparation des données activé');

@@ -112,7 +112,11 @@ class BTPDatabase {
                     city: "Casablanca",
                     postalCode: "20000",
                     website: "https://btp-pro.ma",
-                    description: "Administrateur de la plateforme BTP Pro Maroc"
+                    description: "Administrateur de la plateforme BTP Pro Maroc",
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: "Administration",
+                    source: "système",
+                    status: "actif"
                 },
                 {
                     id: "2",
@@ -135,7 +139,11 @@ class BTPDatabase {
                     city: "Casablanca",
                     postalCode: "20250",
                     website: "https://maconnerie-lyaakobi.ma",
-                    description: "Entreprise familiale spécialisée en maçonnerie depuis 15 ans"
+                    description: "Entreprise familiale spécialisée en maçonnerie depuis 15 ans",
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: "Maçonnerie",
+                    source: "import",
+                    status: "actif"
                 },
                 {
                     id: "3",
@@ -158,10 +166,13 @@ class BTPDatabase {
                     city: "Rabat",
                     postalCode: "10000",
                     website: "",
-                    description: "Entrepreneur en bâtiment spécialisé dans la rénovation"
+                    description: "Entrepreneur en bâtiment spécialisé dans la rénovation",
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: "Construction",
+                    source: "site web",
+                    status: "actif"
                 }
             ],
-            // ... (le reste de vos collections reste inchangé)
             marketplace_posts: [
                 {
                     id: "1",
@@ -518,13 +529,17 @@ class BTPDatabase {
                     lastVisit: new Date().toISOString(),
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    // 🔥 CORRECTION: Initialiser tous les champs de profil
-                    company: '',
-                    address: '',
-                    city: '',
-                    postalCode: '',
-                    website: '',
-                    description: ''
+                    // 🔥 CORRECTION: Initialiser TOUS les champs de profil avec valeurs par défaut
+                    company: userData.company || '',
+                    address: userData.address || '',
+                    city: userData.city || '',
+                    postalCode: userData.postalCode || '',
+                    website: userData.website || '',
+                    description: userData.description || '',
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: userData.metier || '',
+                    source: userData.source || 'site web',
+                    status: userData.status || 'actif'
                 };
                 
                 await firestore.collection('users').doc(user.uid).set(newUser);
@@ -548,13 +563,17 @@ class BTPDatabase {
             lastVisit: new Date().toISOString(),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            // 🔥 CORRECTION: Initialiser tous les champs de profil
-            company: '',
-            address: '',
-            city: '',
-            postalCode: '',
-            website: '',
-            description: ''
+            // 🔥 CORRECTION: Initialiser TOUS les champs de profil avec valeurs par défaut
+            company: userData.company || '',
+            address: userData.address || '',
+            city: userData.city || '',
+            postalCode: userData.postalCode || '',
+            website: userData.website || '',
+            description: userData.description || '',
+            // 🔥 NOUVEAU: Champs pour import Excel
+            metier: userData.metier || '',
+            source: userData.source || 'site web',
+            status: userData.status || 'actif'
         };
 
         const localData = this.getLocalData();
@@ -575,25 +594,41 @@ class BTPDatabase {
             
             if (user) {
                 console.log('✅ Profil trouvé:', user.email);
-                // 🔥 CORRECTION: Renvoyer TOUTES les données du profil
-                return {
+                
+                // 🔥 CORRECTION CRITIQUE : Garantir que TOUS les champs existent avec des valeurs par défaut
+                const completeUserProfile = {
+                    // Informations de base (doivent toujours exister)
                     id: user.id,
                     prenom: user.prenom || '',
                     nom: user.nom || '',
                     email: user.email || '',
                     phone: user.phone || '',
                     role: user.role || 'user',
+                    
+                    // 🔥 CORRECTION : Champs de profil avec valeurs par défaut explicites
                     company: user.company || '',
                     address: user.address || '',
                     city: user.city || '',
                     postalCode: user.postalCode || '',
                     website: user.website || '',
                     description: user.description || '',
+                    
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: user.metier || '',
+                    source: user.source || 'site web',
+                    status: user.status || 'actif',
+                    
+                    // Informations système
                     isVerified: user.isVerified || false,
                     hasPremium: user.hasPremium || false,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt
+                    visitCount: user.visitCount || 0,
+                    lastVisit: user.lastVisit || new Date().toISOString(),
+                    createdAt: user.createdAt || new Date().toISOString(),
+                    updatedAt: user.updatedAt || new Date().toISOString()
                 };
+                
+                console.log('📋 Profil complet préparé:', completeUserProfile);
+                return completeUserProfile;
             }
             
             console.warn('❌ Profil non trouvé pour:', userId);
@@ -612,19 +647,44 @@ class BTPDatabase {
             const userIndex = users.findIndex(u => u.id == userId);
             
             if (userIndex !== -1) {
+                // 🔥 CORRECTION : S'assurer que tous les champs sont sauvegardés
                 const updatedUser = {
                     ...users[userIndex],
-                    ...profileData,
+                    // Mettre à jour les champs de profil
+                    email: profileData.email || users[userIndex].email,
+                    phone: profileData.phone || '',
+                    company: profileData.company || '',
+                    address: profileData.address || '',
+                    city: profileData.city || '',
+                    postalCode: profileData.postalCode || '',
+                    website: profileData.website || '',
+                    description: profileData.description || '',
+                    // 🔥 NOUVEAU: Champs pour import Excel
+                    metier: profileData.metier || '',
+                    source: profileData.source || users[userIndex].source,
+                    status: profileData.status || users[userIndex].status,
                     updatedAt: new Date().toISOString()
                 };
                 
                 // Mettre à jour dans la base
                 await this.put('users', userId, updatedUser);
                 
-                // 🔥 CORRECTION: Mettre à jour l'utilisateur courant dans localStorage
+                // 🔥 CORRECTION : Mettre à jour l'utilisateur courant dans localStorage
                 const currentUser = this.getCurrentUser();
                 if (currentUser && currentUser.id == userId) {
-                    const updatedCurrentUser = { ...currentUser, ...profileData };
+                    const updatedCurrentUser = { 
+                        ...currentUser, 
+                        email: profileData.email || currentUser.email,
+                        phone: profileData.phone || currentUser.phone,
+                        company: profileData.company || currentUser.company,
+                        address: profileData.address || currentUser.address,
+                        city: profileData.city || currentUser.city,
+                        postalCode: profileData.postalCode || currentUser.postalCode,
+                        website: profileData.website || currentUser.website,
+                        description: profileData.description || currentUser.description,
+                        metier: profileData.metier || currentUser.metier,
+                        status: profileData.status || currentUser.status
+                    };
                     localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
                     console.log('✅ Utilisateur courant mis à jour dans localStorage');
                 }
@@ -824,10 +884,475 @@ class BTPDatabase {
             return {};
         }
     }
+
+    // 🔥 NOUVELLE FONCTION : Mise à jour des anciens utilisateurs
+    async upgradeOldUsers() {
+        try {
+            console.log('🔄 Mise à niveau des anciens utilisateurs...');
+            const users = await this.get('users');
+            let updatedCount = 0;
+            
+            for (const user of users) {
+                // Vérifier si l'utilisateur a les champs manquants
+                const needsUpgrade = !user.company && !user.address && !user.city && !user.postalCode && !user.website && !user.description;
+                
+                if (needsUpgrade) {
+                    const upgradedUser = {
+                        ...user,
+                        company: user.company || '',
+                        address: user.address || '',
+                        city: user.city || '',
+                        postalCode: user.postalCode || '',
+                        website: user.website || '',
+                        description: user.description || '',
+                        // 🔥 NOUVEAU: Champs pour import Excel
+                        metier: user.metier || '',
+                        source: user.source || 'site web',
+                        status: user.status || 'actif',
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    await this.put('users', user.id, upgradedUser);
+                    updatedCount++;
+                    console.log(`✅ Utilisateur ${user.email} mis à niveau`);
+                }
+            }
+            
+            console.log(`✅ ${updatedCount} utilisateurs mis à niveau`);
+            return updatedCount;
+        } catch (error) {
+            console.error('❌ Erreur mise à niveau utilisateurs:', error);
+            return 0;
+        }
+    }
+
+    // ========== FONCTIONS POUR SAUVEGARDE COMPLÈTE ==========
+
+    async exportCompleteData() {
+        try {
+            console.log('💾 Export complet des données...');
+            
+            const allCollections = [
+                'users', 'marketplace_posts', 'realestate_posts', 'job_posts', 
+                'freelancers', 'professionals', 'job_applications', 'newsletter_history',
+                'adsense_slots', 'premium_features'
+            ];
+            
+            const exportData = {};
+            
+            for (const collection of allCollections) {
+                exportData[collection] = await this.get(collection);
+                console.log(`✅ ${collection}: ${exportData[collection]?.length || 0} enregistrements`);
+            }
+            
+            // 🔥 INCLUSION DES MOTS DE PASSE
+            console.log('🔐 Mots de passe inclus dans l\'export');
+            
+            return exportData;
+            
+        } catch (error) {
+            console.error('❌ Erreur export complet:', error);
+            throw error;
+        }
+    }
+
+    async importCompleteData(importData) {
+        try {
+            console.log('📤 Import complet des données...');
+            
+            if (!importData || typeof importData !== 'object') {
+                throw new Error('Données d\'import invalides');
+            }
+            
+            // Vérifier la structure des données
+            const requiredCollections = ['users'];
+            for (const collection of requiredCollections) {
+                if (!importData[collection]) {
+                    throw new Error(`Collection manquante: ${collection}`);
+                }
+            }
+            
+            // Sauvegarder les données actuelles avant import
+            const backupData = await this.exportCompleteData();
+            localStorage.setItem('btp_pro_pre_import_backup', JSON.stringify(backupData));
+            console.log('✅ Sauvegarde de sécurité créée');
+            
+            // Importer chaque collection
+            for (const [collection, data] of Object.entries(importData)) {
+                if (Array.isArray(data)) {
+                    // Vider la collection existante
+                    const localData = this.getLocalData();
+                    localData[collection] = [];
+                    this.saveLocalData(localData);
+                    
+                    // Ajouter les nouvelles données
+                    for (const item of data) {
+                        await this.post(collection, item);
+                    }
+                    
+                    console.log(`✅ ${collection}: ${data.length} enregistrements importés`);
+                }
+            }
+            
+            // 🔥 CORRECTION: Les mots de passe sont automatiquement inclus
+            console.log('🔐 Mots de passe importés avec succès');
+            
+            showAlert('✅ Import complet réussi ! Les mots de passe ont été préservés.', 'success');
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erreur import complet:', error);
+            
+            // Restaurer la sauvegarde en cas d'erreur
+            try {
+                const backupData = JSON.parse(localStorage.getItem('btp_pro_pre_import_backup'));
+                if (backupData) {
+                    await this.importCompleteData(backupData);
+                    console.log('✅ Données restaurées depuis la sauvegarde de sécurité');
+                }
+            } catch (restoreError) {
+                console.error('❌ Erreur restauration sauvegarde:', restoreError);
+            }
+            
+            throw error;
+        }
+    }
+
+    // ========== FONCTIONS SPÉCIALES POUR IMPORT EXCEL ==========
+
+    /**
+     * 🔥 NOUVELLE FONCTION : Import d'utilisateurs depuis Excel
+     * @param {Array} excelData - Données Excel formatées
+     * @param {Object} options - Options d'import
+     */
+    async importUsersFromExcel(excelData, options = {}) {
+        try {
+            console.log('📊 Import utilisateurs depuis Excel...', excelData);
+            
+            if (!Array.isArray(excelData) || excelData.length === 0) {
+                throw new Error('Aucune donnée Excel à importer');
+            }
+
+            const importResults = {
+                total: excelData.length,
+                success: 0,
+                errors: 0,
+                details: []
+            };
+
+            const defaultPassword = options.defaultPassword || 'btp123';
+            const overwriteExisting = options.overwriteExisting || false;
+
+            for (const [index, row] of excelData.entries()) {
+                try {
+                    // Nettoyer et valider les données
+                    const userData = this.cleanExcelUserData(row, index);
+                    
+                    // Vérifier si l'utilisateur existe déjà
+                    const existingUser = await this.findUserByEmail(userData.email);
+                    
+                    if (existingUser && !overwriteExisting) {
+                        importResults.details.push({
+                            index: index + 1,
+                            email: userData.email,
+                            status: 'ignoré',
+                            message: 'Utilisateur déjà existant'
+                        });
+                        continue;
+                    }
+
+                    // Préparer les données utilisateur complètes
+                    const completeUserData = {
+                        ...userData,
+                        password: existingUser ? existingUser.password : this.generatePassword(userData, defaultPassword),
+                        role: 'user',
+                        isVerified: userData.isVerified !== undefined ? userData.isVerified : true,
+                        hasPremium: userData.hasPremium !== undefined ? userData.hasPremium : false,
+                        isBlocked: false,
+                        visitCount: userData.visitCount || 0,
+                        lastVisit: userData.lastVisit || new Date().toISOString(),
+                        createdAt: userData.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    if (existingUser && overwriteExisting) {
+                        // Mettre à jour l'utilisateur existant
+                        await this.put('users', existingUser.id, completeUserData);
+                        importResults.details.push({
+                            index: index + 1,
+                            email: userData.email,
+                            status: 'mis à jour',
+                            message: 'Utilisateur mis à jour'
+                        });
+                    } else {
+                        // Créer un nouvel utilisateur
+                        await this.registerUser(completeUserData);
+                        importResults.details.push({
+                            index: index + 1,
+                            email: userData.email,
+                            status: 'créé',
+                            message: 'Nouvel utilisateur créé'
+                        });
+                    }
+
+                    importResults.success++;
+
+                } catch (error) {
+                    importResults.errors++;
+                    importResults.details.push({
+                        index: index + 1,
+                        email: row.email || 'N/A',
+                        status: 'erreur',
+                        message: error.message
+                    });
+                    console.error(`❌ Erreur ligne ${index + 1}:`, error);
+                }
+            }
+
+            console.log('📈 Résultat import Excel:', importResults);
+            return importResults;
+
+        } catch (error) {
+            console.error('❌ Erreur import Excel:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Nettoie et valide les données utilisateur depuis Excel
+     */
+    cleanExcelUserData(row, index) {
+        // Mapping des colonnes Excel vers notre structure
+        const cleanedData = {
+            prenom: (row['Prénom'] || row['prenom'] || '').trim(),
+            nom: (row['Nom'] || row['nom'] || '').trim(),
+            email: (row['Email'] || row['email'] || '').trim().toLowerCase(),
+            phone: (row['Téléphone'] || row['Phone'] || row['telephone'] || '').trim(),
+            company: (row['Entreprise'] || row['Company'] || row['entreprise'] || '').trim(),
+            city: (row['Ville'] || row['City'] || row['ville'] || '').trim(),
+            metier: (row['Métier'] || row['Metier'] || row['métier'] || '').trim(),
+            source: (row['Source'] || row['source'] || 'import excel').trim(),
+            status: (row['Statut'] || row['Status'] || row['statut'] || 'actif').trim()
+        };
+
+        // Validation des champs obligatoires
+        if (!cleanedData.email) {
+            throw new Error('Email manquant');
+        }
+
+        if (!this.isValidEmail(cleanedData.email)) {
+            throw new Error('Email invalide');
+        }
+
+        // Gestion des dates
+        if (row['Date d\'inscription'] || row['createdAt']) {
+            cleanedData.createdAt = this.parseExcelDate(row['Date d\'inscription'] || row['createdAt']);
+        }
+
+        if (row['Dernière connexion'] || row['lastVisit']) {
+            cleanedData.lastVisit = this.parseExcelDate(row['Dernière connexion'] || row['lastVisit']);
+        }
+
+        // Gestion des booléens
+        if (row['Statut Premium'] !== undefined) {
+            cleanedData.hasPremium = this.parseExcelBoolean(row['Statut Premium']);
+        }
+
+        if (row['Email vérifié'] !== undefined) {
+            cleanedData.isVerified = this.parseExcelBoolean(row['Email vérifié']);
+        }
+
+        return cleanedData;
+    }
+
+    /**
+     * Trouve un utilisateur par email
+     */
+    async findUserByEmail(email) {
+        const users = await this.get('users');
+        return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    }
+
+    /**
+     * Génère un mot de passe pour les nouveaux utilisateurs
+     */
+    generatePassword(userData, defaultPassword) {
+        // Stratégie de génération de mot de passe
+        if (userData.prenom && userData.nom) {
+            // Première lettre du prénom + nom complet + "123"
+            return `${userData.prenom.charAt(0)}${userData.nom}123`.toLowerCase();
+        }
+        return defaultPassword;
+    }
+
+    /**
+     * Valide le format d'email
+     */
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    /**
+     * Parse les dates depuis Excel
+     */
+    parseExcelDate(dateValue) {
+        if (!dateValue) return new Date().toISOString();
+        
+        try {
+            // Si c'est déjà un objet Date
+            if (dateValue instanceof Date) {
+                return dateValue.toISOString();
+            }
+            
+            // Si c'est un timestamp Excel
+            if (typeof dateValue === 'number' && dateValue > 25569) {
+                // Conversion timestamp Excel -> JavaScript
+                const jsDate = new Date((dateValue - 25569) * 86400 * 1000);
+                return jsDate.toISOString();
+            }
+            
+            // Si c'est une chaîne de caractères
+            const parsedDate = new Date(dateValue);
+            if (!isNaN(parsedDate.getTime())) {
+                return parsedDate.toISOString();
+            }
+            
+            return new Date().toISOString();
+        } catch (error) {
+            console.warn('⚠️ Erreur parsing date:', dateValue, error);
+            return new Date().toISOString();
+        }
+    }
+
+    /**
+     * Parse les booléens depuis Excel
+     */
+    parseExcelBoolean(value) {
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') {
+            const lowerValue = value.toLowerCase();
+            return lowerValue === 'true' || lowerValue === 'vrai' || lowerValue === 'oui' || lowerValue === '1' || lowerValue === 'x';
+        }
+        if (typeof value === 'number') return value === 1;
+        return false;
+    }
+
+    /**
+     * 🔥 NOUVELLE FONCTION : Export des utilisateurs pour Excel
+     */
+    async exportUsersForExcel() {
+        try {
+            console.log('📊 Export utilisateurs pour Excel...');
+            
+            const users = await this.get('users');
+            
+            const excelData = users.map(user => ({
+                'ID': user.id,
+                'Prénom': user.prenom || '',
+                'Nom': user.nom || '',
+                'Email': user.email || '',
+                'Téléphone': user.phone || '',
+                'Ville': user.city || '',
+                'Entreprise': user.company || '',
+                'Métier': user.metier || '',
+                'Date d\'inscription': user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : '',
+                'Dernière connexion': user.lastVisit ? new Date(user.lastVisit).toLocaleDateString('fr-FR') : '',
+                'Statut Premium': user.hasPremium ? 'Oui' : 'Non',
+                'Email vérifié': user.isVerified ? 'Oui' : 'Non',
+                'Statut': user.status || 'actif',
+                'Source': user.source || 'site web',
+                'Mot de passe': user.password || '' // 🔥 INCLUSION DU MOT DE PASSE
+            }));
+            
+            console.log(`✅ ${excelData.length} utilisateurs exportés pour Excel`);
+            return excelData;
+            
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 🔥 NOUVELLE FONCTION : Migration entre serveurs
+     */
+    async migrateToNewServer(backupData) {
+        try {
+            console.log('🚀 Migration vers nouveau serveur...');
+            
+            if (!backupData) {
+                // Exporter les données actuelles
+                backupData = await this.exportCompleteData();
+            }
+            
+            // Sauvegarder localement le fichier de migration
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupFileName = `btp-pro-migration-${timestamp}.json`;
+            
+            // Créer un blob téléchargeable
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = backupFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Fichier de migration généré:', backupFileName);
+            
+            return {
+                fileName: backupFileName,
+                data: backupData,
+                stats: {
+                    users: backupData.users?.length || 0,
+                    marketplace: backupData.marketplace_posts?.length || 0,
+                    realestate: backupData.realestate_posts?.length || 0,
+                    jobs: backupData.job_posts?.length || 0,
+                    freelancers: backupData.freelancers?.length || 0,
+                    professionals: backupData.professionals?.length || 0
+                }
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur migration:', error);
+            throw error;
+        }
+    }
 }
 
 // ========== INITIALISATION ==========
 const btpDB = new BTPDatabase();
 window.btpDB = btpDB;
 
-console.log('✅ database.js CORRIGÉ - Gestion du profil COMPLÈTEMENT fonctionnelle');
+// 🔥 CORRECTION : Mise à niveau automatique des anciens utilisateurs au chargement
+setTimeout(() => {
+    btpDB.upgradeOldUsers().then(updatedCount => {
+        if (updatedCount > 0) {
+            console.log(`🎉 ${updatedCount} anciens utilisateurs ont été mis à niveau avec les champs de profil complets`);
+        }
+    });
+}, 2000);
+
+console.log('✅ database.js AMÉLIORÉ - Toutes les fonctionnalités demandées sont implémentées');
+
+// ========== EXPORT DES FONCTIONS DE SAUVEGARDE ==========
+window.exportCompleteData = () => btpDB.exportCompleteData();
+window.importCompleteData = (data) => btpDB.importCompleteData(data);
+
+// 🔥 NOUVEAUX EXPORTS POUR LES FONCTIONNALITÉS AJOUTÉES
+window.importUsersFromExcel = (data, options) => btpDB.importUsersFromExcel(data, options);
+window.exportUsersForExcel = () => btpDB.exportUsersForExcel();
+window.migrateToNewServer = (data) => btpDB.migrateToNewServer(data);
+window.generateBackupFile = () => btpDB.migrateToNewServer();
+
+// Fonction utilitaire pour afficher les alertes (si non définie)
+if (typeof showAlert === 'undefined') {
+    window.showAlert = function(message, type = 'info') {
+        console.log(`ALERTE [${type}]: ${message}`);
+        alert(message);
+    };
+}
