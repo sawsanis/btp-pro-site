@@ -1,19 +1,19 @@
 // ========== FONCTIONS ADMIN ==========
 async function loadAdminStats() {
     console.log('🔍 Vérification accès admin...', {
-        currentUser: !!appState.currentUser,
-        isAdmin: appState.isAdmin
+        currentUser: !!authState.currentUser,
+        isAdmin: authState.isAdmin
     });
     
     // VÉRIFICATION RENFORCÉE DE LA SÉCURITÉ
-    if (!appState.currentUser) {
+    if (!authState.currentUser) {
         console.warn('❌ Accès admin refusé - Utilisateur non connecté');
         showAlert('❌ Vous devez être connecté pour accéder à l\'administration', 'error');
         setTimeout(() => goToSection('home'), 1000);
         return;
     }
     
-    if (!appState.isAdmin) {
+    if (!authState.isAdmin) {
         console.warn('❌ Accès admin refusé - Pas administrateur');
         showAlert('❌ Accès réservé aux administrateurs', 'error');
         setTimeout(() => goToSection('home'), 1000);
@@ -849,13 +849,13 @@ async function saveUserChanges(userId) {
         role: document.querySelector('input[name="editRole"]:checked').value,
         hasPremium: document.getElementById('editPremium').checked,
         updatedAt: new Date().toISOString(),
-        updatedBy: appState.currentUser.id
+        updatedBy: authState.currentUser.id
     };
     
     if (updates.isBlocked) {
         updates.blockReason = document.getElementById('editBlockReason')?.value.trim() || 'Modifié par administrateur';
         updates.blockedAt = new Date().toISOString();
-        updates.blockedBy = appState.currentUser.id;
+        updates.blockedBy = authState.currentUser.id;
     } else {
         updates.blockReason = null;
         updates.blockedAt = null;
@@ -1042,7 +1042,7 @@ async function approveAd(adId, adType) {
         await btpDB.put(collectionName, adId, { 
             status: 'approuve',
             moderatedAt: new Date().toISOString(),
-            moderatedBy: appState.currentUser.id
+            moderatedBy: authState.currentUser.id
         });
         
         showAlert('✅ Annonce approuvée avec succès', 'success');
@@ -1076,7 +1076,7 @@ async function rejectAd(adId, adType) {
             status: 'rejete',
             moderationReason: reason.trim(),
             moderatedAt: new Date().toISOString(),
-            moderatedBy: appState.currentUser.id
+            moderatedBy: authState.currentUser.id
         });
         
         showAlert('✅ Annonce rejetée avec succès', 'success');
@@ -1737,7 +1737,7 @@ async function saveAdsenseSlot(slotId) {
         await btpDB.put('adsense_slots', slotId, { 
             code: code,
             updatedAt: new Date().toISOString(),
-            updatedBy: appState.currentUser.id
+            updatedBy: authState.currentUser.id
         });
         
         showAlert('✅ Code Adsense enregistré avec succès', 'success');
@@ -1757,7 +1757,7 @@ async function toggleAdsenseSlot(slotId, newState) {
         await btpDB.put('adsense_slots', slotId, { 
             isActive: newState,
             updatedAt: new Date().toISOString(),
-            updatedBy: appState.currentUser.id
+            updatedBy: authState.currentUser.id
         });
         
         showAlert(`✅ Slot ${newState ? 'activé' : 'désactivé'} avec succès`, 'success');
@@ -1785,7 +1785,7 @@ async function blockUser(userId) {
         await btpDB.put('users', userId, { 
             isBlocked: true,
             blockedAt: new Date().toISOString(),
-            blockedBy: appState.currentUser.id
+            blockedBy: authState.currentUser.id
         });
         showAlert('✅ Utilisateur bloqué avec succès', 'success');
         loadUsersTable();
@@ -1806,7 +1806,7 @@ async function unblockUser(userId) {
         await btpDB.put('users', userId, { 
             isBlocked: false,
             unblockedAt: new Date().toISOString(),
-            unblockedBy: appState.currentUser.id
+            unblockedBy: authState.currentUser.id
         });
         showAlert('✅ Utilisateur débloqué avec succès', 'success');
         loadUsersTable();
@@ -1827,7 +1827,7 @@ async function makeAdmin(userId) {
         await btpDB.put('users', userId, { 
             role: 'admin',
             promotedAt: new Date().toISOString(),
-            promotedBy: appState.currentUser.id
+            promotedBy: authState.currentUser.id
         });
         showAlert('✅ Utilisateur promu administrateur avec succès', 'success');
         loadUsersTable();
@@ -1837,489 +1837,23 @@ async function makeAdmin(userId) {
     }
 }
 
-// ========== FONCTIONS POUR LES CANDIDATURES EMPLOI (ADMIN) ==========
-
-async function loadJobApplicationsAdmin() {
-    if (!checkAdminAccess()) return;
-    
-    console.log('📋 Chargement des candidatures (vue admin)...');
-    
-    try {
-        const [applications, jobs] = await Promise.all([
-            btpDB.get('job_applications'),
-            btpDB.get('job_posts')
-        ]);
-        
-        // Mettre à jour le compteur global
-        window.jobApplicationsCount = {};
-        applications.forEach(app => {
-            window.jobApplicationsCount[app.jobId] = (window.jobApplicationsCount[app.jobId] || 0) + 1;
-        });
-        
-        displayJobApplicationsAdmin(applications, jobs);
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement candidatures admin:', error);
-        showAlert('❌ Erreur lors du chargement des candidatures', 'error');
-    }
-}
-
-function displayJobApplicationsAdmin(applications, jobs) {
-    const container = document.getElementById('admin-applications-container');
-    
-    if (!container) {
-        console.warn('❌ Container applications admin non trouvé');
-        return;
-    }
-    
-    if (!applications || applications.length === 0) {
-        container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune candidature reçue</h5>
-                <p class="text-muted">Les candidatures aux offres d'emploi apparaîtront ici</p>
-                <p class="text-info small">👑 Vue administrateur - Toutes les candidatures</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = `
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5>
-                <i class="fas fa-users me-2 text-warning"></i>
-                Candidatures - Vue Admin
-                <span class="badge bg-danger ms-2">Vue Globale</span>
-            </h5>
-            <div class="text-muted small">
-                ${applications.length} candidature(s) au total
-            </div>
-        </div>
-        
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body text-center">
-                        <i class="fas fa-clock fa-2x mb-2"></i>
-                        <h4>${applications.filter(app => app.status === 'en_attente').length}</h4>
-                        <p class="mb-0">En attente</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body text-center">
-                        <i class="fas fa-play fa-2x mb-2"></i>
-                        <h4>${applications.filter(app => app.status === 'en_cours').length}</h4>
-                        <p class="mb-0">En cours</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center">
-                        <i class="fas fa-check fa-2x mb-2"></i>
-                        <h4>${applications.filter(app => app.status === 'accepte').length}</h4>
-                        <p class="mb-0">Acceptées</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body text-center">
-                        <i class="fas fa-times fa-2x mb-2"></i>
-                        <h4>${applications.filter(app => app.status === 'rejete').length}</h4>
-                        <p class="mb-0">Rejetées</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    const applicationsByJob = {};
-    applications.forEach(app => {
-        if (!applicationsByJob[app.jobId]) {
-            applicationsByJob[app.jobId] = [];
-        }
-        applicationsByJob[app.jobId].push(app);
-    });
-    
-    Object.keys(applicationsByJob).forEach(jobId => {
-        const jobApplications = applicationsByJob[jobId];
-        const job = jobs.find(j => j.id === jobId);
-        
-        const jobTitle = job ? `${job.poste} - ${job.ville}` : `Offre #${jobId} (supprimée)`;
-        const jobAuthor = job ? `par ${job.userName}` : '';
-        
-        html += `
-        <div class="card mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-briefcase me-2 text-warning"></i>
-                    ${jobTitle}
-                    <small class="text-muted">${jobAuthor}</small>
-                </h5>
-                <div>
-                    <span class="badge bg-warning">${jobApplications.length} candidature(s)</span>
-                    ${job ? `<button class="btn btn-sm btn-outline-primary ms-2" onclick="viewJobApplications('${job.id}')">
-                        <i class="fas fa-eye me-1"></i>Voir
-                    </button>` : ''}
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped">
-                        <thead>
-                            <tr>
-                                <th>Candidat</th>
-                                <th>Contact</th>
-                                <th>Expérience</th>
-                                <th>Date</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${jobApplications.map(app => `
-                            <tr>
-                                <td>
-                                    <strong>${app.candidateName}</strong>
-                                    <br><small class="text-muted">ID: ${app.candidateId}</small>
-                                </td>
-                                <td>
-                                    <div>📧 ${app.candidateEmail}</div>
-                                    <div>📞 ${app.candidatePhone}</div>
-                                </td>
-                                <td>${app.experience || 'Non précisée'}</td>
-                                <td>
-                                    <small class="text-muted">
-                                        ${formatDate(app.createdAt)}
-                                    </small>
-                                </td>
-                                <td>
-                                    <span class="badge ${getStatusBadgeClass(app.status)}">
-                                        ${getStatusLabel(app.status)}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" onclick="viewApplicationDetails('${app.id}')" title="Voir détails">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-outline-success" onclick="changeApplicationStatus('${app.id}', 'en_cours')" title="En cours">
-                                            <i class="fas fa-play"></i>
-                                        </button>
-                                        <button class="btn btn-outline-warning" onclick="changeApplicationStatus('${app.id}', 'en_attente')" title="En attente">
-                                            <i class="fas fa-pause"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger" onclick="changeApplicationStatus('${app.id}', 'rejete')" title="Rejeter">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-    console.log(`✅ ${applications.length} candidatures affichées (vue admin)`);
-}
-
-// ========== FONCTIONS DE SAUVEGARDE CORRIGÉES ==========
-
-async function exportBackup() {
-    if (!checkAdminAccess()) return;
-    
-    console.log('💾 Début de l\'export de sauvegarde...');
-    showLoading(true);
-    
-    try {
-        // ✅ UTILISATION DIRECTE DU SYSTÈME EXPORT-IMPORT
-        if (typeof exportImportManager !== 'undefined') {
-            await exportImportManager.createFullBackup();
-            await exportImportManager.downloadBackup();
-        } else {
-            throw new Error('Système d\'export non disponible');
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur export sauvegarde:', error);
-        showAlert(`❌ Erreur lors de l'export: ${error.message}`, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function importBackup(event) {
-    if (!checkAdminAccess()) return;
-    
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Vérification de la taille
-    if (file.size > 10 * 1024 * 1024) {
-        showAlert('❌ Le fichier est trop volumineux (max. 10MB)', 'error');
-        event.target.value = '';
-        return;
-    }
-    
-    console.log('📤 Import de sauvegarde...');
-    showLoading(true);
-    
-    try {
-        // ✅ UTILISATION DIRECTE DU SYSTÈME EXPORT-IMPORT
-        if (typeof exportImportManager !== 'undefined') {
-            if (!confirm('⚠️ ATTENTION: Cette action va écraser les données existantes. Voulez-vous continuer ?')) {
-                return;
-            }
-            
-            await exportImportManager.restoreFromBackup(file);
-        } else {
-            throw new Error('Système d\'import non disponible');
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur import sauvegarde:', error);
-        showAlert(`❌ Erreur lors de l'import: ${error.message}`, 'error');
-    } finally {
-        showLoading(false);
-        event.target.value = '';
-    }
-}
-
-async function sendBackupByEmail() {
-    if (!checkAdminAccess()) return;
-    
-    console.log('📧 Envoi de sauvegarde par email...');
-    showLoading(true);
-    
-    try {
-        // ✅ UTILISATION DIRECTE DU SYSTÈME EXPORT-IMPORT
-        if (typeof exportImportManager !== 'undefined') {
-            await exportImportManager.sendBackupByEmail();
-        } else {
-            throw new Error('Système d\'envoi email non disponible');
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur envoi email:', error);
-        showAlert(`❌ Erreur lors de l'envoi par email: ${error.message}`, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-function showBackupSection() {
-    const backupHTML = `
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-database me-2"></i>
-                            Sauvegarde des Données
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Nouveau système de sauvegarde :</strong> Utilisez les fonctions optimisées pour exporter, importer et sauvegarder vos données.
-                        </div>
-                        
-                        <!-- BOUTONS SIMPLIFIÉS UTILISANT LE SYSTÈME EXPORT-IMPORT -->
-                        <div class="row text-center">
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <i class="fas fa-download fa-3x text-primary mb-3"></i>
-                                        <h5>Exporter</h5>
-                                        <p class="text-muted">Sauvegarde complète en JSON</p>
-                                        <button class="btn btn-primary w-100" onclick="exportBackup()">
-                                            <i class="fas fa-file-export me-2"></i>Télécharger
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <i class="fas fa-upload fa-3x text-success mb-3"></i>
-                                        <h5>Importer</h5>
-                                        <p class="text-muted">Restaurer depuis un fichier</p>
-                                        <input type="file" id="backupFileInput" accept=".json" 
-                                               class="form-control" onchange="importBackup(event)">
-                                        <div class="form-text small">
-                                            Fichier .json de sauvegarde
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <i class="fas fa-envelope fa-3x text-info mb-3"></i>
-                                        <h5>Email</h5>
-                                        <p class="text-muted">Envoyer par email</p>
-                                        <button class="btn btn-info w-100" onclick="sendBackupByEmail()">
-                                            <i class="fas fa-paper-plane me-2"></i>Envoyer
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- NOUVELLE SECTION POUR LE SYSTÈME COMPLET -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card border-primary">
-                                    <div class="card-header bg-primary text-white">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-cogs me-2"></i>
-                                            Système Complet de Sauvegarde
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="mb-3">
-                                            Accédez à l'interface complète de sauvegarde et restauration avec plus d'options.
-                                        </p>
-                                        <button class="btn btn-outline-primary" onclick="exportImportManager.showBackupModal()">
-                                            <i class="fas fa-tools me-2"></i>Ouvrir le Panneau de Sauvegarde
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- STATISTIQUES SIMPLIFIÉES -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Statistiques des Données</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div id="backupStats">
-                                            <div class="spinner-border spinner-border-sm" role="status">
-                                                <span class="visually-hidden">Chargement...</span>
-                                            </div>
-                                            Chargement des statistiques...
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    const container = document.getElementById('backup-container');
-    if (container) {
-        container.innerHTML = backupHTML;
-        loadBackupStats();
-    }
-}
-
-// Charger les statistiques (version simplifiée)
-async function loadBackupStats() {
-    try {
-        const collections = ['users', 'marketplace_posts', 'realestate_posts', 'job_posts', 'job_applications'];
-        let statsHTML = '';
-        let totalRecords = 0;
-        
-        for (const collection of collections) {
-            try {
-                const data = await btpDB.get(collection);
-                const count = data?.length || 0;
-                totalRecords += count;
-                
-                statsHTML += `
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span>${getCollectionLabel(collection)}</span>
-                        <span class="badge bg-primary">${count}</span>
-                    </div>
-                `;
-            } catch (error) {
-                console.warn(`❌ Erreur statistiques ${collection}:`, error);
-            }
-        }
-        
-        const totalStats = `
-            <div class="mt-3 p-2 bg-light rounded">
-                <div class="d-flex justify-content-between">
-                    <strong>Total enregistrements:</strong>
-                    <span class="badge bg-success">${totalRecords}</span>
-                </div>
-                <div class="d-flex justify-content-between mt-1">
-                    <strong>Collections:</strong>
-                    <span class="badge bg-info">${collections.length}</span>
-                </div>
-                <div class="mt-2 text-center">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Système de sauvegarde optimisé
-                    </small>
-                </div>
-            </div>
-        `;
-        
-        const statsContainer = document.getElementById('backupStats');
-        if (statsContainer) {
-            statsContainer.innerHTML = statsHTML + totalStats;
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement statistiques:', error);
-        const statsContainer = document.getElementById('backupStats');
-        if (statsContainer) {
-            statsContainer.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Erreur lors du chargement des statistiques
-                </div>
-            `;
-        }
-    }
-}
-
-// Fonction utilitaire pour les labels
-function getCollectionLabel(collection) {
-    const labels = {
-        'users': '👥 Utilisateurs',
-        'marketplace_posts': '🛍️ Marketplace',
-        'realestate_posts': '🏠 Immobilier', 
-        'job_posts': '💼 Offres d\'emploi',
-        'job_applications': '📨 Candidatures'
-    };
-    return labels[collection] || collection;
-}
-
 // ========== FONCTIONS UTILITAIRES ==========
 function checkAdminAccess() {
     console.log('🔐 Vérification accès admin (admin.js):', {
-        user: !!appState.currentUser,
-        admin: appState.isAdmin,
-        userRole: appState.currentUser?.role
+        user: !!authState.currentUser,
+        admin: authState.isAdmin,
+        userRole: authState.currentUser?.role
     });
     
     // VÉRIFICATION RENFORCÉE - DOUBLE CONTRÔLE
-    if (!appState.currentUser) {
+    if (!authState.currentUser) {
         console.warn('❌ Tentative d\'accès admin sans utilisateur connecté');
         showAlert('❌ Vous devez être connecté pour accéder à l\'administration', 'error');
         setTimeout(() => goToSection('home'), 1500);
         return false;
     }
     
-    if (!appState.isAdmin) {
+    if (!authState.isAdmin) {
         console.warn('❌ Tentative d\'accès admin sans permission administrateur');
         showAlert('❌ Accès réservé aux administrateurs', 'error');
         setTimeout(() => goToSection('home'), 1500);
@@ -2340,8 +1874,7 @@ function refreshAdminData() {
         loadAdminStats(),
         loadUsersTable(),
         loadPendingModeration(),
-        loadAdsenseSlots(),
-        loadJobApplicationsAdmin()
+        loadAdsenseSlots()
     ]).finally(() => {
         setTimeout(() => showLoading(false), 500);
     });
@@ -2350,31 +1883,6 @@ function refreshAdminData() {
 // ========== INITIALISATION DE L'ADMIN ==========
 document.addEventListener('DOMContentLoaded', function() {
     console.log('👑 Initialisation du module admin...');
-    
-    // Initialiser les fonctionnalités newsletter lorsque l'admin est chargé
-    setTimeout(() => {
-        if (document.getElementById('admin-section')?.classList.contains('active')) {
-            initNewsletterFeatures();
-        }
-    }, 1000);
-});
-
-// Surveiller les changements de section pour initialiser les fonctionnalités newsletter
-let currentSection = '';
-const observer = new MutationObserver(() => {
-    const adminSection = document.getElementById('admin-section');
-    if (adminSection && adminSection.classList.contains('active') && currentSection !== 'admin') {
-        currentSection = 'admin';
-        console.log('📧 Section admin détectée, initialisation newsletter...');
-        setTimeout(initNewsletterFeatures, 500);
-    }
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class']
 });
 
 // ========== EXPORT DES FONCTIONS ==========
@@ -2403,21 +1911,7 @@ window.approveAdFromModal = approveAdFromModal;
 window.rejectAdFromModal = rejectAdFromModal;
 window.deleteAnnounceFromModal = deleteAnnounceFromModal;
 
-// Nouvelles fonctions newsletter
-window.initNewsletterFeatures = initNewsletterFeatures;
-window.showImportRecipientsModal = showImportRecipientsModal;
-window.handleFileImport = handleFileImport;
-window.handleManualInput = handleManualInput;
-window.processRecipientsImport = processRecipientsImport;
-
-// Fonctions candidatures admin
-window.loadJobApplicationsAdmin = loadJobApplicationsAdmin;
-
-// Fonctions sauvegarde corrigées
-window.exportBackup = exportBackup;
-window.importBackup = importBackup;
-window.sendBackupByEmail = sendBackupByEmail;
-window.showBackupSection = showBackupSection;
-
 // Nouvelles fonctions pour la gestion des utilisateurs
 window.saveUserChanges = saveUserChanges;
+
+console.log('✅ admin.js CORRIGÉ - Compatible avec la structure modulaire realestate');

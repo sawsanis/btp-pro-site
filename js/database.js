@@ -106,14 +106,12 @@ class BTPDatabase {
                     lastVisit: new Date().toISOString(),
                     createdAt: new Date('2024-01-01').toISOString(),
                     updatedAt: new Date().toISOString(),
-                    // 🔥 CORRECTION: Ajout des champs de profil manquants
                     company: "BTP Pro Maroc",
                     address: "Casablanca, Maroc",
                     city: "Casablanca",
                     postalCode: "20000",
                     website: "https://btp-pro.ma",
                     description: "Administrateur de la plateforme BTP Pro Maroc",
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: "Administration",
                     source: "système",
                     status: "actif"
@@ -133,14 +131,12 @@ class BTPDatabase {
                     lastVisit: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
                     createdAt: new Date('2024-01-15').toISOString(),
                     updatedAt: new Date().toISOString(),
-                    // 🔥 CORRECTION: Ajout des champs de profil manquants
                     company: "Maçonnerie Lyaakobi",
                     address: "123 Avenue Hassan II, Casablanca",
                     city: "Casablanca",
                     postalCode: "20250",
                     website: "https://maconnerie-lyaakobi.ma",
                     description: "Entreprise familiale spécialisée en maçonnerie depuis 15 ans",
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: "Maçonnerie",
                     source: "import",
                     status: "actif"
@@ -160,14 +156,12 @@ class BTPDatabase {
                     lastVisit: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
                     createdAt: new Date('2024-01-20').toISOString(),
                     updatedAt: new Date().toISOString(),
-                    // 🔥 CORRECTION: Ajout des champs de profil manquants
                     company: "Hachimi Construction",
                     address: "45 Rue Mohammed V, Rabat",
                     city: "Rabat",
                     postalCode: "10000",
                     website: "",
                     description: "Entrepreneur en bâtiment spécialisé dans la rénovation",
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: "Construction",
                     source: "site web",
                     status: "actif"
@@ -289,19 +283,78 @@ class BTPDatabase {
                     updatedAt: new Date().toISOString()
                 }
             ],
+            forum_replies: [
+                {
+                    id: "1",
+                    topicId: "1",
+                    content: "Merci pour ce sujet intéressant ! Pour le dosage du béton, je recommande généralement un ratio 1:2:3 (ciment:sable:gravier) pour la plupart des applications courantes.",
+                    authorId: "2",
+                    authorName: "Abderrahmane Lyaakobi",
+                    authorEmail: "lyaakobi@hotmail.com",
+                    isSolution: true,
+                    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
+                },
+                {
+                    id: "2", 
+                    topicId: "1",
+                    content: "Je confirme les recommandations d'Abderrahmane. N'oubliez pas de bien humidifier le sable et les graviers avant mélange pour un béton plus homogène.",
+                    authorId: "3",
+                    authorName: "Younes Hachimi", 
+                    authorEmail: "y.hachimi.yh@gmail.com",
+                    isSolution: false,
+                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
+                }
+            ],
+            forum_topics: [
+                {
+                    id: "1",
+                    title: "Problème de dosage béton pour fondation",
+                    content: "Bonjour à tous, je rencontre des difficultés avec le dosage de mon béton pour des fondations de mur de soutènement. Quel ratio ciment/sable/gravier recommandez-vous ?",
+                    category: "technique",
+                    authorId: "2",
+                    authorName: "Abderrahmane Lyaakobi",
+                    authorEmail: "lyaakobi@hotmail.com",
+                    replyCount: 2,
+                    views: 15,
+                    lastActivity: new Date().toISOString(),
+                    status: "active",
+                    isPinned: true,
+                    tags: ["beton", "fondation", "dosage"],
+                    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
+                },
+                {
+                    id: "2",
+                    title: "Quelle marque de ciment choisir ?",
+                    content: "Je dois acheter du ciment pour un chantier à Casablanca. Quelle marque me conseillez-vous entre Lafarge, Asment et Ciments du Maroc ?",
+                    category: "materiaux", 
+                    authorId: "3",
+                    authorName: "Younes Hachimi",
+                    authorEmail: "y.hachimi.yh@gmail.com",
+                    replyCount: 0,
+                    views: 8,
+                    lastActivity: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: "active", 
+                    isPinned: false,
+                    tags: ["ciment", "marque", "qualite"],
+                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    updatedAt: new Date().toISOString()
+                }
+            ],
             newsletter_history: [],
             job_applications: [],
             job_ratings: [],
             employer_profiles: [],
             notifications: [],
             messages: [],
-            forum_topics: [],
             adsense_slots: [],
             premium_features: []
         };
         
         this.saveLocalData(initialData);
-        console.log('✅ Données de démonstration initialisées avec profils complets');
+        console.log('✅ Données de démonstration initialisées avec forum complet');
     }
 
     // ========== OPÉRATIONS CRUD ==========
@@ -376,7 +429,6 @@ class BTPDatabase {
     }
 
     async put(collection, id, data) {
-        // 🔥 CORRECTION: Mise à jour plus robuste
         const localData = this.getLocalData();
         if (!localData[collection]) {
             console.warn(`❌ Collection ${collection} non trouvée`);
@@ -487,7 +539,6 @@ class BTPDatabase {
             if (user.password === password) {
                 console.log('✅ Connexion locale réussie');
                 
-                // 🔥 CORRECTION: Ne pas supprimer le password pour permettre les mises à jour
                 const userSession = { ...user };
                 
                 localStorage.setItem('currentUser', JSON.stringify(userSession));
@@ -529,14 +580,12 @@ class BTPDatabase {
                     lastVisit: new Date().toISOString(),
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    // 🔥 CORRECTION: Initialiser TOUS les champs de profil avec valeurs par défaut
                     company: userData.company || '',
                     address: userData.address || '',
                     city: userData.city || '',
                     postalCode: userData.postalCode || '',
                     website: userData.website || '',
                     description: userData.description || '',
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: userData.metier || '',
                     source: userData.source || 'site web',
                     status: userData.status || 'actif'
@@ -563,14 +612,12 @@ class BTPDatabase {
             lastVisit: new Date().toISOString(),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            // 🔥 CORRECTION: Initialiser TOUS les champs de profil avec valeurs par défaut
             company: userData.company || '',
             address: userData.address || '',
             city: userData.city || '',
             postalCode: userData.postalCode || '',
             website: userData.website || '',
             description: userData.description || '',
-            // 🔥 NOUVEAU: Champs pour import Excel
             metier: userData.metier || '',
             source: userData.source || 'site web',
             status: userData.status || 'actif'
@@ -595,30 +642,22 @@ class BTPDatabase {
             if (user) {
                 console.log('✅ Profil trouvé:', user.email);
                 
-                // 🔥 CORRECTION CRITIQUE : Garantir que TOUS les champs existent avec des valeurs par défaut
                 const completeUserProfile = {
-                    // Informations de base (doivent toujours exister)
                     id: user.id,
                     prenom: user.prenom || '',
                     nom: user.nom || '',
                     email: user.email || '',
                     phone: user.phone || '',
                     role: user.role || 'user',
-                    
-                    // 🔥 CORRECTION : Champs de profil avec valeurs par défaut explicites
                     company: user.company || '',
                     address: user.address || '',
                     city: user.city || '',
                     postalCode: user.postalCode || '',
                     website: user.website || '',
                     description: user.description || '',
-                    
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: user.metier || '',
                     source: user.source || 'site web',
                     status: user.status || 'actif',
-                    
-                    // Informations système
                     isVerified: user.isVerified || false,
                     hasPremium: user.hasPremium || false,
                     visitCount: user.visitCount || 0,
@@ -647,10 +686,8 @@ class BTPDatabase {
             const userIndex = users.findIndex(u => u.id == userId);
             
             if (userIndex !== -1) {
-                // 🔥 CORRECTION : S'assurer que tous les champs sont sauvegardés
                 const updatedUser = {
                     ...users[userIndex],
-                    // Mettre à jour les champs de profil
                     email: profileData.email || users[userIndex].email,
                     phone: profileData.phone || '',
                     company: profileData.company || '',
@@ -659,17 +696,14 @@ class BTPDatabase {
                     postalCode: profileData.postalCode || '',
                     website: profileData.website || '',
                     description: profileData.description || '',
-                    // 🔥 NOUVEAU: Champs pour import Excel
                     metier: profileData.metier || '',
                     source: profileData.source || users[userIndex].source,
                     status: profileData.status || users[userIndex].status,
                     updatedAt: new Date().toISOString()
                 };
                 
-                // Mettre à jour dans la base
                 await this.put('users', userId, updatedUser);
                 
-                // 🔥 CORRECTION : Mettre à jour l'utilisateur courant dans localStorage
                 const currentUser = this.getCurrentUser();
                 if (currentUser && currentUser.id == userId) {
                     const updatedCurrentUser = { 
@@ -700,7 +734,6 @@ class BTPDatabase {
         }
     }
 
-    // 🔥 CORRECTION: Ajout de la fonction updateUserPassword manquante
     async updateUserPassword(userId, currentPassword, newPassword) {
         try {
             console.log('🔑 Changement mot de passe pour:', userId);
@@ -711,12 +744,10 @@ class BTPDatabase {
             if (userIndex !== -1) {
                 const user = users[userIndex];
                 
-                // Vérifier l'ancien mot de passe
                 if (user.password !== currentPassword) {
                     throw new Error('Mot de passe actuel incorrect');
                 }
                 
-                // Mettre à jour le mot de passe
                 const updatedUser = {
                     ...user,
                     password: newPassword,
@@ -885,7 +916,6 @@ class BTPDatabase {
         }
     }
 
-    // 🔥 NOUVELLE FONCTION : Mise à jour des anciens utilisateurs
     async upgradeOldUsers() {
         try {
             console.log('🔄 Mise à niveau des anciens utilisateurs...');
@@ -893,7 +923,6 @@ class BTPDatabase {
             let updatedCount = 0;
             
             for (const user of users) {
-                // Vérifier si l'utilisateur a les champs manquants
                 const needsUpgrade = !user.company && !user.address && !user.city && !user.postalCode && !user.website && !user.description;
                 
                 if (needsUpgrade) {
@@ -905,7 +934,6 @@ class BTPDatabase {
                         postalCode: user.postalCode || '',
                         website: user.website || '',
                         description: user.description || '',
-                        // 🔥 NOUVEAU: Champs pour import Excel
                         metier: user.metier || '',
                         source: user.source || 'site web',
                         status: user.status || 'actif',
@@ -935,7 +963,7 @@ class BTPDatabase {
             const allCollections = [
                 'users', 'marketplace_posts', 'realestate_posts', 'job_posts', 
                 'freelancers', 'professionals', 'job_applications', 'newsletter_history',
-                'adsense_slots', 'premium_features'
+                'adsense_slots', 'premium_features', 'forum_topics', 'forum_replies'
             ];
             
             const exportData = {};
@@ -945,7 +973,6 @@ class BTPDatabase {
                 console.log(`✅ ${collection}: ${exportData[collection]?.length || 0} enregistrements`);
             }
             
-            // 🔥 INCLUSION DES MOTS DE PASSE
             console.log('🔐 Mots de passe inclus dans l\'export');
             
             return exportData;
@@ -964,7 +991,6 @@ class BTPDatabase {
                 throw new Error('Données d\'import invalides');
             }
             
-            // Vérifier la structure des données
             const requiredCollections = ['users'];
             for (const collection of requiredCollections) {
                 if (!importData[collection]) {
@@ -972,20 +998,16 @@ class BTPDatabase {
                 }
             }
             
-            // Sauvegarder les données actuelles avant import
             const backupData = await this.exportCompleteData();
             localStorage.setItem('btp_pro_pre_import_backup', JSON.stringify(backupData));
             console.log('✅ Sauvegarde de sécurité créée');
             
-            // Importer chaque collection
             for (const [collection, data] of Object.entries(importData)) {
                 if (Array.isArray(data)) {
-                    // Vider la collection existante
                     const localData = this.getLocalData();
                     localData[collection] = [];
                     this.saveLocalData(localData);
                     
-                    // Ajouter les nouvelles données
                     for (const item of data) {
                         await this.post(collection, item);
                     }
@@ -994,7 +1016,6 @@ class BTPDatabase {
                 }
             }
             
-            // 🔥 CORRECTION: Les mots de passe sont automatiquement inclus
             console.log('🔐 Mots de passe importés avec succès');
             
             showAlert('✅ Import complet réussi ! Les mots de passe ont été préservés.', 'success');
@@ -1004,7 +1025,6 @@ class BTPDatabase {
         } catch (error) {
             console.error('❌ Erreur import complet:', error);
             
-            // Restaurer la sauvegarde en cas d'erreur
             try {
                 const backupData = JSON.parse(localStorage.getItem('btp_pro_pre_import_backup'));
                 if (backupData) {
@@ -1021,11 +1041,6 @@ class BTPDatabase {
 
     // ========== FONCTIONS SPÉCIALES POUR IMPORT EXCEL ==========
 
-    /**
-     * 🔥 NOUVELLE FONCTION : Import d'utilisateurs depuis Excel
-     * @param {Array} excelData - Données Excel formatées
-     * @param {Object} options - Options d'import
-     */
     async importUsersFromExcel(excelData, options = {}) {
         try {
             console.log('📊 Import utilisateurs depuis Excel...', excelData);
@@ -1046,10 +1061,8 @@ class BTPDatabase {
 
             for (const [index, row] of excelData.entries()) {
                 try {
-                    // Nettoyer et valider les données
                     const userData = this.cleanExcelUserData(row, index);
                     
-                    // Vérifier si l'utilisateur existe déjà
                     const existingUser = await this.findUserByEmail(userData.email);
                     
                     if (existingUser && !overwriteExisting) {
@@ -1062,7 +1075,6 @@ class BTPDatabase {
                         continue;
                     }
 
-                    // Préparer les données utilisateur complètes
                     const completeUserData = {
                         ...userData,
                         password: existingUser ? existingUser.password : this.generatePassword(userData, defaultPassword),
@@ -1077,7 +1089,6 @@ class BTPDatabase {
                     };
 
                     if (existingUser && overwriteExisting) {
-                        // Mettre à jour l'utilisateur existant
                         await this.put('users', existingUser.id, completeUserData);
                         importResults.details.push({
                             index: index + 1,
@@ -1086,7 +1097,6 @@ class BTPDatabase {
                             message: 'Utilisateur mis à jour'
                         });
                     } else {
-                        // Créer un nouvel utilisateur
                         await this.registerUser(completeUserData);
                         importResults.details.push({
                             index: index + 1,
@@ -1119,11 +1129,7 @@ class BTPDatabase {
         }
     }
 
-    /**
-     * Nettoie et valide les données utilisateur depuis Excel
-     */
     cleanExcelUserData(row, index) {
-        // Mapping des colonnes Excel vers notre structure
         const cleanedData = {
             prenom: (row['Prénom'] || row['prenom'] || '').trim(),
             nom: (row['Nom'] || row['nom'] || '').trim(),
@@ -1136,7 +1142,6 @@ class BTPDatabase {
             status: (row['Statut'] || row['Status'] || row['statut'] || 'actif').trim()
         };
 
-        // Validation des champs obligatoires
         if (!cleanedData.email) {
             throw new Error('Email manquant');
         }
@@ -1145,7 +1150,6 @@ class BTPDatabase {
             throw new Error('Email invalide');
         }
 
-        // Gestion des dates
         if (row['Date d\'inscription'] || row['createdAt']) {
             cleanedData.createdAt = this.parseExcelDate(row['Date d\'inscription'] || row['createdAt']);
         }
@@ -1154,7 +1158,6 @@ class BTPDatabase {
             cleanedData.lastVisit = this.parseExcelDate(row['Dernière connexion'] || row['lastVisit']);
         }
 
-        // Gestion des booléens
         if (row['Statut Premium'] !== undefined) {
             cleanedData.hasPremium = this.parseExcelBoolean(row['Statut Premium']);
         }
@@ -1166,54 +1169,36 @@ class BTPDatabase {
         return cleanedData;
     }
 
-    /**
-     * Trouve un utilisateur par email
-     */
     async findUserByEmail(email) {
         const users = await this.get('users');
         return users.find(u => u.email.toLowerCase() === email.toLowerCase());
     }
 
-    /**
-     * Génère un mot de passe pour les nouveaux utilisateurs
-     */
     generatePassword(userData, defaultPassword) {
-        // Stratégie de génération de mot de passe
         if (userData.prenom && userData.nom) {
-            // Première lettre du prénom + nom complet + "123"
             return `${userData.prenom.charAt(0)}${userData.nom}123`.toLowerCase();
         }
         return defaultPassword;
     }
 
-    /**
-     * Valide le format d'email
-     */
     isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
 
-    /**
-     * Parse les dates depuis Excel
-     */
     parseExcelDate(dateValue) {
         if (!dateValue) return new Date().toISOString();
         
         try {
-            // Si c'est déjà un objet Date
             if (dateValue instanceof Date) {
                 return dateValue.toISOString();
             }
             
-            // Si c'est un timestamp Excel
             if (typeof dateValue === 'number' && dateValue > 25569) {
-                // Conversion timestamp Excel -> JavaScript
                 const jsDate = new Date((dateValue - 25569) * 86400 * 1000);
                 return jsDate.toISOString();
             }
             
-            // Si c'est une chaîne de caractères
             const parsedDate = new Date(dateValue);
             if (!isNaN(parsedDate.getTime())) {
                 return parsedDate.toISOString();
@@ -1226,9 +1211,6 @@ class BTPDatabase {
         }
     }
 
-    /**
-     * Parse les booléens depuis Excel
-     */
     parseExcelBoolean(value) {
         if (typeof value === 'boolean') return value;
         if (typeof value === 'string') {
@@ -1239,9 +1221,6 @@ class BTPDatabase {
         return false;
     }
 
-    /**
-     * 🔥 NOUVELLE FONCTION : Export des utilisateurs pour Excel
-     */
     async exportUsersForExcel() {
         try {
             console.log('📊 Export utilisateurs pour Excel...');
@@ -1263,7 +1242,7 @@ class BTPDatabase {
                 'Email vérifié': user.isVerified ? 'Oui' : 'Non',
                 'Statut': user.status || 'actif',
                 'Source': user.source || 'site web',
-                'Mot de passe': user.password || '' // 🔥 INCLUSION DU MOT DE PASSE
+                'Mot de passe': user.password || ''
             }));
             
             console.log(`✅ ${excelData.length} utilisateurs exportés pour Excel`);
@@ -1275,23 +1254,17 @@ class BTPDatabase {
         }
     }
 
-    /**
-     * 🔥 NOUVELLE FONCTION : Migration entre serveurs
-     */
     async migrateToNewServer(backupData) {
         try {
             console.log('🚀 Migration vers nouveau serveur...');
             
             if (!backupData) {
-                // Exporter les données actuelles
                 backupData = await this.exportCompleteData();
             }
             
-            // Sauvegarder localement le fichier de migration
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const backupFileName = `btp-pro-migration-${timestamp}.json`;
             
-            // Créer un blob téléchargeable
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1313,7 +1286,9 @@ class BTPDatabase {
                     realestate: backupData.realestate_posts?.length || 0,
                     jobs: backupData.job_posts?.length || 0,
                     freelancers: backupData.freelancers?.length || 0,
-                    professionals: backupData.professionals?.length || 0
+                    professionals: backupData.professionals?.length || 0,
+                    forum_topics: backupData.forum_topics?.length || 0,
+                    forum_replies: backupData.forum_replies?.length || 0
                 }
             };
             
@@ -1328,7 +1303,7 @@ class BTPDatabase {
 const btpDB = new BTPDatabase();
 window.btpDB = btpDB;
 
-// 🔥 CORRECTION : Mise à niveau automatique des anciens utilisateurs au chargement
+// Mise à niveau automatique des anciens utilisateurs
 setTimeout(() => {
     btpDB.upgradeOldUsers().then(updatedCount => {
         if (updatedCount > 0) {
@@ -1337,13 +1312,11 @@ setTimeout(() => {
     });
 }, 2000);
 
-console.log('✅ database.js AMÉLIORÉ - Toutes les fonctionnalités demandées sont implémentées');
+console.log('✅ database.js COMPLET - Compatible avec la structure modulaire realestate');
 
-// ========== EXPORT DES FONCTIONS DE SAUVEGARDE ==========
+// ========== EXPORT DES FONCTIONS ==========
 window.exportCompleteData = () => btpDB.exportCompleteData();
 window.importCompleteData = (data) => btpDB.importCompleteData(data);
-
-// 🔥 NOUVEAUX EXPORTS POUR LES FONCTIONNALITÉS AJOUTÉES
 window.importUsersFromExcel = (data, options) => btpDB.importUsersFromExcel(data, options);
 window.exportUsersForExcel = () => btpDB.exportUsersForExcel();
 window.migrateToNewServer = (data) => btpDB.migrateToNewServer(data);
