@@ -1,7 +1,183 @@
 // ========== REALESTATE FORMS - GESTION DES FORMULAIRES ==========
 console.log('📝 Chargement du module RealEstate Forms...');
 
-// ========== FONCTIONS MANQUANTES POUR LA VALIDATION ==========
+// ========== FONCTIONS DE BASE ==========
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// ========== GESTION UPLOAD PHOTOS ==========
+async function handlePhotoUpload(form) {
+    const photoInput = form.querySelector('input[type="file"]');
+    const uploadedPhotos = [];
+    
+    if (photoInput && photoInput.files.length > 0) {
+        console.log('📸 Upload de photos détecté:', photoInput.files.length, 'fichiers');
+        
+        // Limiter à 5 photos maximum
+        const files = Array.from(photoInput.files).slice(0, 5);
+        
+        for (const file of files) {
+            try {
+                // Vérifier la taille du fichier (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showAlert(`❌ La photo "${file.name}" est trop volumineuse (max 5MB)`, 'error');
+                    continue;
+                }
+                
+                // Vérifier le type de fichier
+                if (!file.type.startsWith('image/')) {
+                    showAlert(`❌ Le fichier "${file.name}" n'est pas une image valide`, 'error');
+                    continue;
+                }
+                
+                // Conversion en Base64
+                const base64Image = await convertFileToBase64(file);
+                uploadedPhotos.push(base64Image);
+                
+                console.log(`✅ Photo convertie en Base64: ${file.name}`);
+                
+            } catch (error) {
+                console.error(`❌ Erreur conversion photo ${file.name}:`, error);
+                showAlert(`❌ Erreur lors du traitement de "${file.name}"`, 'error');
+            }
+        }
+    }
+    
+    return uploadedPhotos;
+}
+
+// ========== GESTION PRÉVISUALISATION PHOTOS ==========
+function setupPhotoPreview() {
+    const photoInput = document.getElementById('realestatePhotos');
+    const previewContainer = document.getElementById('photoPreview');
+    
+    if (!photoInput || !previewContainer) {
+        console.warn('❌ Éléments de prévisualisation photos non trouvés');
+        return;
+    }
+    
+    photoInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        previewContainer.innerHTML = '';
+        
+        if (files.length > 5) {
+            showAlert('❌ Maximum 5 photos autorisées', 'error');
+            this.value = '';
+            return;
+        }
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'photo-preview-item position-relative';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" class="img-thumbnail" alt="Preview" style="width: 100px; height: 100px; object-fit: cover;">
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removePhotoPreview(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                previewContainer.appendChild(preview);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+function removePhotoPreview(button) {
+    const previewItem = button.closest('.photo-preview-item');
+    if (previewItem) {
+        previewItem.remove();
+    }
+    
+    // Mettre à jour l'input file
+    const photoInput = document.getElementById('realestatePhotos');
+    if (photoInput) {
+        photoInput.value = '';
+    }
+}
+
+function resetPhotoPreview() {
+    const previewContainer = document.getElementById('photoPreview');
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+    
+    const photoInput = document.getElementById('realestatePhotos');
+    if (photoInput) {
+        photoInput.value = '';
+    }
+}
+
+// ========== INITIALISATION DES TYPES DE BIENS ==========
+function initializeRealEstateFormTypes() {
+    console.log('🔄 Initialisation des types de biens dans le formulaire...');
+    
+    function attemptInitialization(retryCount = 0) {
+        const typeSelect = document.getElementById('realestateType');
+        
+        if (!typeSelect) {
+            if (retryCount < 10) { // Maximum 10 tentatives
+                console.warn(`❌ Select realestateType non trouvé - Réessai dans 500ms (${retryCount + 1}/10)`);
+                setTimeout(() => attemptInitialization(retryCount + 1), 500);
+                return;
+            } else {
+                console.error('❌ Échec initialisation types après 10 tentatives');
+                return;
+            }
+        }
+        
+        console.log('✅ Select realestateType trouvé - Initialisation...');
+        
+        // Vider les options existantes sauf la première
+        while (typeSelect.children.length > 1) {
+            typeSelect.removeChild(typeSelect.lastChild);
+        }
+        
+        // Ajouter tous les types de biens COMPLETS
+        const propertyTypes = [
+            { value: 'villa', label: 'Villa' },
+            { value: 'appartement', label: 'Appartement' },
+            { value: 'maison', label: 'Maison' },
+            { value: 'ferme', label: 'Ferme' },
+            { value: 'bungalow', label: 'Bungalow' },
+            { value: 'usine', label: 'Usine' },
+            { value: 'entrepot', label: 'Entrepôt' },
+            { value: 'bureau', label: 'Bureau' },
+            { value: 'local', label: 'Local commercial' },
+            { value: 'terrain', label: 'Terrain' },
+            { value: 'duplex', label: 'Duplex' },
+            { value: 'studio', label: 'Studio' },
+            { value: 'riad', label: 'Riad' },
+            { value: 'chalet', label: 'Chalet' },
+            { value: 'residence', label: 'Résidence' },
+            { value: 'immeuble', label: 'Immeuble' }
+        ];
+        
+        propertyTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.value;
+            option.textContent = type.label;
+            typeSelect.appendChild(option);
+        });
+        
+        console.log(`✅ ${propertyTypes.length} types de biens ajoutés au formulaire`);
+    }
+    
+    // Démarrer l'initialisation
+    attemptInitialization();
+}
+
+// ========== VALIDATION DU FORMULAIRE ==========
 function validateRealEstateForm(data) {
     const errors = [];
     
@@ -32,18 +208,29 @@ function validateRealEstateForm(data) {
 }
 
 function isValidPhone(phone) {
-    // Validation basique du téléphone (Maroc)
-    const phoneRegex = /^(?:(?:\+|00)212|0)[5-7]\d{8}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
+    if (!phone) return false;
+    
+    console.log('📞 Validation téléphone:', phone);
+    
+    // Nettoyer le numéro (supprimer espaces, tirets, parenthèses, points)
+    const cleanedPhone = phone.replace(/[\s\-\(\)\.]/g, '');
+    
+    // Regex plus permissive pour les formats marocains
+    const phoneRegex = /^(?:(?:\+|00)212[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}|0[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}|[5-7]\d{8})$/;
+    
+    const isValid = phoneRegex.test(cleanedPhone);
+    console.log('📞 Téléphone valide?', isValid);
+    
+    return isValid;
 }
 
-// ========== PUBLICATION IMMOBILIÈRE AVEC COMPRESSION ==========
+// ========== PUBLICATION IMMOBILIÈRE ==========
 async function handlePublishRealEstate(event) {
     event.preventDefault();
     
     console.log('📝 Début publication immobilier...');
     
-    // ✅ VÉRIFICATION UNIFIÉE ET SIMPLIFIÉE
+    // VÉRIFICATION UNIFIÉE ET SIMPLIFIÉE
     if (!checkAuthForPublish()) {
         console.log('❌ Échec vérification auth pour publication');
         return;
@@ -92,9 +279,9 @@ async function handlePublishRealEstate(event) {
         return;
     }
     
-    // Validation du téléphone
+    // Validation du téléphone avec message plus clair
     if (!isValidPhone(data.phone)) {
-        showAlert('❌ Veuillez saisir un numéro de téléphone valide', 'error');
+        showAlert('❌ Veuillez saisir un numéro de téléphone marocain valide\n\nFormats acceptés:\n• 06 12 34 56 78\n• 0612345678\n• +212 6 12 34 56 78\n• 00212 612345678', 'error');
         return;
     }
     
@@ -103,30 +290,8 @@ async function handlePublishRealEstate(event) {
     }
     
     try {
-        // 🔥 COMPRESSION AUTOMATIQUE DES IMAGES
-        let uploadedPhotos = [];
-        if (typeof handlePhotoUploadWithCompression === 'function') {
-            uploadedPhotos = await handlePhotoUploadWithCompression(form);
-        } else {
-            console.warn('⚠️ handlePhotoUploadWithCompression non disponible - upload direct');
-            // Fallback pour l'upload sans compression
-            const photoInput = form.querySelector('input[type="file"]');
-            if (photoInput && photoInput.files.length > 0) {
-                const files = Array.from(photoInput.files).slice(0, 5);
-                for (const file of files) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        showAlert(`❌ La photo "${file.name}" est trop volumineuse (max 5MB)`, 'error');
-                        continue;
-                    }
-                    if (!file.type.startsWith('image/')) {
-                        showAlert(`❌ Le fichier "${file.name}" n'est pas une image valide`, 'error');
-                        continue;
-                    }
-                    const base64Image = await convertFileToBase64(file);
-                    uploadedPhotos.push(base64Image);
-                }
-            }
-        }
+        // Gestion des photos uploadées
+        const uploadedPhotos = await handlePhotoUpload(form);
         
         const propertyData = {
             title: data.title.trim(),
@@ -157,7 +322,7 @@ async function handlePublishRealEstate(event) {
             propertyData.id = Date.now() + Math.random().toString(36).substr(2, 9);
         }
         
-        const result = await btpDB.add('realestate_posts', propertyData);
+        const result = await btpDB.post('realestate_posts', propertyData);
         
         console.log('✅ Bien immobilier sauvegardé:', result);
         
@@ -166,19 +331,8 @@ async function handlePublishRealEstate(event) {
         // Réinitialiser le formulaire
         form.reset();
         
-        // 🔥 CORRECTION: Réinitialiser les photos preview
-        if (typeof resetPhotoPreview === 'function') {
-            resetPhotoPreview();
-        } else {
-            const previewContainer = document.getElementById('photoPreview');
-            if (previewContainer) {
-                previewContainer.innerHTML = '';
-            }
-            const photoInput = document.getElementById('realestatePhotos');
-            if (photoInput) {
-                photoInput.value = '';
-            }
-        }
+        // Réinitialiser les photos preview
+        resetPhotoPreview();
         
         // Rediriger vers la section immobilier
         setTimeout(() => {
@@ -201,61 +355,6 @@ async function handlePublishRealEstate(event) {
             showLoading(false);
         }
     }
-}
-
-// ========== CONVERSION FICHIER EN BASE64 (fallback) ==========
-async function convertFileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-// ========== INITIALISATION DES TYPES DE BIENS ==========
-function initializeRealEstateFormTypes() {
-    const typeSelect = document.getElementById('realestateType');
-    if (!typeSelect) {
-        console.warn('❌ Select realestateType non trouvé');
-        return;
-    }
-    
-    console.log('🔄 Initialisation des types de biens dans le formulaire...');
-    
-    // Vider les options existantes sauf la première
-    while (typeSelect.children.length > 1) {
-        typeSelect.removeChild(typeSelect.lastChild);
-    }
-    
-    // Ajouter tous les types de biens COMPLETS
-    const propertyTypes = [
-        { value: 'villa', label: 'Villa' },
-        { value: 'appartement', label: 'Appartement' },
-        { value: 'maison', label: 'Maison' },
-        { value: 'ferme', label: 'Ferme' },
-        { value: 'bungalow', label: 'Bungalow' },
-        { value: 'usine', label: 'Usine' },
-        { value: 'entrepot', label: 'Entrepôt' },
-        { value: 'bureau', label: 'Bureau' },
-        { value: 'local', label: 'Local commercial' },
-        { value: 'terrain', label: 'Terrain' },
-        { value: 'duplex', label: 'Duplex' },
-        { value: 'studio', label: 'Studio' },
-        { value: 'riad', label: 'Riad' },
-        { value: 'chalet', label: 'Chalet' },
-        { value: 'residence', label: 'Résidence' },
-        { value: 'immeuble', label: 'Immeuble' }
-    ];
-    
-    propertyTypes.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type.value;
-        option.textContent = type.label;
-        typeSelect.appendChild(option);
-    });
-    
-    console.log(`✅ ${propertyTypes.length} types de biens ajoutés au formulaire`);
 }
 
 // ========== ÉDITION D'ANNONCE ==========
@@ -367,6 +466,12 @@ async function handleUpdateRealEstate(event) {
         return;
     }
     
+    // Validation du téléphone avec message plus clair
+    if (!isValidPhone(data.phone)) {
+        showAlert('❌ Veuillez saisir un numéro de téléphone marocain valide\n\nFormats acceptés:\n• 06 12 34 56 78\n• 0612345678\n• +212 6 12 34 56 78\n• 00212 612345678', 'error');
+        return;
+    }
+    
     if (typeof showLoading === 'function') {
         showLoading(true);
     }
@@ -394,36 +499,20 @@ async function handleUpdateRealEstate(event) {
         // Gérer les nouvelles photos si uploadées
         const photoInput = form.querySelector('input[type="file"]');
         if (photoInput && photoInput.files.length > 0) {
-            let newPhotos = [];
-            if (typeof handlePhotoUploadWithCompression === 'function') {
-                newPhotos = await handlePhotoUploadWithCompression(form);
-            } else {
-                // Fallback sans compression
-                const files = Array.from(photoInput.files).slice(0, 5);
-                for (const file of files) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        showAlert(`❌ La photo "${file.name}" est trop volumineuse (max 5MB)`, 'error');
-                        continue;
-                    }
-                    const base64Image = await convertFileToBase64(file);
-                    newPhotos.push(base64Image);
-                }
-            }
+            const newPhotos = await handlePhotoUpload(form);
             if (newPhotos.length > 0) {
                 properties[propertyIndex].photos = newPhotos;
             }
         }
         
         // Sauvegarder
-        await btpDB.set('realestate_posts', properties);
+        await btpDB.put('realestate_posts', window.currentEditingPropertyId, properties[propertyIndex]);
         
         showAlert('✅ Annonce mise à jour avec succès !', 'success');
         
         // Réinitialiser
         form.reset();
-        if (typeof resetPhotoPreview === 'function') {
-            resetPhotoPreview();
-        }
+        resetPhotoPreview();
         delete window.currentEditingPropertyId;
         
         // Restaurer le bouton original
@@ -453,29 +542,72 @@ async function handleUpdateRealEstate(event) {
     }
 }
 
-// ========== INITIALISATION ET EXPORTS ==========
+// ========== AFFICHAGE FORMULAIRE PUBLICATION ==========
+function showPublishRealEstate() {
+    console.log('🎯 Navigation vers publication immobilier...');
+    
+    // Vérifier l'authentification d'abord
+    if (!checkAuthForPublish()) {
+        console.log('❌ Utilisateur non authentifié - affichage modal connexion');
+        return;
+    }
+    
+    // Si authentifié, aller directement à la publication
+    if (typeof goToSection === 'function') {
+        goToSection('publish');
+    }
+    
+    // S'assurer que le formulaire immobilier est visible
+    setTimeout(() => {
+        const realEstateForm = document.getElementById('realestate-form');
+        if (realEstateForm) {
+            realEstateForm.style.display = 'block';
+            
+            // Initialiser les types de biens COMPLETS dans le formulaire
+            initializeRealEstateFormTypes();
+        }
+        
+        // Cacher les autres formulaires de publication
+        const otherForms = document.querySelectorAll('.publish-form');
+        otherForms.forEach(form => {
+            if (form.id !== 'realestate-form') {
+                form.style.display = 'none';
+            }
+        });
+        
+        // Initialiser la prévisualisation des photos
+        setupPhotoPreview();
+    }, 100);
+}
+
+// ========== INITIALISATION ==========
 function initializeFormFunctions() {
     console.log('🔄 Initialisation des fonctions formulaires...');
     
     // Auto-initialisation des types si le formulaire existe
-    if (document.getElementById('realestateType')) {
-        initializeRealEstateFormTypes();
-    }
+    initializeRealEstateFormTypes();
     
     // Initialiser la prévisualisation des photos si disponible
-    if (typeof setupPhotoPreview === 'function') {
-        setupPhotoPreview();
-    }
+    setupPhotoPreview();
 }
 
-// Export des fonctions
+// ========== EXPORT DES FONCTIONS ==========
 window.handlePublishRealEstate = handlePublishRealEstate;
-window.initializeRealEstateFormTypes = initializeRealEstateFormTypes;
 window.editRealEstateAnnounce = editRealEstateAnnounce;
 window.handleUpdateRealEstate = handleUpdateRealEstate;
+window.showPublishRealEstate = showPublishRealEstate;
+window.initializeRealEstateFormTypes = initializeRealEstateFormTypes;
 window.initializeFormFunctions = initializeFormFunctions;
+
+// Export des fonctions de gestion des photos
+window.setupPhotoPreview = setupPhotoPreview;
+window.removePhotoPreview = removePhotoPreview;
+window.resetPhotoPreview = resetPhotoPreview;
+window.convertFileToBase64 = convertFileToBase64;
+window.handlePhotoUpload = handlePhotoUpload;
+
+// Export des fonctions de validation
 window.validateRealEstateForm = validateRealEstateForm;
 window.isValidPhone = isValidPhone;
-window.convertFileToBase64 = convertFileToBase64;
 
-console.log('✅ realestate-forms.js chargé - Formulaires prêts');
+console.log('✅ realestate-forms.js chargé - Formulaires et édition PRÊTS');

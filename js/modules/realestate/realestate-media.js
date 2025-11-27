@@ -69,7 +69,7 @@ async function handlePhotoUploadWithCompression(form) {
                 
                 let processedFile = file;
                 
-                // 🔥 COMPRESSION AUTOMATIQUE pour les images > 500KB
+                // COMPRESSION AUTOMATIQUE pour les images > 500KB
                 if (file.size > 500 * 1024) {
                     console.log(`🔄 Compression de ${file.name} (${(file.size/1024).toFixed(0)} KB)`);
                     processedFile = await compressImage(file, 800, 600, 0.7);

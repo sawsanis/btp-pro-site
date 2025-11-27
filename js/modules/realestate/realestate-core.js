@@ -262,6 +262,13 @@ function displayBasicRealEstatePosts(properties) {
         const favoriteBtnClass = isFavorite ? 'text-danger' : 'text-muted';
         const favoriteIcon = isFavorite ? 'fas' : 'far';
         
+        // Vérifier si l'utilisateur peut éditer cette annonce
+        let canEdit = false;
+        if (typeof authState !== 'undefined' && authState.currentUser) {
+            canEdit = authState.currentUser.id === property.userId || 
+                     (authState.isAdmin === true);
+        }
+        
         // Gestion des photos
         const mainPhoto = property.photos && property.photos.length > 0 ? 
             property.photos[0] : null;
@@ -277,7 +284,7 @@ function displayBasicRealEstatePosts(properties) {
                     </span>
                 </div>
                 ` : ''}
-                <button class="btn btn-sm btn-light favorite-btn ${favoriteBtnClass}" 
+                <button class="btn btn-sm btn-light favorite-btn position-absolute top-0 end-0 m-2 ${favoriteBtnClass}" 
                         onclick="toggleFavorite('${property.id}', 'realestate')"
                         title="${isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
                     <i class="${favoriteIcon} fa-heart"></i>
@@ -286,6 +293,11 @@ function displayBasicRealEstatePosts(properties) {
         ` : `
             <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
                 <i class="fas fa-home fa-3x text-muted"></i>
+                <button class="btn btn-sm btn-light favorite-btn position-absolute top-0 end-0 m-2 ${favoriteBtnClass}" 
+                        onclick="toggleFavorite('${property.id}', 'realestate')"
+                        title="${isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                    <i class="${favoriteIcon} fa-heart"></i>
+                </button>
             </div>
         `;
         
@@ -327,6 +339,17 @@ function displayBasicRealEstatePosts(properties) {
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <h4 class="text-success mb-0">${formatPrice(property.price || 0)}</h4>
                         <small class="text-muted">${formatDate(property.createdAt)}</small>
+                    </div>
+                    
+                    <!-- BOUTONS ÉDITION -->
+                    <div class="actions mt-2">
+                        <div class="btn-group btn-group-sm w-100">
+                            ${canEdit ? `
+                            <button class="btn btn-outline-primary btn-sm" onclick="handleEditRealEstate('${property.id}')" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
@@ -599,6 +622,218 @@ function debugRealEstateModules() {
     return modules.every(m => typeof window[m.fn] === 'function');
 }
 
+// ========== FONCTIONS D'ÉDITION MANQUANTES ==========
+function handleEditRealEstate(propertyId) {
+    console.log('✏️ Tentative d\'édition annonce:', propertyId);
+    
+    // Vérifier si la fonction d'édition existe dans le module forms
+    if (typeof editRealEstateAnnounce === 'function') {
+        console.log('✅ Fonction editRealEstateAnnounce disponible - appel direct');
+        editRealEstateAnnounce(propertyId);
+        return;
+    }
+    
+    console.log('🔄 Fonction editRealEstateAnnounce non disponible - chargement manuel');
+    
+    // Fallback manuel
+    btpDB.get('realestate_posts').then(properties => {
+        const property = properties.find(p => p.id == propertyId);
+        
+        if (!property) {
+            showAlert('❌ Annonce non trouvée', 'error');
+            return;
+        }
+        
+        // Vérifier les permissions
+        let currentUser;
+        if (typeof authState !== 'undefined' && authState.currentUser) {
+            currentUser = authState.currentUser;
+        } else {
+            currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        }
+        
+        const isAdmin = authState && authState.isAdmin === true;
+        
+        if (!currentUser || (currentUser.id !== property.userId && !isAdmin)) {
+            showAlert('❌ Vous n\'avez pas la permission de modifier cette annonce', 'error');
+            return;
+        }
+        
+        // Stocker l'ID pour la sauvegarde
+        window.currentEditingPropertyId = propertyId;
+        
+        // Aller à la section publication
+        goToSection('publish');
+        
+        // Remplir le formulaire d'édition après un délai
+        setTimeout(() => {
+            fillRealEstateForm(property);
+        }, 500);
+        
+    }).catch(error => {
+        console.error('❌ Erreur chargement annonce:', error);
+        showAlert('❌ Erreur lors du chargement de l\'annonce', 'error');
+    });
+}
+
+function fillRealEstateForm(property) {
+    console.log('📝 Remplissage formulaire édition:', property);
+    
+    const setValue = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value || '';
+            console.log(`✅ Champ ${id} rempli:`, value);
+        } else {
+            console.warn(`❌ Champ ${id} non trouvé`);
+        }
+    };
+    
+    // Remplir les champs du formulaire
+    setValue('realestateTitle', property.title);
+    setValue('realestateType', property.type);
+    setValue('realestatePrice', property.price);
+    setValue('realestateSurface', property.surface);
+    setValue('realestateRooms', property.rooms);
+    setValue('realestateAddress', property.address);
+    setValue('realestateCity', property.city);
+    setValue('realestateDescription', property.description);
+    setValue('realestatePhone', property.phone);
+    
+    // S'assurer que le formulaire immobilier est visible
+    const realEstateForm = document.getElementById('realestate-form');
+    if (realEstateForm) {
+        realEstateForm.style.display = 'block';
+        
+        // Initialiser les types si nécessaire
+        if (typeof initializeRealEstateFormTypes === 'function') {
+            initializeRealEstateFormTypes();
+        }
+        
+        // Mettre à jour le bouton de publication
+        const submitBtn = realEstateForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Mettre à jour l\'annonce';
+            // Remplacer l'event listener
+            submitBtn.onclick = handleUpdateRealEstate;
+        }
+        
+        console.log('✅ Formulaire d\'édition préparé');
+        showAlert('📝 Formulaire d\'édition prêt. Modifiez les champs et cliquez sur "Mettre à jour"', 'info');
+    } else {
+        console.error('❌ Formulaire realestate-form non trouvé');
+        showAlert('❌ Erreur: formulaire non trouvé', 'error');
+    }
+    
+    // Cacher les autres formulaires
+    const otherForms = document.querySelectorAll('.publish-form');
+    otherForms.forEach(form => {
+        if (form.id !== 'realestate-form') {
+            form.style.display = 'none';
+        }
+    });
+}
+
+async function handleUpdateRealEstate(event) {
+    if (event) event.preventDefault();
+    
+    console.log('🔄 Mise à jour directe annonce immobilier...');
+    
+    if (!window.currentEditingPropertyId) {
+        showAlert('❌ Aucune annonce en cours d\'édition', 'error');
+        return;
+    }
+    
+    const form = document.getElementById('realestate-form');
+    if (!form) {
+        showAlert('❌ Formulaire non trouvé', 'error');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    console.log('📊 Données formulaire édition:', data);
+    
+    // Validation
+    const requiredFields = ['title', 'type', 'price', 'address', 'description', 'phone'];
+    const missingFields = requiredFields.filter(field => !data[field]);
+    
+    if (missingFields.length > 0) {
+        showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+    
+    // Validation du prix
+    const price = parseFloat(data.price);
+    if (isNaN(price) || price <= 0) {
+        showAlert('❌ Veuillez saisir un prix valide', 'error');
+        return;
+    }
+    
+    // Validation de la surface si fournie
+    if (data.surface && (isNaN(data.surface) || data.surface < 0)) {
+        showAlert('❌ Veuillez saisir une surface valide', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const properties = await btpDB.get('realestate_posts');
+        const propertyIndex = properties.findIndex(p => p.id == window.currentEditingPropertyId);
+        
+        if (propertyIndex === -1) {
+            throw new Error('Annonce non trouvée');
+        }
+        
+        // Mettre à jour les données
+        properties[propertyIndex].title = data.title.trim();
+        properties[propertyIndex].type = data.type;
+        properties[propertyIndex].price = parseFloat(data.price);
+        properties[propertyIndex].surface = data.surface ? parseFloat(data.surface) : null;
+        properties[propertyIndex].rooms = data.rooms ? parseInt(data.rooms) : null;
+        properties[propertyIndex].address = data.address.trim();
+        properties[propertyIndex].city = data.city ? data.city.trim() : '';
+        properties[propertyIndex].description = data.description.trim();
+        properties[propertyIndex].phone = data.phone.trim();
+        properties[propertyIndex].updatedAt = new Date().toISOString();
+        
+        // Sauvegarder
+        await btpDB.put('realestate_posts', window.currentEditingPropertyId, properties[propertyIndex]);
+        
+        showAlert('✅ Annonce mise à jour avec succès !', 'success');
+        
+        // Réinitialiser le formulaire
+        form.reset();
+        if (typeof resetPhotoPreview === 'function') {
+            resetPhotoPreview();
+        }
+        
+        // Supprimer l'ID d'édition
+        delete window.currentEditingPropertyId;
+        
+        // Restaurer le bouton original
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Publier l\'annonce';
+            submitBtn.onclick = handlePublishRealEstate;
+        }
+        
+        // Retourner aux annonces
+        setTimeout(() => {
+            goToSection('realestate');
+            loadRealEstateAnnounces();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Erreur mise à jour annonce:', error);
+        showAlert('❌ Erreur lors de la mise à jour: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
 // ========== EXPORTS GLOBAUX ==========
 window.loadRealEstateAnnounces = loadRealEstateAnnounces;
 window.showPublishRealEstate = showPublishRealEstate;
@@ -615,6 +850,11 @@ window.formatPrice = formatPrice;
 window.formatDate = formatDate;
 window.checkRealEstateSystemHealth = checkRealEstateSystemHealth;
 window.debugRealEstateModules = debugRealEstateModules;
+
+// Export des fonctions d'édition
+window.handleEditRealEstate = handleEditRealEstate;
+window.fillRealEstateForm = fillRealEstateForm;
+window.handleUpdateRealEstate = handleUpdateRealEstate;
 
 // Fonctions de secours pour la galerie
 window.showPhotoGallery = function(propertyId) {
