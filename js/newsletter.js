@@ -452,7 +452,7 @@ L'équipe BTP Pro Maroc
         }
     }
 
-    // Charger l'historique des newsletters (CORRIGÉ)
+    // Charger l'historique des newsletters (CORRECTION FIREBASE)
     async loadNewsletterHistory() {
         try {
             console.log('📋 Chargement historique newsletters...');
@@ -473,8 +473,20 @@ L'équipe BTP Pro Maroc
                 </div>
             `;
 
-            // Utiliser btpDB
-            const history = await btpDB.get('newsletter_history');
+            // CORRECTION : Gestion des erreurs Firebase
+            let history;
+            try {
+                history = await btpDB.get('newsletter_history');
+            } catch (firebaseError) {
+                console.error('❌ Erreur Firebase:', firebaseError);
+                // Si Firebase échoue, utiliser le localStorage comme fallback
+                const localHistory = localStorage.getItem('newsletter_history');
+                history = localHistory ? JSON.parse(localHistory) : [];
+                
+                if (history.length > 0) {
+                    console.log('✅ Historique récupéré depuis localStorage');
+                }
+            }
             
             if (!history || history.length === 0) {
                 historyContainer.innerHTML = `
