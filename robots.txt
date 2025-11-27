@@ -1,0 +1,69 @@
+# robots.txt pour BTP Pro Maroc
+User-agent: *
+Allow: /
+
+# ==================== PAGES À BLOQUER ====================
+
+# Administration et backoffice
+Disallow: /admin/
+Disallow: /dashboard/
+
+# Pages utilisateurs privées
+Disallow: /profile/
+Disallow: /account/
+Disallow: /user/
+
+# Recherches et filtres
+Disallow: /search/
+Disallow: /?search=
+Disallow: /?filter=
+Disallow: /?q=
+
+# API et données sensibles
+Disallow: /api/
+Disallow: /backup/
+Disallow: /export-import/
+
+# Messagerie privée
+Disallow: /messaging/
+Disallow: /chat/
+
+# Candidatures emplois
+Disallow: /applications/
+Disallow: /jobs-applications/
+
+# Pages de connexion
+Disallow: /login/
+Disallow: /register/
+Disallow: /auth/
+
+# ==================== RESSOURCES AUTORISÉES ====================
+
+# CSS - Styles
+Allow: /css/
+Allow: *.css
+
+# JavaScript - Scripts
+Allow: /js/
+Allow: *.js
+
+# Modules JavaScript
+Allow: /js/modules/
+
+# Assets (si vous en avez)
+Allow: /assets/
+
+# ==================== PARAMÈTRES ====================
+
+# Délai entre les requêtes
+Crawl-delay: 1
+
+# ==================== SITEMAPS ====================
+
+Sitemap: https://btppro.ma/sitemap.xml
+
+# ==================== COMMENTAIRES ====================
+
+# Structure actuelle sans dossier images
+# Fichiers autorisés : CSS, JS, Modules
+# Pages bloquées : Admin, Profils, Recherches

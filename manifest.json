@@ -1,0 +1,88 @@
+{
+  "name": "BTP Pro Maroc - Plateforme Professionnelle",
+  "short_name": "BTP Pro Maroc",
+  "description": "La plateforme complète pour les professionnels du BTP au Maroc - Immobilier, Emplois, Marketplace et Forum technique",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0a5cb8",
+  "orientation": "any",
+  "scope": "/",
+  "categories": ["business", "productivity", "education"],
+  "lang": "fr",
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMwYTVjYjgiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Ik0xOSAzSDVjLTEuMSAwLTIgLjktMiAydjE0YzAgMS4xLjkgMiAyIDJoMTRjMS4xIDAgMi0uOSAyLTJWNWMwLTEuMS0uOS0yLTItMnoiLz4KPHBhdGggZD0iTTkgOWg2TTkgMTJoNk05IDE1aDZNMTUgMTJoMyIvPgo8L3N2Zz4KPC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMwYTVjYjgiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiPgo8cGF0aCBkPSJNMTkgM0g1Yy0xLjEgMC0yIC45LTIgMnYxNGMwIDEuMS45IDIgMiAyaDE0YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6Ii8+CjxwYXRoIGQ9Ik05IDloNk05IDEyaDZNOSAxNWg2TTE1IDEyaDMiLz4KPC9zdmc+Cjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDYwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjMGExYzFmIi8+CjxyZWN0IHg9IjEwMCIgeT0iNTAiIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjUwMCIgcng9IjIwIiBmaWxsPSIjZjhmOWZhIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNDgiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMGE1Y2I4Ij5CVFAgUFJPIE1BUk9DPC90ZXh0Pgo8dGV4dCB4PSIxMDAiIHk9IjIyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjMzMzMzMzIj5QbGF0ZWZvcm1lIHByb2Zlc3Npb25uZWxsZSBCTVA8L3RleHQ+CjxyZWN0IHg9IjEwMCIgeT0iMjcwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE1MCIgcng9IjEwIiBmaWxsPSIjMGExYzFmIi8+CjxyZWN0IHg9IjM4MCIgeT0iMjcwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE1MCIgcng9IjEwIiBmaWxsPSIjZmY3NzEwIi8+CjxyZWN0IHg9IjY2MCIgeT0iMjcwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE1MCIgcng9IjEwIiBmaWxsPSIjMmQzYTRhIi8+Cjx0ZXh0IHg9IjExNSIgeT0iMzMwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNmZmZmZmYiPvCfjrhJbW1vYmlsaWVyPC90ZXh0Pgo8dGV4dCB4PSIzOTUiIHk9IjMzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjZmZmZmZmIj7wn4y0RW1wbG9pczwvdGV4dD4KPHRleHQgeD0iNjc1IiB5PSIzMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2ZmZmZmZiI+8J+MsEZvcnVtPC90ZXh0Pgo8L3N2Zz4=",
+      "sizes": "1200x600",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "BTP Pro Maroc - Plateforme Professionnelle"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "🏠 Immobilier",
+      "short_name": "Immobilier",
+      "description": "Gestion et recherche de biens immobiliers",
+      "url": "/realestate",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiMwYTVjYjgiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Ik0zIDloMTh2MTJIM1Y5eiIvPgo8cGF0aCBkPSJNOSAyMlY5Ii8+CjxwYXRoIGQ9Ik0xNSAyMlY5Ii8+CjxwYXRoIGQ9Ik0yMSA5SDE5LjVhMS41IDEuNSAwIDAgMSAwLTNoMWEzIDMgMCAwIDEgMyAzdjBoLTF6Ii8+CjxwYXRoIGQ9Ik0yMSAxNWgtMmEzIDMgMCAwIDEtMy0zdi0xIi8+CjxwYXRoIGQ9Ik02IDlsLTMtMyAzLTMiLz4KPC9zdmc+",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "💼 Emplois",
+      "short_name": "Emplois",
+      "description": "Offres d'emploi et candidatures BTP",
+      "url": "/jobs",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiNmZjc3MTAiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Ik0yMCA3SDRhMiAyIDAgMCAwLTIgMnYxMGEyIDIgMCAwIDAgMiAyaDE2YTIgMiAwIDAgMCAyLTJWOWEyIDIgMCAwIDAtMi0yeiIvPgo8cGF0aCBkPSJNMTYgMjFWNWEyIDIgMCAwIDAtMi0yaC00YTIgMiAwIDAgMC0yIDJ2MTYiLz4KPC9zdmc+",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "💬 Forum",
+      "short_name": "Forum",
+      "description": "Forum technique et échanges professionnels",
+      "url": "/forum",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLz200MDAvc3ZnIiBzdHJva2U9IiMyZDNhNGEiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Ik0yMSAxNWEyIDIgMCAwIDEtMiAySDdsLTQgNFY1YTIgMiAwIDAgMSAyLTJoMTBhMiAyIDAgMCAxIDIgMnoiLz4KPC9zdmc+",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "protocol_handlers": [],
+  "display_override": ["window-controls-overlay"],
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}
