@@ -1,3 +1,4 @@
+
 // ========== FONCTIONS MARKETPLACE CORRIGÉES ==========
 async function loadMarketplace() {
     console.log('🛍️ Chargement de la marketplace...');
