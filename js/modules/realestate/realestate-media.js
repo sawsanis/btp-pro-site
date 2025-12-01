@@ -69,7 +69,7 @@ async function handlePhotoUploadWithCompression(form) {
                 
                 let processedFile = file;
                 
-                // COMPRESSION AUTOMATIQUE pour les images > 500KB
+                // 🔥 COMPRESSION AUTOMATIQUE pour les images > 500KB
                 if (file.size > 500 * 1024) {
                     console.log(`🔄 Compression de ${file.name} (${(file.size/1024).toFixed(0)} KB)`);
                     processedFile = await compressImage(file, 800, 600, 0.7);
@@ -277,46 +277,6 @@ function showPhotoGallery(propertyId) {
     });
 }
 
-// ========== FONCTIONS UTILITAIRES POUR L'AFFICHAGE ==========
-function truncateText(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-function formatPrice(price) {
-    if (!price && price !== 0) return 'Non spécifié';
-    return new Intl.NumberFormat('fr-FR').format(price) + ' MAD';
-}
-
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR');
-}
-
-function getPropertyTypeLabel(type) {
-    const types = {
-        'villa': 'Villa',
-        'appartement': 'Appartement',
-        'maison': 'Maison',
-        'ferme': 'Ferme',
-        'bungalow': 'Bungalow',
-        'usine': 'Usine',
-        'entrepot': 'Entrepôt',
-        'bureau': 'Bureau',
-        'local': 'Local commercial',
-        'terrain': 'Terrain',
-        'duplex': 'Duplex',
-        'studio': 'Studio',
-        'riad': 'Riad',
-        'chalet': 'Chalet',
-        'residence': 'Résidence',
-        'immeuble': 'Immeuble'
-    };
-    return types[type] || type;
-}
-
 // ========== INITIALISATION DES FONCTIONS MÉDIA ==========
 function initializeMediaFunctions() {
     console.log('🔄 Initialisation des fonctions media...');
@@ -332,11 +292,5 @@ window.removePhotoPreview = removePhotoPreview;
 window.resetPhotoPreview = resetPhotoPreview;
 window.showPhotoGallery = showPhotoGallery;
 window.initializeMediaFunctions = initializeMediaFunctions;
-
-// Export des fonctions utilitaires pour l'affichage
-window.truncateText = truncateText;
-window.formatPrice = formatPrice;
-window.formatDate = formatDate;
-window.getPropertyTypeLabel = getPropertyTypeLabel;
 
 console.log('✅ realestate-media.js chargé - Compression, galerie et utilitaires prêts');

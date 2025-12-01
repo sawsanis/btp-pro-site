@@ -19,7 +19,11 @@ function getPropertyTypeLabel(type) {
         'riad': 'Riad',
         'chalet': 'Chalet',
         'residence': 'Résidence',
-        'immeuble': 'Immeuble'
+        'immeuble': 'Immeuble',
+        'garage': 'Garage',
+        'commerce': 'Commerce',
+        'cafe': 'Café',
+        'magasin': 'Magasin'
     };
     return types[type] || type;
 }
@@ -172,6 +176,32 @@ function validateRealEstateData(data) {
     };
 }
 
+// ========== LISTE DES TYPES DE BIENS (synchronisée avec forms) ==========
+function getAllPropertyTypes() {
+    return [
+        { value: 'villa', label: 'Villa' },
+        { value: 'appartement', label: 'Appartement' },
+        { value: 'maison', label: 'Maison' },
+        { value: 'ferme', label: 'Ferme' },
+        { value: 'bungalow', label: 'Bungalow' },
+        { value: 'usine', label: 'Usine' },
+        { value: 'entrepot', label: 'Entrepôt' },
+        { value: 'bureau', label: 'Bureau' },
+        { value: 'local', label: 'Local commercial' },
+        { value: 'terrain', label: 'Terrain' },
+        { value: 'duplex', label: 'Duplex' },
+        { value: 'studio', label: 'Studio' },
+        { value: 'riad', label: 'Riad' },
+        { value: 'chalet', label: 'Chalet' },
+        { value: 'residence', label: 'Résidence' },
+        { value: 'immeuble', label: 'Immeuble' },
+        { value: 'garage', label: 'Garage' },
+        { value: 'commerce', label: 'Commerce' },
+        { value: 'cafe', label: 'Café' },
+        { value: 'magasin', label: 'Magasin' }
+    ];
+}
+
 // ========== GÉNÉRATION DE DONNÉES EXEMPLES ==========
 function generateSampleRealEstateData() {
     const sampleData = {
@@ -206,6 +236,7 @@ window.getRealEstateStats = getRealEstateStats;
 window.incrementPropertyView = incrementPropertyView;
 window.incrementPropertyContact = incrementPropertyContact;
 window.validateRealEstateData = validateRealEstateData;
+window.getAllPropertyTypes = getAllPropertyTypes;
 window.generateSampleRealEstateData = generateSampleRealEstateData;
 window.initializeUtilityFunctions = initializeUtilityFunctions;
 
