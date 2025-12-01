@@ -246,29 +246,59 @@ function displayRealEstatePosts(properties) {
 
 // ========== FILTRES ET RECHERCHE ==========
 function initializeRealEstateFilters(properties) {
-    // Récupérer les types uniques
-    const types = [...new Set(properties.map(p => p.type).filter(Boolean))];
+    console.log('🔧 Initialisation des filtres immobilier...');
+    
+    // 🔥 CORRECTION: Utiliser TOUS les types possibles, pas seulement ceux des propriétés
+    const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
+        { value: 'villa', label: 'Villa' },
+        { value: 'appartement', label: 'Appartement' },
+        { value: 'maison', label: 'Maison' },
+        { value: 'ferme', label: 'Ferme' },
+        { value: 'bungalow', label: 'Bungalow' },
+        { value: 'usine', label: 'Usine' },
+        { value: 'entrepot', label: 'Entrepôt' },
+        { value: 'bureau', label: 'Bureau' },
+        { value: 'local', label: 'Local commercial' },
+        { value: 'terrain', label: 'Terrain' },
+        { value: 'duplex', label: 'Duplex' },
+        { value: 'studio', label: 'Studio' },
+        { value: 'riad', label: 'Riad' },
+        { value: 'chalet', label: 'Chalet' },
+        { value: 'residence', label: 'Résidence' },
+        { value: 'immeuble', label: 'Immeuble' },
+        { value: 'garage', label: 'Garage' },
+        { value: 'commerce', label: 'Commerce' },
+        { value: 'cafe', label: 'Café' },
+        { value: 'magasin', label: 'Magasin' }
+    ];
     
     // Mettre à jour le filtre des types
     const typeFilter = document.getElementById('realestateTypeFilter');
     if (typeFilter) {
+        console.log('🎯 Initialisation du filtre des types...');
+        
         // Garder l'option "Tous les types"
         while (typeFilter.children.length > 1) {
             typeFilter.removeChild(typeFilter.lastChild);
         }
         
-        types.forEach(type => {
+        // Ajouter TOUS les types possibles
+        allPossibleTypes.forEach(type => {
             const option = document.createElement('option');
-            option.value = type;
-            option.textContent = typeof getPropertyTypeLabel === 'function' ? getPropertyTypeLabel(type) : type;
+            option.value = typeof type === 'object' ? type.value : type;
+            option.textContent = typeof type === 'object' ? type.label : 
+                               (typeof getPropertyTypeLabel === 'function' ? getPropertyTypeLabel(type) : type);
             typeFilter.appendChild(option);
         });
+        
+        console.log(`✅ ${allPossibleTypes.length} types ajoutés aux filtres`);
+    } else {
+        console.log('❌ Filtre realestateTypeFilter non trouvé');
     }
     
-    // Mettre à jour le filtre des villes depuis la liste fixe
+    // Mettre à jour le filtre des villes
     initializeRealEstateCitiesFilter();
 }
-
 async function filterRealEstate() {
     console.log('🔍 Filtrage immobilier...');
     
