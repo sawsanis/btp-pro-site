@@ -69,120 +69,20 @@ class BTPDatabase {
         if (!firebaseOnline) return;
         
         try {
-            console.log('🔄 Synchronisation COMPLÈTE avec Firebase...');
+            console.log('🔄 Synchronisation avec Firebase...');
             
-            // 🔥 CORRECTION: Synchroniser TOUTES les collections importantes
-            const collections = [
-                'users', 
-                'marketplace_posts', 
-                'realestate_posts', 
-                'job_posts',
-                'freelancers', 
-                'professionals',
-                'forum_topics',
-                'forum_replies'
-            ];
-            
-            let totalSynced = 0;
-            
-            for (const collection of collections) {
-                try {
-                    console.log(`📥 Synchronisation ${collection}...`);
-                    const snapshot = await firestore.collection(collection).get();
-                    
-                    if (!snapshot.empty) {
-                        const firebaseData = snapshot.docs.map(doc => ({ 
-                            id: doc.id, 
-                            ...doc.data(),
-                            _syncedAt: new Date().toISOString() // Marquer comme synchronisé
-                        }));
-                        
-                        const localData = this.getLocalData();
-                        localData[collection] = this.mergeArraysWithPriority(
-                            localData[collection] || [], 
-                            firebaseData,
-                            'firebase' // Priorité à Firebase
-                        );
-                        
-                        this.saveLocalData(localData);
-                        totalSynced += firebaseData.length;
-                        
-                        console.log(`✅ ${collection}: ${firebaseData.length} éléments synchronisés`);
-                    }
-                } catch (error) {
-                    console.warn(`⚠️ Erreur synchronisation ${collection}:`, error);
-                    // Continuer avec les autres collections même si une échoue
-                }
+            // Synchroniser les utilisateurs
+            const usersSnapshot = await firestore.collection('users').get();
+            if (!usersSnapshot.empty) {
+                const firebaseUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const localData = this.getLocalData();
+                localData.users = this.mergeArrays(localData.users, firebaseUsers);
+                this.saveLocalData(localData);
             }
             
-            console.log(`🎉 Synchronisation terminée: ${totalSynced} éléments synchronisés depuis Firebase`);
-            
-            // 🔥 CORRECTION: Vérifier spécifiquement la récupération de Mouad
-            await this.checkAndRecoverMouadUser();
-            
+            console.log('✅ Synchronisation Firebase terminée');
         } catch (error) {
             console.warn('⚠️ Erreur synchronisation Firebase:', error);
-        }
-    }
-
-    // 🔥 NOUVELLE FONCTION: Fusion avec priorité Firebase
-    mergeArraysWithPriority(localArray, firebaseArray, priority = 'firebase') {
-        if (!localArray || localArray.length === 0) return firebaseArray;
-        if (!firebaseArray || firebaseArray.length === 0) return localArray;
-        
-        const mergedMap = new Map();
-        
-        // D'abord ajouter tous les éléments locaux
-        localArray.forEach(item => {
-            if (item.id) {
-                mergedMap.set(item.id.toString(), { ...item, _source: 'local' });
-            }
-        });
-        
-        // Ensuite fusionner/remplacer avec Firebase
-        firebaseArray.forEach(fbItem => {
-            const existingItem = mergedMap.get(fbItem.id.toString());
-            
-            if (!existingItem) {
-                // Nouvel élément Firebase
-                mergedMap.set(fbItem.id.toString(), fbItem);
-            } else {
-                // Conflit: priorité à Firebase
-                if (priority === 'firebase') {
-                    mergedMap.set(fbItem.id.toString(), fbItem);
-                }
-                // Sinon garder l'existant (local)
-            }
-        });
-        
-        return Array.from(mergedMap.values());
-    }
-
-    // 🔥 NOUVELLE FONCTION: Recherche spécifique de Mouad
-    async checkAndRecoverMouadUser() {
-        try {
-            console.log('🔍 Vérification récupération utilisateur Mouad...');
-            
-            const localData = this.getLocalData();
-            const users = localData.users || [];
-            
-            // Rechercher Mouad par email ou nom
-            const mouadUser = users.find(user => 
-                (user.email && user.email.toLowerCase().includes('mouad')) ||
-                (user.prenom && user.prenom.toLowerCase().includes('mouad')) ||
-                (user.nom && user.nom.toLowerCase().includes('mouad'))
-            );
-            
-            if (mouadUser) {
-                console.log('✅ UTILISATEUR MOURAD RETROUVÉ:', mouadUser);
-                return mouadUser;
-            } else {
-                console.log('❌ Utilisateur Mouad non trouvé dans les données locales');
-                return null;
-            }
-        } catch (error) {
-            console.error('❌ Erreur recherche Mouad:', error);
-            return null;
         }
     }
 
@@ -483,17 +383,9 @@ class BTPDatabase {
         try {
             const snapshot = await firestore.collection(collection).get();
             if (!snapshot.empty) {
-                const firebaseData = snapshot.docs.map(doc => ({ 
-                    id: doc.id, 
-                    ...doc.data(),
-                    _syncedAt: new Date().toISOString()
-                }));
+                const firebaseData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const localData = this.getLocalData();
-                localData[collection] = this.mergeArraysWithPriority(
-                    localData[collection] || [], 
-                    firebaseData,
-                    'firebase'
-                );
+                localData[collection] = this.mergeArrays(localData[collection], firebaseData);
                 this.saveLocalData(localData);
             }
         } catch (error) {
@@ -1405,46 +1297,6 @@ class BTPDatabase {
             throw error;
         }
     }
-
-    // 🔥 NOUVELLE FONCTION: Synchronisation forcée
-    async forceSyncFromFirebase() {
-        console.log('🚀 FORCE SYNC depuis Firebase...');
-        
-        if (!firebaseOnline) {
-            throw new Error('Firebase non disponible');
-        }
-        
-        try {
-            await this.syncWithFirebase();
-            
-            // Vérifier les résultats
-            const localData = this.getLocalData();
-            const stats = {
-                users: localData.users?.length || 0,
-                marketplace: localData.marketplace_posts?.length || 0,
-                realestate: localData.realestate_posts?.length || 0,
-                jobs: localData.job_posts?.length || 0,
-                freelancers: localData.freelancers?.length || 0,
-                professionals: localData.professionals?.length || 0
-            };
-            
-            console.log('📊 Statistiques après synchronisation:', stats);
-            
-            // Recherche spécifique de Mouad
-            const mouadUser = await this.checkAndRecoverMouadUser();
-            
-            return {
-                success: true,
-                stats: stats,
-                mouadRecovered: !!mouadUser,
-                mouadUser: mouadUser
-            };
-            
-        } catch (error) {
-            console.error('❌ Erreur force sync:', error);
-            throw error;
-        }
-    }
 }
 
 // ========== INITIALISATION ==========
@@ -1460,7 +1312,7 @@ setTimeout(() => {
     });
 }, 2000);
 
-console.log('✅ database.js COMPLET - Toutes les fonctionnalités restaurées');
+console.log('✅ database.js COMPLET - Compatible avec la structure modulaire realestate');
 
 // ========== EXPORT DES FONCTIONS ==========
 window.exportCompleteData = () => btpDB.exportCompleteData();
@@ -1469,9 +1321,6 @@ window.importUsersFromExcel = (data, options) => btpDB.importUsersFromExcel(data
 window.exportUsersForExcel = () => btpDB.exportUsersForExcel();
 window.migrateToNewServer = (data) => btpDB.migrateToNewServer(data);
 window.generateBackupFile = () => btpDB.migrateToNewServer();
-
-// 🔥 NOUVELLE FONCTION: Synchronisation forcée
-window.forceSyncFromFirebase = () => btpDB.forceSyncFromFirebase();
 
 // Fonction utilitaire pour afficher les alertes (si non définie)
 if (typeof showAlert === 'undefined') {
