@@ -23,8 +23,9 @@ class BTPApp {
         this.setupEventListeners();
         this.loadSection('home');
         
-        // 🔥 CORRECTION: Initialiser les types de biens immobiliers
-        this.initializeRealEstateTypes();
+        // 🔥 CORRECTION MODIFIÉE: Ne pas initialiser les types ici
+        // L'initialisation sera faite au moment opportun
+        this.scheduleRealEstateInitialization();
         
         // Cacher le loader
         setTimeout(() => {
@@ -91,17 +92,12 @@ class BTPApp {
         }
     }
 
-    // 🔥 CORRECTION: INITIALISER LES TYPES DE BIENS IMMOBILIERS
-    initializeRealEstateTypes() {
-        console.log('🏠 Initialisation des types de biens immobiliers...');
+    // 🔥 CORRECTION MODIFIÉE: PLANIFIER L'INITIALISATION DES TYPES
+    scheduleRealEstateInitialization() {
+        console.log('⏰ Planification initialisation types de biens...');
         
-        // S'assurer que les types sont disponibles dans tous les formulaires
-        setTimeout(() => {
-            if (typeof initializeRealEstateFormTypes === 'function') {
-                initializeRealEstateFormTypes();
-                console.log('✅ Types de biens immobiliers initialisés');
-            }
-        }, 500);
+        // Ne pas initialiser immédiatement - attendre que la section soit active
+        // L'initialisation sera déclenchée par realestate-forms.js
     }
 
     // ✅ MÉTHODE POUR SYNCHRONISER QUAND L'UTILISATEUR CHANGE
@@ -339,8 +335,6 @@ class BTPApp {
                 if (window.loadRealEstateAnnounces) {
                     loadRealEstateAnnounces();
                 }
-                // 🔥 CORRECTION: S'assurer que les types de biens sont initialisés
-                this.initializeRealEstateTypes();
             },
             'jobs': () => {
                 if (window.loadJobsAnnounces) {
@@ -543,8 +537,8 @@ class BTPApp {
             this.loadMarketplaceCategories();
         }
         
-        // 🔥 CORRECTION: Initialiser les types de biens immobiliers
-        this.initializeRealEstateFormTypes();
+        // 🔥 CORRECTION MODIFIÉE: Appeler la fonction d'initialisation globale
+        this.triggerRealEstateFormInitialization();
         
         // ✅ FORCER L'AFFICHAGE DU PREMIER FORMULAIRE AU CHARGEMENT
         setTimeout(() => {
@@ -558,60 +552,137 @@ class BTPApp {
         }, 200);
     }
 
-    // 🔥 CORRECTION: INITIALISER LES TYPES DE BIENS DANS LE FORMULAIRE
-    initializeRealEstateFormTypes() {
-        console.log('🏠 Initialisation types de biens formulaire...');
+    // 🔥 CORRECTION RECTIFIÉE: DÉCLENCHER L'INITIALISATION DU FORMULAIRE IMMOBILIER
+    triggerRealEstateFormInitialization() {
+        console.log('🎬 Déclenchement initialisation formulaire immobilier...');
         
-        if (typeof initializeRealEstateFormTypes === 'function') {
-            initializeRealEstateFormTypes();
-        } else {
-            // Fallback manuel
-            const typeSelect = document.getElementById('realestateType');
-            if (typeSelect && typeSelect.children.length <= 1) {
-                const propertyTypes = [
-                    'villa', 'appartement', 'maison', 'ferme', 'bungalow', 'usine',
-                    'entrepot', 'bureau', 'local', 'terrain', 'duplex', 'studio',
-                    'riad', 'chalet', 'residence', 'immeuble'
-                ];
-                
-                propertyTypes.forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = this.getPropertyTypeLabel(type);
-                    typeSelect.appendChild(option);
-                });
-                
-                console.log(`✅ ${propertyTypes.length} types de biens ajoutés`);
+        // 🔥 CORRECTION: Chercher le formulaire immobilier (immobilier-form)
+        const immobilierForm = document.getElementById('immobilier-form');
+        
+        if (!immobilierForm) {
+            console.log('⚠️ Formulaire immobilier-form non trouvé, recherche alternative...');
+            // Chercher par texte
+            const allForms = document.querySelectorAll('.publish-form');
+            let foundForm = null;
+            allForms.forEach(form => {
+                const text = form.textContent.toLowerCase();
+                if (text.includes('immobilier')) {
+                    foundForm = form;
+                    console.log('🔍 Formulaire immobilier trouvé par texte:', form.id || 'sans-id');
+                }
+            });
+            
+            if (!foundForm) {
+                console.log('❌ Aucun formulaire immobilier trouvé');
+                return;
             }
+        }
+        
+        // Utiliser la fonction globale si disponible
+        if (typeof forceInitializeRealEstateForm === 'function') {
+            console.log('✅ Appel de forceInitializeRealEstateForm');
+            setTimeout(() => {
+                forceInitializeRealEstateForm();
+            }, 300);
+        } else if (typeof initializeRealEstateFormTypes === 'function') {
+            console.log('✅ Appel de initializeRealEstateFormTypes');
+            setTimeout(() => {
+                initializeRealEstateFormTypes();
+            }, 300);
+        } else {
+            console.log('ℹ️ Fonctions d\'initialisation non disponibles, tentative manuelle');
+            // Initialisation manuelle de secours
+            this.manualRealEstateFormInitialization();
         }
     }
 
-    // 🔥 CORRECTION: LABELS DES TYPES DE BIENS
-    getPropertyTypeLabel(type) {
-        const labels = {
-            'villa': 'Villa',
-            'appartement': 'Appartement',
-            'maison': 'Maison',
-            'ferme': 'Ferme',
-            'bungalow': 'Bungalow',
-            'usine': 'Usine',
-            'entrepot': 'Entrepôt',
-            'bureau': 'Bureau',
-            'local': 'Local commercial',
-            'terrain': 'Terrain',
-            'duplex': 'Duplex',
-            'studio': 'Studio',
-            'riad': 'Riad',
-            'chalet': 'Chalet',
-            'residence': 'Résidence',
-            'immeuble': 'Immeuble'
-        };
-        return labels[type] || type;
+    // 🔥 NOUVELLE FONCTION: Initialisation manuelle du formulaire immobilier
+    manualRealEstateFormInitialization() {
+        console.log('🔧 Initialisation manuelle du formulaire immobilier...');
+        
+        // 1. Trouver le formulaire immobilier
+        const immobilierForm = document.getElementById('immobilier-form');
+        if (!immobilierForm) {
+            console.log('❌ Formulaire immobilier-form non trouvé');
+            return;
+        }
+        
+        // 2. Trouver le select des types
+        const typeSelect = immobilierForm.querySelector('select[name="type"], select');
+        if (typeSelect) {
+            console.log('🎯 Select trouvé:', typeSelect.id || typeSelect.name);
+            
+            // Vérifier s'il a besoin d'être initialisé
+            if (typeSelect.options.length < 15) {
+                console.log('⚠️ Select incomplet, initialisation...');
+                
+                // Liste complète des types
+                const propertyTypes = [
+                    { value: 'villa', label: 'Villa' },
+                    { value: 'appartement', label: 'Appartement' },
+                    { value: 'maison', label: 'Maison' },
+                    { value: 'ferme', label: 'Ferme' },
+                    { value: 'bungalow', label: 'Bungalow' },
+                    { value: 'usine', label: 'Usine' },
+                    { value: 'entrepot', label: 'Entrepôt' },
+                    { value: 'bureau', label: 'Bureau' },
+                    { value: 'local', label: 'Local commercial' },
+                    { value: 'terrain', label: 'Terrain' },
+                    { value: 'duplex', label: 'Duplex' },
+                    { value: 'studio', label: 'Studio' },
+                    { value: 'riad', label: 'Riad' },
+                    { value: 'chalet', label: 'Chalet' },
+                    { value: 'residence', label: 'Résidence' },
+                    { value: 'immeuble', label: 'Immeuble' },
+                    { value: 'garage', label: 'Garage' },
+                    { value: 'commerce', label: 'Commerce' },
+                    { value: 'cafe', label: 'Café' },
+                    { value: 'magasin', label: 'Magasin' }
+                ];
+                
+                // Sauvegarder l'option par défaut
+                const defaultOption = typeSelect.options[0];
+                typeSelect.innerHTML = '';
+                
+                if (defaultOption) {
+                    typeSelect.appendChild(defaultOption);
+                } else {
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = 'Type de bien';
+                    typeSelect.appendChild(defaultOpt);
+                }
+                
+                // Ajouter tous les types
+                propertyTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type.value;
+                    option.textContent = type.label;
+                    typeSelect.appendChild(option);
+                });
+                
+                console.log(`✅ ${propertyTypes.length} types ajoutés manuellement`);
+                showAlert('✅ Types de biens mis à jour (20 types disponibles)', 'success');
+            } else {
+                console.log('✅ Select déjà complet:', typeSelect.options.length, 'options');
+            }
+        } else {
+            console.log('❌ Aucun select trouvé dans le formulaire immobilier');
+        }
     }
 
-    // ✅ NOUVELLE MÉTHODE POUR AFFICHER LES FORMULAIRES
+    // ✅ MÉTHODE CORRIGÉE POUR AFFICHER LES FORMULAIRES
     showPublishForm(formType) {
         console.log('📝 Affichage formulaire:', formType);
+        
+        // 🔥 CORRECTION: Mapper realestate -> immobilier-form
+        let formId = formType + '-form';
+        if (formType === 'realestate') {
+            // Chercher d'abord immobilier-form, sinon realestate-form
+            if (document.getElementById('immobilier-form')) {
+                formId = 'immobilier-form';
+            }
+        }
         
         // Masquer tous les formulaires
         document.querySelectorAll('.publish-form').forEach(form => {
@@ -619,12 +690,34 @@ class BTPApp {
         });
         
         // Afficher le formulaire cible
-        const targetForm = document.getElementById(formType + '-form');
+        const targetForm = document.getElementById(formId);
         if (targetForm) {
             targetForm.style.display = 'block';
-            console.log('✅ Formulaire affiché:', formType);
+            console.log('✅ Formulaire affiché:', formId);
+            
+            // 🔥 CORRECTION: Initialiser les types de biens SI c'est le formulaire immobilier
+            if (formType === 'realestate') {
+                setTimeout(() => {
+                    this.triggerRealEstateFormInitialization();
+                }, 100);
+            }
         } else {
-            console.warn('❌ Formulaire non trouvé:', formType);
+            console.warn('❌ Formulaire non trouvé:', formId);
+            
+            // Fallback: chercher par contenu
+            if (formType === 'realestate') {
+                const allForms = document.querySelectorAll('.publish-form');
+                allForms.forEach(form => {
+                    const text = form.textContent.toLowerCase();
+                    if (text.includes('immobilier')) {
+                        console.log('🔍 Formulaire immobilier trouvé par texte');
+                        form.style.display = 'block';
+                        setTimeout(() => {
+                            this.triggerRealEstateFormInitialization();
+                        }, 100);
+                    }
+                });
+            }
         }
         
         // Mettre à jour la navigation active
@@ -820,7 +913,14 @@ window.showPublishForm = function(formType) {
         document.querySelectorAll('.publish-form').forEach(form => {
             form.style.display = 'none';
         });
-        const targetForm = document.getElementById(formType + '-form');
+        
+        // 🔥 CORRECTION: Gérer immobilier-form
+        let formId = formType + '-form';
+        if (formType === 'realestate' && document.getElementById('immobilier-form')) {
+            formId = 'immobilier-form';
+        }
+        
+        const targetForm = document.getElementById(formId);
         if (targetForm) {
             targetForm.style.display = 'block';
         }
@@ -1048,4 +1148,4 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('❌ Promise rejetée:', e.reason);
 });
 
-console.log('✅ app.js COMPLET - Correction PROFIL et IMMOBILIER APPLIQUÉE');
+console.log('✅ app.js CORRIGÉ - Problème immobilier-form résolu');

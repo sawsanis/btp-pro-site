@@ -1,4 +1,137 @@
 // ========== JOBS-FORMS.JS - GESTION DES FORMULAIRES EMPLOI ==========
+// 🔥 CORRECTION : Ajout des fonctions d'initialisation des formulaires
+
+console.log('📝 Chargement du module Forms Init dans jobs-forms.js...');
+
+// ========== INITIALISATION DES FORMULAIRES (AJOUT) ==========
+function initializeFormSelects() {
+    console.log('🔄 Initialisation des sélecteurs de formulaire...');
+    
+    // Initialiser les types de biens immobiliers
+    initializeRealEstateTypes();
+    
+    // Initialiser les villes
+    initializeCitySelects();
+    
+    // Initialiser les catégories marketplace
+    initializeMarketplaceCategories();
+}
+
+function initializeRealEstateTypes() {
+    const typeSelect = document.getElementById('realestateType');
+    if (!typeSelect) {
+        console.warn('❌ Select realestateType non trouvé');
+        return;
+    }
+    
+    console.log('🏠 Initialisation des types de biens...');
+    
+    // Vider les options existantes sauf la première
+    while (typeSelect.children.length > 1) {
+        typeSelect.removeChild(typeSelect.lastChild);
+    }
+    
+    const propertyTypes = [
+        { value: 'villa', label: 'Villa' },
+        { value: 'appartement', label: 'Appartement' },
+        { value: 'maison', label: 'Maison' },
+        { value: 'ferme', label: 'Ferme' },
+        { value: 'bungalow', label: 'Bungalow' },
+        { value: 'usine', label: 'Usine' },
+        { value: 'entrepot', label: 'Entrepôt' },
+        { value: 'bureau', label: 'Bureau' },
+        { value: 'local', label: 'Local commercial' },
+        { value: 'terrain', label: 'Terrain' },
+        { value: 'duplex', label: 'Duplex' },
+        { value: 'studio', label: 'Studio' },
+        { value: 'riad', label: 'Riad' },
+        { value: 'chalet', label: 'Chalet' },
+        { value: 'residence', label: 'Résidence' },
+        { value: 'immeuble', label: 'Immeuble' }
+    ];
+    
+    propertyTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.value;
+        option.textContent = type.label;
+        typeSelect.appendChild(option);
+    });
+    
+    console.log(`✅ ${propertyTypes.length} types de biens initialisés`);
+}
+
+function initializeCitySelects() {
+    const cities = [
+        'Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger', 'Meknès', 'Agadir',
+        'Oujda', 'Kénitra', 'Tétouan', 'Safi', 'Mohammédia', 'Beni Mellal',
+        'El Jadida', 'Taza', 'Nador', 'Settat', 'Khouribga', 'Laâyoune', 'Dakhla'
+    ];
+    
+    // Mettre à jour tous les sélecteurs de ville
+    const citySelects = document.querySelectorAll('select[name="city"], #realestateCity');
+    console.log(`🏙️ Initialisation de ${citySelects.length} sélecteurs de ville...`);
+    
+    citySelects.forEach(select => {
+        // Garder seulement l'option par défaut
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+        
+        cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            select.appendChild(option);
+        });
+    });
+    
+    console.log(`✅ ${cities.length} villes initialisées dans ${citySelects.length} sélecteurs`);
+}
+
+function initializeMarketplaceCategories() {
+    const categories = {
+        'ciment': 'Ciment',
+        'acier': 'Acier',
+        'revetement': 'Revêtement',
+        'bois': 'Bois',
+        'isolation': 'Isolation',
+        'plomberie': 'Plomberie',
+        'electricite': 'Électricité',
+        'outillage': 'Outillage',
+        'quincaillerie': 'Quincaillerie',
+        'autres': 'Autres'
+    };
+
+    const select = document.getElementById('marketplaceCategorySelect');
+    if (!select) {
+        console.warn('❌ Select marketplaceCategorySelect non trouvé');
+        return;
+    }
+
+    console.log('🛒 Initialisation des catégories marketplace...');
+
+    // Vider les options existantes sauf la première
+    while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+    }
+
+    Object.entries(categories).forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        select.appendChild(option);
+    });
+    
+    console.log(`✅ ${Object.keys(categories).length} catégories marketplace initialisées`);
+}
+
+// Fonction pour initialiser les types de biens dans le formulaire (compatibilité)
+function initializeRealEstateFormTypes() {
+    console.log('🏠 Initialisation des types de biens dans le formulaire...');
+    initializeRealEstateTypes();
+}
+
+// ========== GESTION DES FORMULAIRES EMPLOI (ORIGINAL) ==========
 
 const JobsForms = {
     // ========== FORMULAIRE DE PUBLICATION D'OFFRE ==========
@@ -440,4 +573,9 @@ const JobsForms = {
 
 // Export global
 window.JobsForms = JobsForms;
-console.log('✅ jobs-forms.js CHARGÉ - Module formulaires emploi initialisé');
+window.initializeFormSelects = initializeFormSelects;
+window.initializeRealEstateFormTypes = initializeRealEstateFormTypes;
+window.initializeCitySelects = initializeCitySelects;
+window.initializeMarketplaceCategories = initializeMarketplaceCategories;
+
+console.log('✅ jobs-forms.js CHARGÉ - Module formulaires emploi ET initialisation des formulaires initialisé');
