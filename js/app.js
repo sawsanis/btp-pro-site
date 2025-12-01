@@ -4,41 +4,34 @@ class BTPApp {
         this.state = {
             currentUser: null,
             isAdmin: false,
+            isAuthenticated: false,
             currentSection: 'home'
         };
-        this.userProfile = null; // 🔥 CORRECTION: Instance du profil
+        this.userProfile = null;
+        // SUPPRIMÉ: this.photoUploadManager = new PhotoUploadManager();
         this.init();
     }
 
     async init() {
         console.log('🚀 Initialisation BTP Pro...');
         
-        // ✅ ATTENDRE L'INITIALISATION COMPLÈTE DE L'AUTH
         await this.waitForAuthInitialization();
-        
-        // 🔥 CORRECTION: Initialiser le profil utilisateur
         await this.initializeUserProfile();
         
-        // Initialiser l'interface
         this.setupEventListeners();
         this.loadSection('home');
         
-        // 🔥 CORRECTION MODIFIÉE: Ne pas initialiser les types ici
-        // L'initialisation sera faite au moment opportun
         this.scheduleRealEstateInitialization();
         
-        // Cacher le loader
         setTimeout(() => {
             const loader = document.querySelector('.loading-overlay');
             if (loader) loader.style.display = 'none';
         }, 1000);
     }
 
-    // ✅ NOUVELLE MÉTHODE POUR ATTENDRE L'AUTH
     async waitForAuthInitialization() {
         console.log('⏳ Attente initialisation auth...');
         
-        // Attendre que authState soit disponible
         let attempts = 0;
         while (typeof authState === 'undefined' && attempts < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -53,34 +46,30 @@ class BTPApp {
         }
     }
 
-    // ✅ SYNCHRONISATION AVEC LE SYSTÈME D'AUTH UNIFIÉ
     syncWithAuthSystem() {
-        // Utiliser authState comme source de vérité
         if (typeof authState !== 'undefined') {
             console.log('🔄 Synchronisation avec authState...');
             this.state.currentUser = authState.currentUser;
             this.state.isAdmin = authState.isAdmin;
+            this.state.isAuthenticated = authState.isAuthenticated;
             
             console.log('✅ État synchronisé:', {
                 user: !!this.state.currentUser,
                 email: this.state.currentUser?.email,
                 admin: this.state.isAdmin,
-                userRole: this.state.currentUser?.role
+                authenticated: this.state.isAuthenticated
             });
         } else {
             console.warn('⚠️ authState non disponible pour synchronisation');
         }
     }
 
-    // 🔥 CORRECTION: INITIALISATION DU PROFIL UTILISATEUR
     async initializeUserProfile() {
         console.log('👤 Initialisation du profil utilisateur...');
         
-        // Attendre que l'authentification soit complètement initialisée
         if (this.state.currentUser) {
             console.log('✅ Utilisateur connecté, initialisation UserProfile...');
             
-            // Vérifier si UserProfile existe
             if (typeof UserProfile !== 'undefined') {
                 this.userProfile = new UserProfile();
                 console.log('✅ UserProfile initialisé');
@@ -92,20 +81,14 @@ class BTPApp {
         }
     }
 
-    // 🔥 CORRECTION MODIFIÉE: PLANIFIER L'INITIALISATION DES TYPES
     scheduleRealEstateInitialization() {
         console.log('⏰ Planification initialisation types de biens...');
-        
-        // Ne pas initialiser immédiatement - attendre que la section soit active
-        // L'initialisation sera déclenchée par realestate-forms.js
     }
 
-    // ✅ MÉTHODE POUR SYNCHRONISER QUAND L'UTILISATEUR CHANGE
     refreshAuthState() {
         console.log('🔄 Rafraîchissement état auth...');
         this.syncWithAuthSystem();
         
-        // 🔥 CORRECTION: Réinitialiser le profil si l'utilisateur change
         if (this.state.currentUser) {
             this.initializeUserProfile();
         } else {
@@ -120,7 +103,6 @@ class BTPApp {
         document.addEventListener('click', (e) => {
             const target = e.target;
             
-            // Liens de navigation
             if (target.matches('[data-section]') || target.closest('[data-section]')) {
                 e.preventDefault();
                 const element = target.matches('[data-section]') ? target : target.closest('[data-section]');
@@ -129,14 +111,12 @@ class BTPApp {
                 return;
             }
 
-            // Logo
             if (target.closest('.navbar-brand')) {
                 e.preventDefault();
                 this.loadSection('home');
                 return;
             }
 
-            // 🔥 CORRECTION: Gestion du clic sur le profil
             if (target.matches('#user-profile-btn') || target.closest('#user-profile-btn')) {
                 e.preventDefault();
                 this.showUserProfile();
@@ -155,7 +135,7 @@ class BTPApp {
             });
         }
 
-        // Fermer le menu mobile quand on clique sur un lien
+        // Fermer le menu mobile
         document.addEventListener('click', (e) => {
             if (window.innerWidth < 992) {
                 const navbarCollapse = document.querySelector('.navbar-collapse.show');
@@ -165,11 +145,10 @@ class BTPApp {
             }
         });
 
-        // 🔥 CORRECTION: Écouteur pour le modal de profil
+        // Modal de profil
         document.addEventListener('show.bs.modal', (e) => {
             if (e.target.id === 'profileModal') {
                 console.log('🎯 Modal profil ouvert - chargement données...');
-                // S'assurer que les données sont chargées
                 if (typeof userProfileManager !== 'undefined') {
                     setTimeout(() => userProfileManager.loadUserProfile(), 100);
                 } else if (typeof loadProfileData === 'function') {
@@ -179,7 +158,6 @@ class BTPApp {
         });
     }
 
-    // 🔥 CORRECTION: MÉTHODE POUR AFFICHER LE PROFIL
     showUserProfile() {
         if (!this.state.currentUser) {
             showAlert('🔐 Veuillez vous connecter pour accéder à votre profil', 'warning');
@@ -191,15 +169,12 @@ class BTPApp {
 
         console.log('👤 Affichage du profil utilisateur:', this.state.currentUser.email);
         
-        // Utiliser la fonction globale si disponible
         if (typeof showProfileModal === 'function') {
             showProfileModal();
         } else {
-            // Fallback : afficher le modal directement
             const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
             profileModal.show();
             
-            // Charger les données après un court délai
             setTimeout(() => {
                 if (typeof userProfileManager !== 'undefined') {
                     userProfileManager.loadUserProfile();
@@ -213,69 +188,52 @@ class BTPApp {
     loadSection(sectionId) {
         console.log('📂 Chargement section:', sectionId);
         
-        // Masquer toutes les sections
         document.querySelectorAll('.section-content').forEach(section => {
             section.classList.remove('active');
             section.style.display = 'none';
         });
 
-        // Afficher la section cible
         const targetSection = document.getElementById(sectionId + '-section');
         if (targetSection) {
             targetSection.classList.add('active');
             targetSection.style.display = 'block';
             this.state.currentSection = sectionId;
 
-            // Fermer le menu mobile
             this.closeMobileMenu();
-
-            // Mettre à jour la navigation active
             this.updateActiveNav(sectionId);
-
-            // ✅ RÉINITIALISER LES FILTRES DE LA NOUVELLE SECTION
             this.resetSectionFilters(sectionId);
-
-            // Charger les données de la section
             this.loadSectionData(sectionId);
 
-            // Scroll vers le haut
             window.scrollTo(0, 0);
         } else {
             console.warn('❌ Section non trouvée:', sectionId);
         }
     }
 
-    // ✅ MÉTHODE POUR RÉINITIALISER LES FILTRES
     resetSectionFilters(sectionId) {
         console.log('🔄 Appel réinitialisation filtres pour:', sectionId);
         
-        // Utiliser la fonction de utils.js si elle existe
         if (typeof resetSectionFilters === 'function') {
             resetSectionFilters(sectionId);
         } else {
-            // Fallback : réinitialisation manuelle
             this.fallbackResetFilters(sectionId);
         }
     }
 
-    // ✅ FALLBACK SI utils.js N'EST PAS DISPONIBLE
     fallbackResetFilters(sectionId) {
         console.log('🔄 Fallback réinitialisation pour:', sectionId);
         
         setTimeout(() => {
             const sectionElement = document.getElementById(sectionId + '-section');
             if (sectionElement) {
-                // Réinitialiser tous les selects
                 const selects = sectionElement.querySelectorAll('select');
                 selects.forEach(select => {
                     select.value = '';
-                    // Garder "newest" pour les tris
                     if (select.id.includes('Sort')) {
                         select.value = 'newest';
                     }
                 });
                 
-                // Réinitialiser les inputs de recherche
                 const searchInputs = sectionElement.querySelectorAll('input[type="search"]');
                 searchInputs.forEach(input => {
                     input.value = '';
@@ -296,18 +254,15 @@ class BTPApp {
     }
 
     updateActiveNav(sectionId) {
-        // Retirer active de tous les liens
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
 
-        // Activer le lien courant
         const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
         if (activeLink) {
             activeLink.classList.add('active');
         }
 
-        // Mettre à jour également les liens du footer
         document.querySelectorAll('footer [data-section]').forEach(link => {
             if (link.getAttribute('data-section') === sectionId) {
                 link.classList.add('active');
@@ -323,7 +278,6 @@ class BTPApp {
         const sectionLoaders = {
             'home': () => {
                 console.log('🏠 Section accueil chargée');
-                // 🔥 CORRECTION: Initialiser Adsense si nécessaire
                 this.initializeAdsense();
             },
             'marketplace': () => {
@@ -361,7 +315,6 @@ class BTPApp {
                 this.initializePublishSection();
             },
             'admin': () => {
-                // 🔥 CORRECTION: Vérification ADMIN RENFORCÉE
                 if (this.checkAdminAccess()) {
                     if (window.refreshAdminData) {
                         refreshAdminData();
@@ -376,7 +329,6 @@ class BTPApp {
             },
             'my_account': () => {
                 console.log('👤 Section mon compte chargée');
-                // 🔥 CORRECTION: Charger les données du profil
                 this.loadAccountSection();
             },
             'search': () => {
@@ -406,11 +358,9 @@ class BTPApp {
         }
     }
 
-    // 🔥 CORRECTION: INITIALISATION ADSENSE
     initializeAdsense() {
         console.log('📢 Initialisation Adsense...');
         
-        // S'assurer que les slots Adsense sont initialisés
         if (typeof btpDB !== 'undefined' && btpDB.initializeAdsenseSlots) {
             setTimeout(() => {
                 btpDB.initializeAdsenseSlots().then(slots => {
@@ -420,7 +370,6 @@ class BTPApp {
         }
     }
 
-    // 🔥 CORRECTION: VÉRIFICATION ADMIN RENFORCÉE
     checkAdminAccess() {
         console.log('🔐 Vérification accès admin...', {
             hasUser: !!this.state.currentUser,
@@ -444,11 +393,9 @@ class BTPApp {
         return true;
     }
 
-    // 🔥 CORRECTION: CHARGEMENT DE LA SECTION COMPTE
     loadAccountSection() {
         console.log('💼 Chargement section mon compte...');
         
-        // S'assurer que l'utilisateur est connecté
         if (!this.state.currentUser) {
             showAlert('🔐 Veuillez vous connecter', 'warning');
             if (typeof showLoginModal === 'function') {
@@ -457,44 +404,36 @@ class BTPApp {
             return;
         }
 
-        // Charger les données du profil si disponible
         if (typeof userProfileManager !== 'undefined') {
             setTimeout(() => userProfileManager.loadUserProfile(), 100);
         } else if (typeof loadProfileData === 'function') {
             setTimeout(() => loadProfileData(), 100);
         }
 
-        // Afficher les onglets du compte
         this.showAccountTab('profile');
     }
 
-    // 🔥 CORRECTION: AFFICHAGE DES ONGLETS DU COMPTE
     showAccountTab(tabName) {
         console.log('📑 Affichage onglet compte:', tabName);
         
-        // Masquer tous les onglets
         document.querySelectorAll('.account-tab').forEach(tab => {
             tab.style.display = 'none';
         });
         
-        // Désactiver tous les liens d'onglets
         document.querySelectorAll('.account-nav .nav-link').forEach(link => {
             link.classList.remove('active');
         });
         
-        // Afficher l'onglet cible
         const targetTab = document.getElementById(tabName + '-tab');
         if (targetTab) {
             targetTab.style.display = 'block';
         }
         
-        // Activer le lien d'onglet
         const activeNavLink = document.querySelector(`[onclick*="showAccountTab('${tabName}')"]`);
         if (activeNavLink) {
             activeNavLink.classList.add('active');
         }
 
-        // Charger les données spécifiques à l'onglet
         switch(tabName) {
             case 'profile':
                 if (typeof userProfileManager !== 'undefined') {
@@ -519,11 +458,9 @@ class BTPApp {
         }
     }
 
-    // ✅ SECTION PUBLICATION COMPLÈTEMENT CORRIGÉE
     initializePublishSection() {
         console.log('🎯 Initialisation section publication...');
         
-        // Initialiser les sélecteurs de villes si nécessaire
         const citySelects = document.querySelectorAll('select[name="city"]');
         citySelects.forEach(select => {
             if (select.children.length <= 1) {
@@ -531,37 +468,30 @@ class BTPApp {
             }
         });
 
-        // Initialiser les sélecteurs de catégories marketplace
         const marketplaceCategorySelect = document.getElementById('marketplaceCategorySelect');
         if (marketplaceCategorySelect && marketplaceCategorySelect.children.length <= 1) {
             this.loadMarketplaceCategories();
         }
         
-        // 🔥 CORRECTION MODIFIÉE: Appeler la fonction d'initialisation globale
         this.triggerRealEstateFormInitialization();
         
-        // ✅ FORCER L'AFFICHAGE DU PREMIER FORMULAIRE AU CHARGEMENT
         setTimeout(() => {
             const hasActiveForm = document.querySelector('.publish-form[style*="display: block"]');
             if (!hasActiveForm) {
                 this.showPublishForm('marketplace');
             }
             
-            // ✅ INITIALISER LES ÉCOUTEURS D'ÉVÉNEMENTS POUR LA NAVIGATION
             this.initializePublishNavigation();
         }, 200);
     }
 
-    // 🔥 CORRECTION RECTIFIÉE: DÉCLENCHER L'INITIALISATION DU FORMULAIRE IMMOBILIER
     triggerRealEstateFormInitialization() {
         console.log('🎬 Déclenchement initialisation formulaire immobilier...');
         
-        // 🔥 CORRECTION: Chercher le formulaire immobilier (immobilier-form)
         const immobilierForm = document.getElementById('immobilier-form');
         
         if (!immobilierForm) {
             console.log('⚠️ Formulaire immobilier-form non trouvé, recherche alternative...');
-            // Chercher par texte
             const allForms = document.querySelectorAll('.publish-form');
             let foundForm = null;
             allForms.forEach(form => {
@@ -578,7 +508,6 @@ class BTPApp {
             }
         }
         
-        // Utiliser la fonction globale si disponible
         if (typeof forceInitializeRealEstateForm === 'function') {
             console.log('✅ Appel de forceInitializeRealEstateForm');
             setTimeout(() => {
@@ -591,32 +520,26 @@ class BTPApp {
             }, 300);
         } else {
             console.log('ℹ️ Fonctions d\'initialisation non disponibles, tentative manuelle');
-            // Initialisation manuelle de secours
             this.manualRealEstateFormInitialization();
         }
     }
 
-    // 🔥 NOUVELLE FONCTION: Initialisation manuelle du formulaire immobilier
     manualRealEstateFormInitialization() {
         console.log('🔧 Initialisation manuelle du formulaire immobilier...');
         
-        // 1. Trouver le formulaire immobilier
         const immobilierForm = document.getElementById('immobilier-form');
         if (!immobilierForm) {
             console.log('❌ Formulaire immobilier-form non trouvé');
             return;
         }
         
-        // 2. Trouver le select des types
         const typeSelect = immobilierForm.querySelector('select[name="type"], select');
         if (typeSelect) {
             console.log('🎯 Select trouvé:', typeSelect.id || typeSelect.name);
             
-            // Vérifier s'il a besoin d'être initialisé
             if (typeSelect.options.length < 15) {
                 console.log('⚠️ Select incomplet, initialisation...');
                 
-                // Liste complète des types
                 const propertyTypes = [
                     { value: 'villa', label: 'Villa' },
                     { value: 'appartement', label: 'Appartement' },
@@ -640,7 +563,6 @@ class BTPApp {
                     { value: 'magasin', label: 'Magasin' }
                 ];
                 
-                // Sauvegarder l'option par défaut
                 const defaultOption = typeSelect.options[0];
                 typeSelect.innerHTML = '';
                 
@@ -653,7 +575,6 @@ class BTPApp {
                     typeSelect.appendChild(defaultOpt);
                 }
                 
-                // Ajouter tous les types
                 propertyTypes.forEach(type => {
                     const option = document.createElement('option');
                     option.value = type.value;
@@ -671,31 +592,25 @@ class BTPApp {
         }
     }
 
-    // ✅ MÉTHODE CORRIGÉE POUR AFFICHER LES FORMULAIRES
     showPublishForm(formType) {
         console.log('📝 Affichage formulaire:', formType);
         
-        // 🔥 CORRECTION: Mapper realestate -> immobilier-form
         let formId = formType + '-form';
         if (formType === 'realestate') {
-            // Chercher d'abord immobilier-form, sinon realestate-form
             if (document.getElementById('immobilier-form')) {
                 formId = 'immobilier-form';
             }
         }
         
-        // Masquer tous les formulaires
         document.querySelectorAll('.publish-form').forEach(form => {
             form.style.display = 'none';
         });
         
-        // Afficher le formulaire cible
         const targetForm = document.getElementById(formId);
         if (targetForm) {
             targetForm.style.display = 'block';
             console.log('✅ Formulaire affiché:', formId);
             
-            // 🔥 CORRECTION: Initialiser les types de biens SI c'est le formulaire immobilier
             if (formType === 'realestate') {
                 setTimeout(() => {
                     this.triggerRealEstateFormInitialization();
@@ -704,7 +619,6 @@ class BTPApp {
         } else {
             console.warn('❌ Formulaire non trouvé:', formId);
             
-            // Fallback: chercher par contenu
             if (formType === 'realestate') {
                 const allForms = document.querySelectorAll('.publish-form');
                 allForms.forEach(form => {
@@ -720,15 +634,12 @@ class BTPApp {
             }
         }
         
-        // Mettre à jour la navigation active
         this.updatePublishNavigation(formType);
     }
 
-    // ✅ MÉTHODE CORRIGÉE POUR METTRE À JOUR LA NAVIGATION
     updatePublishNavigation(activeFormType) {
         console.log('🎯 Mise à jour navigation pour:', activeFormType);
         
-        // 1. DÉSÉLECTIONNER TOUS LES BOUTONS
         const publishSection = document.getElementById('publish-section');
         if (publishSection) {
             const allNavItems = publishSection.querySelectorAll('.list-group-item, .nav-link');
@@ -738,10 +649,8 @@ class BTPApp {
             });
         }
         
-        // 2. SÉLECTIONNER LE BOUTON ACTIF
         let activeNavItem = document.querySelector(`[onclick*="showPublishForm('${activeFormType}')"]`);
         
-        // Fallback : chercher par texte
         if (!activeNavItem) {
             const allNavItems = document.querySelectorAll('.publish-nav .list-group-item');
             allNavItems.forEach(item => {
@@ -755,20 +664,17 @@ class BTPApp {
             });
         }
         
-        // 3. APPLIQUER LES STYLES AU BOUTON ACTIF
         if (activeNavItem) {
             activeNavItem.classList.remove('bg-light', 'text-dark');
             activeNavItem.classList.add('active', 'bg-primary', 'text-white');
         }
     }
 
-    // ✅ INITIALISER LA NAVIGATION DES FORMULAIRES
     initializePublishNavigation() {
         const navItems = document.querySelectorAll('.publish-nav .list-group-item');
         console.log('🔧 Initialisation navigation publication:', navItems.length, 'éléments');
         
         navItems.forEach(item => {
-            // S'assurer que chaque élément a un onclick
             if (!item.getAttribute('onclick')) {
                 const text = item.textContent.toLowerCase();
                 if (text.includes('marketplace')) {
@@ -782,7 +688,6 @@ class BTPApp {
                 }
             }
             
-            // Ajouter un écouteur d'événement direct pour plus de fiabilité
             item.addEventListener('click', function(e) {
                 const onclick = this.getAttribute('onclick');
                 if (onclick && onclick.includes('showPublishForm')) {
@@ -827,7 +732,6 @@ class BTPApp {
         const select = document.getElementById('marketplaceCategorySelect');
         if (!select) return;
 
-        // Vider les options existantes sauf la première
         while (select.children.length > 1) {
             select.removeChild(select.lastChild);
         }
@@ -841,17 +745,14 @@ class BTPApp {
     }
 
     updateAuthUI() {
-        // ✅ DÉLÉGUER COMPLÈTEMENT À auth.js
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
         } else {
             console.warn('⚠️ updateAuthUI non disponible - fallback manuel');
-            // Fallback manuel basique
             this.fallbackUpdateAuthUI();
         }
     }
 
-    // 🔥 CORRECTION: FALLBACK POUR UPDATE AUTH UI
     fallbackUpdateAuthUI() {
         console.log('🔄 Fallback mise à jour interface auth...');
         
@@ -861,11 +762,9 @@ class BTPApp {
         const adminMenuItem = document.getElementById('admin-menu-item');
         
         if (this.state.currentUser && this.state.isAuthenticated) {
-            // Utilisateur connecté
             if (authButtons) authButtons.style.display = 'none';
             if (userMenu) userMenu.style.display = 'flex';
             
-            // 🔥 CORRECTION: Masquer admin si pas admin
             if (this.state.isAdmin) {
                 if (adminNavItem) adminNavItem.style.display = 'block';
                 if (adminMenuItem) adminMenuItem.style.display = 'block';
@@ -874,7 +773,6 @@ class BTPApp {
                 if (adminMenuItem) adminMenuItem.style.display = 'none';
             }
         } else {
-            // Utilisateur déconnecté
             if (authButtons) authButtons.style.display = 'flex';
             if (userMenu) userMenu.style.display = 'none';
             if (adminNavItem) adminNavItem.style.display = 'none';
@@ -882,9 +780,7 @@ class BTPApp {
         }
     }
 
-    // Méthodes utilitaires - DÉLÉGUER À auth.js
     requireAuth(callback) {
-        // ✅ UTILISER LA FONCTION UNIFIÉE
         if (typeof checkAuthForPublish === 'function') {
             const isAuthenticated = checkAuthForPublish();
             if (isAuthenticated && callback) callback();
@@ -902,19 +798,16 @@ class BTPApp {
     }
 }
 
-// ========== FONCTIONS GLOBALES CORRIGÉES ==========
+// ========== FONCTIONS GLOBALES ==========
 
-// ✅ FONCTION UNIFIÉE POUR AFFICHER LES FORMULAIRES (compatibilité)
 window.showPublishForm = function(formType) {
     if (btpApp && btpApp.showPublishForm) {
         btpApp.showPublishForm(formType);
     } else {
-        // Fallback basique
         document.querySelectorAll('.publish-form').forEach(form => {
             form.style.display = 'none';
         });
         
-        // 🔥 CORRECTION: Gérer immobilier-form
         let formId = formType + '-form';
         if (formType === 'realestate' && document.getElementById('immobilier-form')) {
             formId = 'immobilier-form';
@@ -925,7 +818,6 @@ window.showPublishForm = function(formType) {
             targetForm.style.display = 'block';
         }
         
-        // Mettre à jour la navigation
         document.querySelectorAll('.publish-nav .list-group-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -936,12 +828,10 @@ window.showPublishForm = function(formType) {
     }
 };
 
-// 🔥 CORRECTION: FONCTION POUR AFFICHER LES ONGLETS DU COMPTE
 window.showAccountTab = function(tabName) {
     if (btpApp && btpApp.showAccountTab) {
         btpApp.showAccountTab(tabName);
     } else {
-        // Fallback basique
         document.querySelectorAll('.account-tab').forEach(tab => {
             tab.style.display = 'none';
         });
@@ -962,7 +852,6 @@ window.showAccountTab = function(tabName) {
     }
 };
 
-// ✅ FONCTIONS SPÉCIFIQUES POUR CHAQUE TYPE
 window.showMarketplaceForm = function() {
     if (typeof checkAuthForPublish === 'function' && checkAuthForPublish()) {
         goToSection('publish');
@@ -991,20 +880,25 @@ window.showFreelancersForm = function() {
     }
 };
 
-// ✅ FONCTION POUR ALLER À LA SECTION PUBLICATION
 window.goToPublish = function(defaultForm = 'marketplace') {
-    // Vérifier l'authentification
     if (typeof checkAuthForPublish === 'function' && checkAuthForPublish()) {
         goToSection('publish');
         
-        // Afficher le formulaire par défaut après un délai
         setTimeout(() => {
             showPublishForm(defaultForm);
         }, 100);
     }
 };
 
-// ✅ FONCTION DE RECHERCHE GLOBALE
+// ========== FONCTIONS UPLOAD PHOTO (À SUPPRIMER - ELLES SERONT DANS PHOTO-UPLOAD.JS) ==========
+// SUPPRIMEZ TOUTES CES FONCTIONS - ELLES SERONT DÉPLACÉES VERS PHOTO-UPLOAD.JS
+// 
+// window.initializePhotoUpload = function(formId, containerId = null) { ... }
+// window.getUploadedPhotos = function(formId) { ... }
+// window.clearUploadedPhotos = function(formId) { ... }
+// window.onPhotoUploadComplete = function(formId, callback) { ... }
+// window.testPhotoUpload = function(formId) { ... }
+
 function performGlobalSearch() {
     const searchInput = document.querySelector('.search-container input');
     const query = searchInput.value.trim();
@@ -1041,21 +935,20 @@ function displaySearchResults() {
     `;
 }
 
-// ========== INITIALISATION CORRIGÉE ==========
+// ========== INITIALISATION ==========
 let btpApp;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM chargé - Démarrage application...');
     btpApp = new BTPApp();
     window.appState = btpApp.state;
+    // SUPPRIMÉ: window.photoUploadManager = btpApp.photoUploadManager;
 });
 
-// ✅ FONCTION goToSection UNIFIÉE
 window.goToSection = function(sectionId) {
     if (btpApp) {
         btpApp.loadSection(sectionId);
     } else {
-        // Fallback basique
         document.querySelectorAll('.section-content').forEach(section => {
             section.classList.remove('active');
             section.style.display = 'none';
@@ -1068,7 +961,6 @@ window.goToSection = function(sectionId) {
     }
 };
 
-// ✅ FONCTION POUR DÉBOGUER LES FILTRES
 window.debugFilters = function() {
     console.log('🐛 Debug filtres:');
     
@@ -1108,12 +1000,10 @@ window.checkAuthAndGo = function(section, context = '') {
     return true;
 };
 
-// 🔥 CORRECTION: FONCTION POUR AFFICHER LE PROFIL
 window.showUserProfile = function() {
     if (btpApp && btpApp.showUserProfile) {
         btpApp.showUserProfile();
     } else {
-        // Fallback
         if (typeof showProfileModal === 'function') {
             showProfileModal();
         } else {
@@ -1130,8 +1020,8 @@ window.appDebug = function() {
     console.log('👤 Utilisateur:', btpApp?.state.currentUser);
     console.log('👑 Admin:', btpApp?.state.isAdmin);
     console.log('👤 Profil initialisé:', !!btpApp?.userProfile);
+    // SUPPRIMÉ: console.log('📸 Photos uploadées:', btpApp?.photoUploadManager?.photos?.length || 0);
     
-    // 🔥 CORRECTION: Debug détaillé admin
     console.log('🔐 Debug admin détaillé:', {
         authStateAdmin: authState?.isAdmin,
         appStateAdmin: btpApp?.state.isAdmin,
@@ -1148,4 +1038,4 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('❌ Promise rejetée:', e.reason);
 });
 
-console.log('✅ app.js CORRIGÉ - Problème immobilier-form résolu');
+console.log('✅ app.js CORRIGÉ - Ancien PhotoUploadManager SUPPRIMÉ');
