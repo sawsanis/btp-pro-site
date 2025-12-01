@@ -232,20 +232,40 @@ async function convertFileToBase64(file) {
     });
 }
 
+
 // ========== INITIALISATION DES TYPES DE BIENS ==========
 function initializeRealEstateFormTypes() {
-    const typeSelect = document.getElementById('realestateType');
+    console.log('🔄 Initialisation des types de biens dans le formulaire...');
+    
+    // 🔥 CORRECTION: Chercher dans immobilier-form
+    const immobilierForm = document.getElementById('immobilier-form');
+    let typeSelect = null;
+    
+    if (immobilierForm) {
+        console.log('✅ Formulaire immobilier-form trouvé');
+        
+        // Chercher le select des types
+        typeSelect = immobilierForm.querySelector('select[name="type"]') || 
+                    immobilierForm.querySelector('select') ||
+                    document.getElementById('realestateType');
+    } else {
+        console.log('⚠️ immobilier-form non trouvé, recherche globale...');
+        typeSelect = document.getElementById('realestateType');
+    }
+    
     if (!typeSelect) {
-        console.warn('❌ Select realestateType non trouvé - le formulaire est peut-être caché');
+        console.warn('❌ Select type non trouvé');
         return false;
     }
     
-    console.log('🔄 Initialisation des types de biens dans le formulaire...');
+    console.log('🎯 Select trouvé:', typeSelect.id || typeSelect.name || 'sans-id');
+    console.log('📊 Options actuelles:', typeSelect.options.length);
     
     // Vider les options existantes sauf la première
     while (typeSelect.children.length > 1) {
         typeSelect.removeChild(typeSelect.lastChild);
     }
+    
     
     // Ajouter tous les types de biens COMPLETS
     const propertyTypes = [
@@ -258,6 +278,8 @@ function initializeRealEstateFormTypes() {
         { value: 'entrepot', label: 'Entrepôt' },
         { value: 'bureau', label: 'Bureau' },
         { value: 'local', label: 'Local commercial' },
+
+
         { value: 'terrain', label: 'Terrain' },
         { value: 'duplex', label: 'Duplex' },
         { value: 'studio', label: 'Studio' },
