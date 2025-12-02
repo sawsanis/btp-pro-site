@@ -1842,38 +1842,25 @@
 <!-- Assistant IA -->
 <script src="js/ai-assistant.js"></script>
 
-<!-- SUPPRIMEZ CE BLOC D'INITIALISATION - IL N'EST PLUS NÉCESSAIRE -->
-<!--
+<!-- Diagnostic filtres (optionnel) -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Initialisation upload photos immobilier...');
-    
-    // Attendre que tous les scripts soient chargés
-    setTimeout(() => {
-        if (typeof setupPhotoPreview === 'function') {
-            console.log('✅ setupPhotoPreview disponible');
-            setupPhotoPreview();
-        } else {
-            console.warn('❌ setupPhotoPreview non trouvé');
-        }
-    }, 1500);
-    
-    // Ré-initialiser quand on va dans la section publication
-    document.addEventListener('sectionChanged', function(e) {
-        if (e.detail && e.detail.section === 'publish') {
-            console.log('📍 Section publication - réinitialisation upload');
-            setTimeout(() => {
-                if (typeof setupPhotoPreview === 'function') {
-                    setupPhotoPreview();
-                }
-                if (typeof forceInitializeRealEstateForm === 'function') {
-                    forceInitializeRealEstateForm();
-                }
-            }, 300);
-        }
-    });
-});
+// Script de vérification simple
+console.log('=== VÉRIFICATION REALESTATE ===');
+console.log('1. filterRealEstate disponible:', typeof filterRealEstate);
+console.log('2. displayRealEstatePosts disponible:', typeof displayRealEstatePosts);
+console.log('3. clearRealEstateFilters disponible:', typeof clearRealEstateFilters);
+
+// Créer une fonction de test dans la console
+window.testRealEstate = function() {
+    console.log('🧪 Test RealEstate:');
+    console.log('- Appel de filterRealEstate()');
+    if (typeof filterRealEstate === 'function') {
+        filterRealEstate();
+    } else {
+        console.error('❌ filterRealEstate non disponible');
+    }
+};
 </script>
--->
+
 </body>
 </html>
