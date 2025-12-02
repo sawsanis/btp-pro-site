@@ -2,7 +2,7 @@
 console.log('🎨 Chargement du module RealEstate Display...');
 
 // ========== FONCTIONS UTILITAIRES MANQUANTES ==========
-function truncateText(text, maxLength) {
+function truncateText(text, maxLength = 100) {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -77,6 +77,105 @@ function initializeRealEstateFilterEvents() {
     }
 }
 
+// ========== FONCTION DE FILTRAGE PRINCIPALE (CORRIGÉE) ==========
+async function filterRealEstate() {
+    console.log('🔍 Filtrage immobilier...');
+    
+    try {
+        const type = document.getElementById('realestateTypeFilter')?.value;
+        const city = document.getElementById('realestateCityFilter')?.value;
+        const priceRange = document.getElementById('realestatePriceFilter')?.value;
+        const sort = document.getElementById('realestateSort')?.value;
+        
+        console.log('🎯 Filtres sélectionnés:', { type, city, priceRange, sort });
+        
+        const properties = await btpDB.get('realestate_posts') || [];
+        console.log('📊 Total des biens:', properties.length);
+        
+        let filteredProperties = properties.filter(property => {
+            // Filtre statut
+            if (!(property.status === 'approuve' || property.status === 'approved' || !property.status)) {
+                return false;
+            }
+            
+            // Filtre par type
+            if (type && property.type !== type) {
+                console.log(`❌ Type filtré: ${property.type} !== ${type}`);
+                return false;
+            }
+            
+            // Filtre par ville
+            if (city && property.city !== city) {
+                console.log(`❌ Ville filtrée: ${property.city} !== ${city}`);
+                return false;
+            }
+            
+            // Filtre par prix
+            if (priceRange && property.price) {
+                const price = property.price;
+                let isValid = true;
+                
+                switch(priceRange) {
+                    case '0-500000':
+                        isValid = price <= 500000;
+                        break;
+                    case '500000-1000000':
+                        isValid = price >= 500000 && price <= 1000000;
+                        break;
+                    case '1000000-2000000':
+                        isValid = price >= 1000000 && price <= 2000000;
+                        break;
+                    case '2000000+':
+                        isValid = price >= 2000000;
+                        break;
+                }
+                
+                if (!isValid) {
+                    console.log(`❌ Prix filtré: ${price} hors de la plage ${priceRange}`);
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        console.log(`📊 Résultats filtrés: ${filteredProperties.length}/${properties.length}`);
+        
+        // CORRECTION : TOUJOURS afficher les résultats, même si 0
+        displayRealEstatePosts(filteredProperties);
+        
+        // Trier les résultats (après affichage pour optimisation)
+        if (sort === 'price_asc') {
+            filteredProperties.sort((a, b) => (a.price || 0) - (b.price || 0));
+        } else if (sort === 'price_desc') {
+            filteredProperties.sort((a, b) => (b.price || 0) - (a.price || 0));
+        } else if (sort === 'premium') {
+            filteredProperties.sort((a, b) => {
+                if (b.isPremium && !a.isPremium) return 1;
+                if (a.isPremium && !b.isPremium) return -1;
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            });
+        } else {
+            // Plus récent d'abord (par défaut)
+            filteredProperties.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        }
+        
+        // Ré-afficher avec le bon tri
+        if (filteredProperties.length > 0) {
+            displayRealEstatePosts(filteredProperties);
+        }
+        
+        // Afficher le nombre de résultats
+        showFilterResults('realestate-container', filteredProperties.length);
+        
+    } catch (error) {
+        console.error('❌ Erreur filtrage immobilier:', error);
+        if (typeof showAlert === 'function') {
+            showAlert('❌ Erreur lors du filtrage: ' + error.message, 'error');
+        }
+    }
+}
+
 // ========== AFFICHAGE DES CARTES BIENS IMMOBILIERS ==========
 function displayRealEstatePosts(properties) {
     const container = document.getElementById('realestate-container');
@@ -85,6 +184,9 @@ function displayRealEstatePosts(properties) {
         console.warn('❌ Container realestate non trouvé');
         return;
     }
+    
+    // CORRECTION CRITIQUE : Vider TOUJOURS le container d'abord
+    container.innerHTML = '';
     
     if (!properties || properties.length === 0) {
         container.innerHTML = `
@@ -225,30 +327,6 @@ function displayRealEstatePosts(properties) {
                         <h4 class="text-success mb-0">${typeof formatPrice === 'function' ? formatPrice(property.price || 0) : (property.price ? property.price.toLocaleString() + ' MAD' : 'Prix non spécifié')}</h4>
                         <small class="text-muted">${typeof formatDate === 'function' ? formatDate(property.createdAt) : (property.createdAt ? new Date(property.createdAt).toLocaleDateString('fr-FR') : '')}</small>
                     </div>
-                    
-                    <!-- BOUTONS ADMIN ET ÉDITION -->
-                    <div class="actions mt-2">
-                        <div class="btn-group btn-group-sm w-100">
-                            ${canEdit ? `
-                            <button class="btn btn-outline-primary btn-sm" onclick="editRealEstateAnnounce('${property.id}')" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            ` : ''}
-                            ${authState && authState.isAdmin ? `
-                            <button class="btn btn-outline-warning btn-sm" onclick="toggleAnnounceStatus('${property.id}', 'realestate', '${property.status === 'en_pause' ? 'approuve' : 'en_pause'}')" 
-                                    title="${property.status === 'en_pause' ? 'Activer' : 'Mettre en pause'}">
-                                <i class="fas fa-${property.status === 'en_pause' ? 'play' : 'pause'}"></i>
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="togglePremium('${property.id}', 'realestate', ${!property.isPremium})" 
-                                    title="${property.isPremium ? 'Retirer premium' : 'Mettre en avant'}">
-                                <i class="fas fa-${property.isPremium ? 'star' : 'crown'}"></i>
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAnnounce('${property.id}', 'realestate')" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            ` : ''}
-                        </div>
-                    </div>
                 </div>
                 <div class="card-footer bg-transparent">
                     <div class="d-flex gap-2">
@@ -272,10 +350,10 @@ function displayRealEstatePosts(properties) {
     });
     
     container.innerHTML = html;
-    console.log(`✅ ${properties.length} biens immobiliers affichés avec galerie photos`);
+    console.log(`✅ ${properties.length} biens immobiliers affichés`);
 }
 
-// ========== FILTRES ET RECHERCHE ==========
+// ========== INITIALISATION DES FILTRES ==========
 function initializeRealEstateFilters(properties) {
     console.log('🔧 Initialisation des filtres immobilier...');
     
@@ -329,97 +407,21 @@ function initializeRealEstateFilters(properties) {
         });
         
         console.log(`✅ ${allPossibleTypes.length} types ajoutés aux filtres`);
-    } else {
-        console.log('❌ Filtre realestateTypeFilter non trouvé');
     }
     
     // Mettre à jour le filtre des villes
     initializeRealEstateCitiesFilter();
     
-    // Initialiser les événements de filtres
+    // Initialiser les événements des filtres
     initializeRealEstateFilterEvents();
-}
-
-async function filterRealEstate() {
-    console.log('🔍 Filtrage immobilier...');
     
-    try {
-        const type = document.getElementById('realestateTypeFilter')?.value;
-        const city = document.getElementById('realestateCityFilter')?.value;
-        const priceRange = document.getElementById('realestatePriceFilter')?.value;
-        const sort = document.getElementById('realestateSort')?.value;
-        
-        const properties = await btpDB.get('realestate_posts') || [];
-        let filteredProperties = properties.filter(property => {
-            // Filtre statut
-            if (!(property.status === 'approuve' || property.status === 'approved' || !property.status)) {
-                return false;
-            }
-            
-            // Filtre par type
-            if (type && property.type !== type) return false;
-            
-            // Filtre par ville
-            if (city && property.city !== city) return false;
-            
-            // Filtre par prix
-            if (priceRange && property.price) {
-                const price = property.price;
-                switch(priceRange) {
-                    case '0-500000':
-                        if (price > 500000) return false;
-                        break;
-                    case '500000-1000000':
-                        if (price < 500000 || price > 1000000) return false;
-                        break;
-                    case '1000000-2000000':
-                        if (price < 1000000 || price > 2000000) return false;
-                        break;
-                    case '2000000+':
-                        if (price < 2000000) return false;
-                        break;
-                }
-            }
-            
-            return true;
-        });
-        
-        console.log(`📊 Résultats filtrés: ${filteredProperties.length}/${properties.length}`);
-        
-        // Trier les résultats
-        if (sort === 'price_asc') {
-            filteredProperties.sort((a, b) => (a.price || 0) - (b.price || 0));
-        } else if (sort === 'price_desc') {
-            filteredProperties.sort((a, b) => (b.price || 0) - (a.price || 0));
-        } else if (sort === 'premium') {
-            filteredProperties.sort((a, b) => {
-                if (b.isPremium && !a.isPremium) return 1;
-                if (a.isPremium && !b.isPremium) return -1;
-                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-            });
-        } else {
-            // Plus récent d'abord (par défaut)
-            filteredProperties.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        }
-        
-        if (typeof setupPagination === 'function') {
-            setupPagination('realestate-container', filteredProperties, displayRealEstatePosts);
-        } else {
-            displayRealEstatePosts(filteredProperties);
-        }
-        
-        // Afficher le nombre de résultats
-        showFilterResults('realestate-container', filteredProperties.length);
-        
-    } catch (error) {
-        console.error('❌ Erreur filtrage immobilier:', error);
-        if (typeof showAlert === 'function') {
-            showAlert('❌ Erreur lors du filtrage', 'error');
-        }
-    }
+    console.log('✅ Filtres immobilier initialisés');
 }
 
+// ========== FONCTIONS UTILITAIRES ==========
 function clearRealEstateFilters() {
+    console.log('🧹 Effacement des filtres immobilier...');
+    
     const typeFilter = document.getElementById('realestateTypeFilter');
     const cityFilter = document.getElementById('realestateCityFilter');
     const priceFilter = document.getElementById('realestatePriceFilter');
@@ -430,6 +432,7 @@ function clearRealEstateFilters() {
     if (priceFilter) priceFilter.value = '';
     if (sortFilter) sortFilter.value = 'newest';
     
+    // Relancer le filtrage
     filterRealEstate();
 }
 
@@ -448,86 +451,6 @@ function showFilterResults(containerId, count) {
     resultsCount.innerHTML = `<small class="text-muted">${count} bien${count > 1 ? 's' : ''} immobilier${count > 1 ? 's' : ''} trouvé${count > 1 ? 's' : ''}</small>`;
     
     container.appendChild(resultsCount);
-}
-
-// ========== FONCTIONS ADMIN POUR LES BOUTONS ==========
-function toggleAnnounceStatus(propertyId, type, newStatus) {
-    console.log('🔄 Changement statut:', propertyId, type, newStatus);
-    
-    if (!confirm('Êtes-vous sûr de vouloir changer le statut de cette annonce ?')) {
-        return;
-    }
-    
-    btpDB.get('realestate_posts').then(properties => {
-        const propertyIndex = properties.findIndex(p => p.id == propertyId);
-        if (propertyIndex !== -1) {
-            properties[propertyIndex].status = newStatus;
-            properties[propertyIndex].updatedAt = new Date().toISOString();
-            
-            btpDB.set('realestate_posts', properties).then(() => {
-                showAlert(`✅ Statut changé à: ${newStatus}`, 'success');
-                // Recharger les annonces
-                setTimeout(() => {
-                    if (typeof loadRealEstateAnnounces === 'function') {
-                        loadRealEstateAnnounces();
-                    }
-                }, 500);
-            });
-        }
-    }).catch(error => {
-        console.error('❌ Erreur changement statut:', error);
-        showAlert('❌ Erreur lors du changement de statut', 'error');
-    });
-}
-
-function togglePremium(propertyId, type, makePremium) {
-    console.log('⭐ Changement premium:', propertyId, makePremium);
-    
-    btpDB.get('realestate_posts').then(properties => {
-        const propertyIndex = properties.findIndex(p => p.id == propertyId);
-        if (propertyIndex !== -1) {
-            properties[propertyIndex].isPremium = makePremium;
-            properties[propertyIndex].updatedAt = new Date().toISOString();
-            
-            btpDB.set('realestate_posts', properties).then(() => {
-                showAlert(`✅ Annonce ${makePremium ? 'mise en avant' : 'retirée des annonces premium'}`, 'success');
-                // Recharger les annonces
-                setTimeout(() => {
-                    if (typeof loadRealEstateAnnounces === 'function') {
-                        loadRealEstateAnnounces();
-                    }
-                }, 500);
-            });
-        }
-    }).catch(error => {
-        console.error('❌ Erreur changement premium:', error);
-        showAlert('❌ Erreur lors du changement premium', 'error');
-    });
-}
-
-function deleteAnnounce(propertyId, type) {
-    console.log('🗑️ Suppression annonce:', propertyId);
-    
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.')) {
-        return;
-    }
-    
-    btpDB.get('realestate_posts').then(properties => {
-        const updatedProperties = properties.filter(p => p.id != propertyId);
-        
-        btpDB.set('realestate_posts', updatedProperties).then(() => {
-            showAlert('✅ Annonce supprimée avec succès', 'success');
-            // Recharger les annonces
-                setTimeout(() => {
-                if (typeof loadRealEstateAnnounces === 'function') {
-                    loadRealEstateAnnounces();
-                }
-            }, 500);
-        });
-    }).catch(error => {
-        console.error('❌ Erreur suppression:', error);
-        showAlert('❌ Erreur lors de la suppression', 'error');
-    });
 }
 
 // ========== INITIALISATION ET EXPORTS ==========
@@ -555,10 +478,7 @@ window.clearRealEstateFilters = clearRealEstateFilters;
 window.showFilterResults = showFilterResults;
 window.initializeDisplayFunctions = initializeDisplayFunctions;
 
-// Export des fonctions utilitaires et admin
+// Export des fonctions utilitaires
 window.truncateText = truncateText;
-window.toggleAnnounceStatus = toggleAnnounceStatus;
-window.togglePremium = togglePremium;
-window.deleteAnnounce = deleteAnnounce;
 
 console.log('✅ realestate-display.js chargé - Affichage et filtres prêts');
