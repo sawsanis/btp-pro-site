@@ -8,7 +8,6 @@ class BTPApp {
             currentSection: 'home'
         };
         this.userProfile = null;
-        // SUPPRIMÉ: this.photoUploadManager = new PhotoUploadManager();
         this.init();
     }
 
@@ -473,6 +472,10 @@ class BTPApp {
             this.loadMarketplaceCategories();
         }
         
+        // INITIALISATION - SEULEMENT le nouveau système (10 photos)
+        this.initializeNewPhotoUploadSystem();
+        
+        // Déclencher l'initialisation des formulaires immobilier
         this.triggerRealEstateFormInitialization();
         
         setTimeout(() => {
@@ -483,6 +486,34 @@ class BTPApp {
             
             this.initializePublishNavigation();
         }, 200);
+    }
+
+    // NOUVELLE MÉTHODE - Uniquement le système de 10 photos
+    initializeNewPhotoUploadSystem() {
+        console.log('📸 Initialisation du NOUVEAU système d\'upload (10 photos)...');
+        
+        // Vérifier que PhotoUploadSystem est disponible
+        if (typeof PhotoUploadSystem === 'undefined' || !window.photoUploadSystemInstance) {
+            console.warn('❌ PhotoUploadSystem non disponible');
+            return;
+        }
+        
+        console.log('✅ PhotoUploadSystem disponible');
+        
+        // Initialiser seulement si les formulaires existent
+        const formsToInitialize = [
+            { id: 'marketplace-form', name: 'Marketplace' },
+            { id: 'immobilier-form', name: 'Immobilier' },
+            { id: 'jobs-form', name: 'Jobs' },
+            { id: 'freelancers-form', name: 'Freelancers' }
+        ];
+        
+        formsToInitialize.forEach(form => {
+            if (document.getElementById(form.id)) {
+                console.log(`📸 Initialisation pour ${form.name}`);
+                window.photoUploadSystemInstance.initialize(form.id);
+            }
+        });
     }
 
     triggerRealEstateFormInitialization() {
@@ -508,19 +539,18 @@ class BTPApp {
             }
         }
         
-        if (typeof forceInitializeRealEstateForm === 'function') {
-            console.log('✅ Appel de forceInitializeRealEstateForm');
-            setTimeout(() => {
-                forceInitializeRealEstateForm();
-            }, 300);
-        } else if (typeof initializeRealEstateFormTypes === 'function') {
+        if (typeof initializeRealEstateFormTypes === 'function') {
             console.log('✅ Appel de initializeRealEstateFormTypes');
             setTimeout(() => {
                 initializeRealEstateFormTypes();
             }, 300);
+        } else if (typeof forceInitializeRealEstateForm === 'function') {
+            console.log('✅ Appel de forceInitializeRealEstateForm');
+            setTimeout(() => {
+                forceInitializeRealEstateForm();
+            }, 300);
         } else {
-            console.log('ℹ️ Fonctions d\'initialisation non disponibles, tentative manuelle');
-            this.manualRealEstateFormInitialization();
+            console.log('ℹ️ Fonctions d\'initialisation non disponibles');
         }
     }
 
@@ -610,6 +640,13 @@ class BTPApp {
         if (targetForm) {
             targetForm.style.display = 'block';
             console.log('✅ Formulaire affiché:', formId);
+            
+            // Réinitialiser l'upload photo seulement pour le nouveau système
+            setTimeout(() => {
+                if (typeof PhotoUploadSystem !== 'undefined' && window.photoUploadSystemInstance) {
+                    window.photoUploadSystemInstance.initialize(formId);
+                }
+            }, 100);
             
             if (formType === 'realestate') {
                 setTimeout(() => {
@@ -890,15 +927,6 @@ window.goToPublish = function(defaultForm = 'marketplace') {
     }
 };
 
-// ========== FONCTIONS UPLOAD PHOTO (À SUPPRIMER - ELLES SERONT DANS PHOTO-UPLOAD.JS) ==========
-// SUPPRIMEZ TOUTES CES FONCTIONS - ELLES SERONT DÉPLACÉES VERS PHOTO-UPLOAD.JS
-// 
-// window.initializePhotoUpload = function(formId, containerId = null) { ... }
-// window.getUploadedPhotos = function(formId) { ... }
-// window.clearUploadedPhotos = function(formId) { ... }
-// window.onPhotoUploadComplete = function(formId, callback) { ... }
-// window.testPhotoUpload = function(formId) { ... }
-
 function performGlobalSearch() {
     const searchInput = document.querySelector('.search-container input');
     const query = searchInput.value.trim();
@@ -942,7 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM chargé - Démarrage application...');
     btpApp = new BTPApp();
     window.appState = btpApp.state;
-    // SUPPRIMÉ: window.photoUploadManager = btpApp.photoUploadManager;
 });
 
 window.goToSection = function(sectionId) {
@@ -1020,7 +1047,6 @@ window.appDebug = function() {
     console.log('👤 Utilisateur:', btpApp?.state.currentUser);
     console.log('👑 Admin:', btpApp?.state.isAdmin);
     console.log('👤 Profil initialisé:', !!btpApp?.userProfile);
-    // SUPPRIMÉ: console.log('📸 Photos uploadées:', btpApp?.photoUploadManager?.photos?.length || 0);
     
     console.log('🔐 Debug admin détaillé:', {
         authStateAdmin: authState?.isAdmin,
@@ -1038,4 +1064,4 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('❌ Promise rejetée:', e.reason);
 });
 
-console.log('✅ app.js CORRIGÉ - Ancien PhotoUploadManager SUPPRIMÉ');
+console.log('✅ app.js CORRIGÉ - Ancien système d\'upload 5 photos SUPPRIMÉ, seul le système 10 photos reste');

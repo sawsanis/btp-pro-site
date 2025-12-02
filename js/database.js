@@ -9,7 +9,7 @@ const firebaseConfig = {
 };
 
 // ========== INITIALISATION FIREBASE ==========
-let firebaseApp, firestore, auth;
+let firebaseApp, firestore, auth, storage;
 let firebaseOnline = false;
 
 // Vérifier si Firebase est disponible
@@ -27,6 +27,7 @@ if (typeof firebase !== 'undefined') {
         
         firestore = firebase.firestore();
         auth = firebase.auth();
+        storage = firebase.storage();
         firebaseOnline = true;
         
         // Configurer la persistance des données
@@ -47,6 +48,7 @@ if (typeof firebase !== 'undefined') {
 class BTPDatabase {
     constructor() {
         this.localStorageKey = 'btp_pro_local_db';
+        this.firebaseInitialized = false;
         this.init();
     }
 
@@ -57,32 +59,69 @@ class BTPDatabase {
             this.initializeLocalData();
         }
         
-        // Synchroniser avec Firebase si disponible
-        if (firebaseOnline) {
-            this.syncWithFirebase();
-        }
+        // Tester la connexion Firebase
+        this.testFirebaseConnection().then(isConnected => {
+            this.firebaseInitialized = isConnected;
+            if (isConnected) {
+                console.log('✅ Firebase connecté et opérationnel');
+                this.syncWithFirebase();
+            } else {
+                console.warn('⚠️ Mode hors ligne - utilisation localStorage uniquement');
+            }
+        }).catch(error => {
+            console.warn('⚠️ Erreur connexion Firebase:', error.message);
+            this.firebaseInitialized = false;
+        });
         
         console.log('✅ Base de données initialisée');
     }
 
+    async testFirebaseConnection() {
+        if (!firebaseOnline) return false;
+        
+        try {
+            // Tester avec une requête simple
+            await firestore.collection('test_connection').limit(1).get();
+            console.log('✅ Connexion Firebase testée avec succès');
+            return true;
+        } catch (error) {
+            // Si permission denied, c'est que Firebase est accessible mais les règles bloquent
+            if (error.code === 'permission-denied') {
+                console.log('✅ Firebase accessible (règles restrictives)');
+                return true;
+            }
+            
+            console.warn('❌ Connexion Firebase échouée:', error.message);
+            return false;
+        }
+    }
+
     async syncWithFirebase() {
-        if (!firebaseOnline) return;
+        if (!this.firebaseInitialized) return;
         
         try {
             console.log('🔄 Synchronisation avec Firebase...');
             
-            // Synchroniser les utilisateurs
-            const usersSnapshot = await firestore.collection('users').get();
-            if (!usersSnapshot.empty) {
-                const firebaseUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const localData = this.getLocalData();
-                localData.users = this.mergeArrays(localData.users, firebaseUsers);
-                this.saveLocalData(localData);
+            // Synchroniser les collections principales avec gestion d'erreurs
+            const collections = [
+                'users', 
+                'marketplace_posts', 
+                'realestate_posts', 
+                'job_posts',
+                'freelancers', 
+                'professionals',
+                'forum_topics',
+                'forum_replies'
+            ];
+            
+            for (const collection of collections) {
+                await this.syncCollectionFromFirebase(collection);
             }
             
             console.log('✅ Synchronisation Firebase terminée');
         } catch (error) {
-            console.warn('⚠️ Erreur synchronisation Firebase:', error);
+            console.warn('⚠️ Erreur synchronisation Firebase:', error.message);
+            // Ne pas bloquer l'application en cas d'erreur
         }
     }
 
@@ -350,46 +389,96 @@ class BTPDatabase {
             notifications: [],
             messages: [],
             adsense_slots: [],
-            premium_features: []
+            premium_features: [],
+            temp_uploads: [] // Nouvelle collection pour les uploads temporaires
         };
         
         this.saveLocalData(initialData);
         console.log('✅ Données de démonstration initialisées avec forum complet');
     }
 
-    // ========== OPÉRATIONS CRUD ==========
-    async get(collection) {
+    // ========== OPÉRATIONS CRUD AVEC GESTION D'ERREURS ==========
+    async get(collection, filters = {}) {
         try {
             const localData = this.getLocalData();
-            const data = localData[collection] || [];
+            let data = localData[collection] || [];
             
-            if (firebaseOnline) {
+            // Appliquer les filtres si fournis
+            if (Object.keys(filters).length > 0) {
+                data = this.applyFilters(data, filters);
+            }
+            
+            // Tenter une synchronisation Firebase en arrière-plan
+            if (this.firebaseInitialized) {
                 this.syncCollectionFromFirebase(collection).catch(error => {
-                    console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error);
+                    console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error.message);
                 });
             }
             
             return data;
             
         } catch (error) {
-            console.error(`❌ Erreur critique chargement ${collection}:`, error);
+            console.error(`❌ Erreur chargement ${collection}:`, error);
             return [];
         }
     }
 
+    applyFilters(data, filters) {
+        return data.filter(item => {
+            for (const [key, value] of Object.entries(filters)) {
+                if (value === undefined || value === null || value === '') continue;
+                
+                // Filtre par correspondance exacte ou partielle
+                if (typeof value === 'string' && item[key]) {
+                    if (!item[key].toLowerCase().includes(value.toLowerCase())) {
+                        return false;
+                    }
+                } else if (item[key] !== value) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
     async syncCollectionFromFirebase(collection) {
-        if (!firebaseOnline) return;
+        if (!this.firebaseInitialized) return;
         
         try {
-            const snapshot = await firestore.collection(collection).get();
-            if (!snapshot.empty) {
-                const firebaseData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const localData = this.getLocalData();
-                localData[collection] = this.mergeArrays(localData[collection], firebaseData);
-                this.saveLocalData(localData);
+            console.log(`🔄 Tentative sync Firebase ${collection}...`);
+            
+            const snapshot = await firestore.collection(collection).limit(1).get();
+            
+            if (snapshot.empty) {
+                console.log(`ℹ️ Collection ${collection} vide sur Firebase`);
+                return;
             }
+            
+            // Récupérer toutes les données
+            const fullSnapshot = await firestore.collection(collection).get();
+            const firebaseData = fullSnapshot.docs.map(doc => {
+                const data = doc.data();
+                return { 
+                    id: doc.id, 
+                    ...data,
+                    // Nettoyer les données sensibles
+                    password: data.password ? '********' : undefined
+                };
+            });
+            
+            const localData = this.getLocalData();
+            localData[collection] = this.mergeArrays(localData[collection] || [], firebaseData);
+            this.saveLocalData(localData);
+            
+            console.log(`✅ ${collection} synchronisé depuis Firebase: ${firebaseData.length} éléments`);
+            
         } catch (error) {
-            console.warn(`⚠️ Erreur sync Firebase ${collection}:`, error);
+            console.warn(`⚠️ Erreur sync Firebase ${collection}:`, error.message);
+            
+            // Ne pas bloquer l'application en cas d'erreur Firebase
+            if (error.code === 'permission-denied') {
+                console.warn(`❌ Permission refusée pour ${collection}, utilisation des données locales`);
+            }
         }
     }
 
@@ -408,9 +497,10 @@ class BTPDatabase {
 
         console.log(`✅ ${collection} créé localement:`, item.id);
 
-        if (firebaseOnline) {
+        // Synchroniser avec Firebase en arrière-plan
+        if (this.firebaseInitialized) {
             this.syncToFirebase(collection, item).catch(error => {
-                console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error);
+                console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error.message);
             });
         }
 
@@ -418,13 +508,19 @@ class BTPDatabase {
     }
 
     async syncToFirebase(collection, item) {
-        if (!firebaseOnline) return;
+        if (!this.firebaseInitialized) return;
         
         try {
-            await firestore.collection(collection).doc(item.id.toString()).set(item);
+            // Nettoyer les données sensibles avant l'envoi à Firebase
+            const cleanItem = { ...item };
+            if (cleanItem.password && cleanItem.password !== '********') {
+                cleanItem.password = '********'; // Ne pas envoyer les mots de passe réels
+            }
+            
+            await firestore.collection(collection).doc(item.id.toString()).set(cleanItem);
             console.log(`☁️ ${collection} synchronisé vers Firebase:`, item.id);
         } catch (error) {
-            console.warn(`⚠️ Erreur sync vers Firebase ${collection}:`, error);
+            console.warn(`⚠️ Erreur sync vers Firebase ${collection}:`, error.message);
         }
     }
 
@@ -446,9 +542,10 @@ class BTPDatabase {
             this.saveLocalData(localData);
             console.log(`✅ ${collection} mis à jour localement:`, id);
 
-            if (firebaseOnline) {
+            // Synchroniser avec Firebase
+            if (this.firebaseInitialized) {
                 this.updateInFirebase(collection, id, data).catch(error => {
-                    console.warn(`⚠️ Update Firebase ${collection} échouée:`, error);
+                    console.warn(`⚠️ Update Firebase ${collection} échouée:`, error.message);
                 });
             }
 
@@ -460,13 +557,13 @@ class BTPDatabase {
     }
 
     async updateInFirebase(collection, id, data) {
-        if (!firebaseOnline) return;
+        if (!this.firebaseInitialized) return;
         
         try {
             await firestore.collection(collection).doc(id.toString()).update(data);
             console.log(`☁️ ${collection} mis à jour dans Firebase:`, id);
         } catch (error) {
-            console.warn(`⚠️ Erreur update Firebase ${collection}:`, error);
+            console.warn(`⚠️ Erreur update Firebase ${collection}:`, error.message);
         }
     }
 
@@ -478,9 +575,10 @@ class BTPDatabase {
             this.saveLocalData(localData);
             console.log(`✅ ${collection} supprimé localement:`, id);
 
-            if (firebaseOnline) {
+            // Supprimer de Firebase
+            if (this.firebaseInitialized) {
                 this.deleteFromFirebase(collection, id).catch(error => {
-                    console.warn(`⚠️ Delete Firebase ${collection} échouée:`, error);
+                    console.warn(`⚠️ Delete Firebase ${collection} échouée:`, error.message);
                 });
             }
 
@@ -491,13 +589,143 @@ class BTPDatabase {
     }
 
     async deleteFromFirebase(collection, id) {
-        if (!firebaseOnline) return;
+        if (!this.firebaseInitialized) return;
         
         try {
             await firestore.collection(collection).doc(id.toString()).delete();
             console.log(`☁️ ${collection} supprimé de Firebase:`, id);
         } catch (error) {
-            console.warn(`⚠️ Erreur delete Firebase ${collection}:`, error);
+            console.warn(`⚠️ Erreur delete Firebase ${collection}:`, error.message);
+        }
+    }
+
+    // ========== FONCTIONS POUR UPLOAD DE PHOTOS ==========
+    
+    async uploadPhoto(file, formId, userId) {
+        console.log(`📸 Upload photo pour ${formId} par ${userId}`);
+        
+        try {
+            // Générer un ID unique pour la photo
+            const photoId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const fileName = `${photoId}_${file.name}`;
+            
+            // 1. Sauvegarder localement (Base64)
+            const localPhotoData = {
+                id: photoId,
+                name: fileName,
+                formId: formId,
+                userId: userId,
+                url: await this.fileToBase64(file),
+                size: file.size,
+                type: file.type,
+                uploadedAt: new Date().toISOString(),
+                status: 'uploaded'
+            };
+            
+            // Ajouter aux uploads temporaires
+            await this.post('temp_uploads', localPhotoData);
+            
+            console.log(`✅ Photo sauvegardée localement: ${fileName}`);
+            
+            // 2. Tenter l'upload Firebase en arrière-plan
+            if (this.firebaseInitialized && storage) {
+                this.uploadToFirebaseStorage(file, fileName, photoId, formId, userId)
+                    .catch(error => {
+                        console.warn('⚠️ Upload Firebase échoué, photo disponible localement:', error.message);
+                    });
+            }
+            
+            return {
+                success: true,
+                photoId: photoId,
+                localUrl: localPhotoData.url,
+                fileName: fileName
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur upload photo:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    
+    async uploadToFirebaseStorage(file, fileName, photoId, formId, userId) {
+        if (!this.firebaseInitialized || !storage) return;
+        
+        try {
+            // Créer une référence dans le storage
+            const storageRef = storage.ref();
+            const photoRef = storageRef.child(`uploads/${formId}/${fileName}`);
+            
+            // Upload vers Firebase Storage
+            const snapshot = await photoRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            
+            console.log(`☁️ Photo uploadée vers Firebase Storage: ${downloadURL}`);
+            
+            // Mettre à jour l'enregistrement avec l'URL Firebase
+            const tempUploads = await this.get('temp_uploads');
+            const uploadIndex = tempUploads.findIndex(u => u.id === photoId);
+            
+            if (uploadIndex !== -1) {
+                const updatedUpload = {
+                    ...tempUploads[uploadIndex],
+                    firebaseUrl: downloadURL,
+                    status: 'synced',
+                    updatedAt: new Date().toISOString()
+                };
+                
+                await this.put('temp_uploads', photoId, updatedUpload);
+            }
+            
+            return downloadURL;
+            
+        } catch (error) {
+            console.warn('⚠️ Erreur upload Firebase Storage:', error.message);
+            throw error;
+        }
+    }
+    
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    
+    async getUploadedPhotos(formId, userId) {
+        try {
+            const tempUploads = await this.get('temp_uploads');
+            return tempUploads.filter(upload => 
+                upload.formId === formId && upload.userId === userId
+            );
+        } catch (error) {
+            console.error('❌ Erreur récupération photos:', error);
+            return [];
+        }
+    }
+    
+    async clearUploadedPhotos(formId, userId) {
+        try {
+            const tempUploads = await this.get('temp_uploads');
+            const userUploads = tempUploads.filter(upload => 
+                upload.formId === formId && upload.userId === userId
+            );
+            
+            for (const upload of userUploads) {
+                await this.delete('temp_uploads', upload.id);
+            }
+            
+            console.log(`✅ ${userUploads.length} photos supprimées pour ${formId}`);
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erreur suppression photos:', error);
+            return false;
         }
     }
 
@@ -505,7 +733,7 @@ class BTPDatabase {
     async authenticateUser(email, password) {
         console.log('🔐 Tentative de connexion:', email);
         
-        if (firebaseOnline) {
+        if (this.firebaseInitialized) {
             try {
                 console.log('🔥 Authentification Firebase...');
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -560,7 +788,7 @@ class BTPDatabase {
             throw new Error('Cet email est déjà utilisé');
         }
 
-        if (firebaseOnline) {
+        if (this.firebaseInitialized) {
             try {
                 const userCredential = await auth.createUserWithEmailAndPassword(
                     userData.email, 
@@ -596,7 +824,7 @@ class BTPDatabase {
                 return newUser;
                 
             } catch (error) {
-                console.warn('⚠️ Erreur Firebase register, fallback localStorage:', error);
+                console.warn('⚠️ Erreur Firebase register, fallback localStorage:', error.message);
             }
         }
 
@@ -796,7 +1024,7 @@ class BTPDatabase {
             localData.users = users;
             this.saveLocalData(localData);
             
-            if (firebaseOnline) {
+            if (this.firebaseInitialized) {
                 this.updateInFirebase('users', userId, {
                     visitCount: users[userIndex].visitCount,
                     lastVisit: users[userIndex].lastVisit,
@@ -829,7 +1057,7 @@ class BTPDatabase {
     }
 
     mergeArrays(localArray, firebaseArray) {
-        if (!localArray || localArray.length === 0) return firebaseArray;
+        if (!localArray || localArray.length === 0) return firebaseArray || [];
         if (!firebaseArray || firebaseArray.length === 0) return localArray;
         
         const merged = [...localArray];
@@ -864,9 +1092,9 @@ class BTPDatabase {
 
     logoutUser() {
         localStorage.removeItem('currentUser');
-        if (firebaseOnline && auth) {
+        if (this.firebaseInitialized && auth) {
             auth.signOut().catch(error => {
-                console.warn('⚠️ Erreur déconnexion Firebase:', error);
+                console.warn('⚠️ Erreur déconnexion Firebase:', error.message);
             });
         }
     }
@@ -963,7 +1191,8 @@ class BTPDatabase {
             const allCollections = [
                 'users', 'marketplace_posts', 'realestate_posts', 'job_posts', 
                 'freelancers', 'professionals', 'job_applications', 'newsletter_history',
-                'adsense_slots', 'premium_features', 'forum_topics', 'forum_replies'
+                'adsense_slots', 'premium_features', 'forum_topics', 'forum_replies',
+                'temp_uploads'
             ];
             
             const exportData = {};
@@ -1288,13 +1517,65 @@ class BTPDatabase {
                     freelancers: backupData.freelancers?.length || 0,
                     professionals: backupData.professionals?.length || 0,
                     forum_topics: backupData.forum_topics?.length || 0,
-                    forum_replies: backupData.forum_replies?.length || 0
+                    forum_replies: backupData.forum_replies?.length || 0,
+                    temp_uploads: backupData.temp_uploads?.length || 0
                 }
             };
             
         } catch (error) {
             console.error('❌ Erreur migration:', error);
             throw error;
+        }
+    }
+
+    // ========== FONCTIONS ADSENSE ==========
+    
+    async initializeAdsenseSlots() {
+        console.log('📢 Initialisation des slots Adsense...');
+        
+        try {
+            const slotsData = await this.get('adsense_slots');
+            
+            if (slotsData.length === 0) {
+                // Créer des slots par défaut
+                const defaultSlots = [
+                    {
+                        id: 'header-ad',
+                        position: 'header',
+                        code: '<div class="ad-slot header-ad">Publicité Header</div>',
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'sidebar-ad',
+                        position: 'sidebar',
+                        code: '<div class="ad-slot sidebar-ad">Publicité Sidebar</div>',
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'footer-ad',
+                        position: 'footer',
+                        code: '<div class="ad-slot footer-ad">Publicité Footer</div>',
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                
+                for (const slot of defaultSlots) {
+                    await this.post('adsense_slots', slot);
+                }
+                
+                console.log('✅ Slots Adsense par défaut créés');
+                return defaultSlots;
+            }
+            
+            console.log(`✅ ${slotsData.length} slots Adsense chargés`);
+            return slotsData;
+            
+        } catch (error) {
+            console.error('❌ Erreur initialisation Adsense:', error);
+            return [];
         }
     }
 }
@@ -1312,7 +1593,7 @@ setTimeout(() => {
     });
 }, 2000);
 
-console.log('✅ database.js COMPLET - Compatible avec la structure modulaire realestate');
+console.log('✅ database.js COMPLET CORRIGÉ - Système upload photo intégré et gestion d\'erreurs Firebase améliorée');
 
 // ========== EXPORT DES FONCTIONS ==========
 window.exportCompleteData = () => btpDB.exportCompleteData();
@@ -1322,10 +1603,48 @@ window.exportUsersForExcel = () => btpDB.exportUsersForExcel();
 window.migrateToNewServer = (data) => btpDB.migrateToNewServer(data);
 window.generateBackupFile = () => btpDB.migrateToNewServer();
 
+// Fonctions upload photo accessibles globalement
+window.uploadPhoto = (file, formId) => {
+    const user = btpDB.getCurrentUser();
+    if (!user) {
+        showAlert('🔐 Veuillez vous connecter pour uploader des photos', 'warning');
+        return Promise.resolve({ success: false, error: 'Non authentifié' });
+    }
+    return btpDB.uploadPhoto(file, formId, user.id);
+};
+
+window.getUploadedPhotos = (formId) => {
+    const user = btpDB.getCurrentUser();
+    if (!user) return Promise.resolve([]);
+    return btpDB.getUploadedPhotos(formId, user.id);
+};
+
+window.clearUploadedPhotos = (formId) => {
+    const user = btpDB.getCurrentUser();
+    if (!user) return Promise.resolve(false);
+    return btpDB.clearUploadedPhotos(formId, user.id);
+};
+
 // Fonction utilitaire pour afficher les alertes (si non définie)
 if (typeof showAlert === 'undefined') {
     window.showAlert = function(message, type = 'info') {
         console.log(`ALERTE [${type}]: ${message}`);
-        alert(message);
+        
+        // Créer une alerte Bootstrap
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.alerts-container') || document.body;
+        container.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
     };
 }
