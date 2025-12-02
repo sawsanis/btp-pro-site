@@ -52,9 +52,39 @@ function setupPagination(containerId, items, displayFunction) {
     }
     
     function updatePaginationControls() {
-        const paginationContainer = document.getElementById(`${containerId}-pagination`);
+        // CORRECTION : Chercher le container de différentes manières
+        let paginationContainer = document.getElementById(`${containerId}-pagination`);
+        
+        // Si pas trouvé avec l'ID standard, essayer d'autres IDs
         if (!paginationContainer) {
-            console.warn(`❌ Container de pagination ${containerId}-pagination non trouvé`);
+            // Essayer avec le nom de section
+            const sectionName = containerId.replace('-container', '');
+            paginationContainer = document.getElementById(`${sectionName}-pagination`);
+        }
+        
+        // Si toujours pas trouvé, créer un nouveau container
+        if (!paginationContainer) {
+            console.warn(`❌ Container de pagination ${containerId}-pagination non trouvé, création d'un nouveau...`);
+            
+            // Chercher si un container pagination existe déjà dans la section
+            const parentSection = container.closest('.section-content');
+            if (parentSection) {
+                paginationContainer = parentSection.querySelector('.pagination-container');
+            }
+            
+            // Si pas trouvé, créer un nouveau div après le container
+            if (!paginationContainer) {
+                paginationContainer = document.createElement('div');
+                paginationContainer.className = 'pagination-container';
+                paginationContainer.id = `${containerId}-pagination`;
+                
+                // Insérer après le container des annonces
+                container.parentNode.insertBefore(paginationContainer, container.nextSibling);
+            }
+        }
+        
+        if (!paginationContainer) {
+            console.warn('❌ Impossible de créer/find le container de pagination');
             return;
         }
         
@@ -135,7 +165,10 @@ function setupPagination(containerId, items, displayFunction) {
         displayPage(1);
     } else {
         // Pas besoin de pagination si pas d'éléments
-        const paginationContainer = document.getElementById(`${containerId}-pagination`);
+        let paginationContainer = document.getElementById(`${containerId}-pagination`);
+        if (!paginationContainer) {
+            paginationContainer = document.querySelector('.pagination-container');
+        }
         if (paginationContainer) {
             paginationContainer.innerHTML = '';
         }
