@@ -249,28 +249,34 @@ function initializeRealEstateFilters(properties) {
     console.log('🔧 Initialisation des filtres immobilier...');
     
     // 🔥 CORRECTION: Utiliser TOUS les types possibles, pas seulement ceux des propriétés
-    const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
-        { value: 'villa', label: 'Villa' },
-        { value: 'appartement', label: 'Appartement' },
-        { value: 'maison', label: 'Maison' },
-        { value: 'ferme', label: 'Ferme' },
-        { value: 'bungalow', label: 'Bungalow' },
-        { value: 'usine', label: 'Usine' },
-        { value: 'entrepot', label: 'Entrepôt' },
-        { value: 'bureau', label: 'Bureau' },
-        { value: 'local', label: 'Local commercial' },
-        { value: 'terrain', label: 'Terrain' },
-        { value: 'duplex', label: 'Duplex' },
-        { value: 'studio', label: 'Studio' },
-        { value: 'riad', label: 'Riad' },
-        { value: 'chalet', label: 'Chalet' },
-        { value: 'residence', label: 'Résidence' },
-        { value: 'immeuble', label: 'Immeuble' },
-        { value: 'garage', label: 'Garage' },
-        { value: 'commerce', label: 'Commerce' },
-        { value: 'cafe', label: 'Café' },
-        { value: 'magasin', label: 'Magasin' }
-    ];
+const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
+    // Habitations
+    { value: 'villa', label: 'Villa' },
+    { value: 'appartement', label: 'Appartement' },
+    { value: 'maison', label: 'Maison' },
+    { value: 'studio', label: 'Studio' },
+    { value: 'duplex', label: 'Duplex' },
+    { value: 'triplex', label: 'Triplex' },
+    { value: 'riad', label: 'Riad' },
+    { value: 'chalet', label: 'Chalet' },
+    { value: 'bungalow', label: 'Bungalow' },
+    { value: 'ferme', label: 'Ferme' },
+    { value: 'residence', label: 'Résidence' },
+    
+    // Immobilier d'entreprise
+    { value: 'bureau', label: 'Bureau' },
+    { value: 'local_commercial', label: 'Local commercial' },
+    { value: 'commerce', label: 'Commerce' },
+    { value: 'cafe', label: 'Café' },
+    { value: 'magasin', label: 'Magasin' },
+    { value: 'entrepot', label: 'Entrepôt' },
+    { value: 'usine', label: 'Usine' },
+    
+    // Autres
+    { value: 'terrain', label: 'Terrain' },
+    { value: 'immeuble', label: 'Immeuble' },
+    { value: 'garage', label: 'Garage' }
+];
     
     // Mettre à jour le filtre des types
     const typeFilter = document.getElementById('realestateTypeFilter');
