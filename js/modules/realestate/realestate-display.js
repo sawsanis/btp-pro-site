@@ -46,6 +46,37 @@ function initializeRealEstateCitiesFilter() {
     console.log(`✅ ${moroccanCities.length} villes ajoutées aux filtres`);
 }
 
+// ========== INITIALISATION DES ÉVÉNEMENTS DE FILTRES ==========
+function initializeRealEstateFilterEvents() {
+    console.log('🎯 Initialisation des événements de filtres...');
+    
+    // Lier les filtres aux événements
+    const typeFilter = document.getElementById('realestateTypeFilter');
+    const cityFilter = document.getElementById('realestateCityFilter');
+    const priceFilter = document.getElementById('realestatePriceFilter');
+    const sortFilter = document.getElementById('realestateSort');
+    
+    if (typeFilter) {
+        typeFilter.onchange = filterRealEstate;
+        console.log('✅ Type filter event attached');
+    }
+    
+    if (cityFilter) {
+        cityFilter.onchange = filterRealEstate;
+        console.log('✅ City filter event attached');
+    }
+    
+    if (priceFilter) {
+        priceFilter.onchange = filterRealEstate;
+        console.log('✅ Price filter event attached');
+    }
+    
+    if (sortFilter) {
+        sortFilter.onchange = filterRealEstate;
+        console.log('✅ Sort filter event attached');
+    }
+}
+
 // ========== AFFICHAGE DES CARTES BIENS IMMOBILIERS ==========
 function displayRealEstatePosts(properties) {
     const container = document.getElementById('realestate-container');
@@ -248,35 +279,35 @@ function displayRealEstatePosts(properties) {
 function initializeRealEstateFilters(properties) {
     console.log('🔧 Initialisation des filtres immobilier...');
     
-    // 🔥 CORRECTION: Utiliser TOUS les types possibles, pas seulement ceux des propriétés
-const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
-    // Habitations
-    { value: 'villa', label: 'Villa' },
-    { value: 'appartement', label: 'Appartement' },
-    { value: 'maison', label: 'Maison' },
-    { value: 'studio', label: 'Studio' },
-    { value: 'duplex', label: 'Duplex' },
-    { value: 'triplex', label: 'Triplex' },
-    { value: 'riad', label: 'Riad' },
-    { value: 'chalet', label: 'Chalet' },
-    { value: 'bungalow', label: 'Bungalow' },
-    { value: 'ferme', label: 'Ferme' },
-    { value: 'residence', label: 'Résidence' },
-    
-    // Immobilier d'entreprise
-    { value: 'bureau', label: 'Bureau' },
-    { value: 'local_commercial', label: 'Local commercial' },
-    { value: 'commerce', label: 'Commerce' },
-    { value: 'cafe', label: 'Café' },
-    { value: 'magasin', label: 'Magasin' },
-    { value: 'entrepot', label: 'Entrepôt' },
-    { value: 'usine', label: 'Usine' },
-    
-    // Autres
-    { value: 'terrain', label: 'Terrain' },
-    { value: 'immeuble', label: 'Immeuble' },
-    { value: 'garage', label: 'Garage' }
-];
+    // CORRECTION: Utiliser TOUS les types possibles
+    const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
+        // Habitations
+        { value: 'villa', label: 'Villa' },
+        { value: 'appartement', label: 'Appartement' },
+        { value: 'maison', label: 'Maison' },
+        { value: 'studio', label: 'Studio' },
+        { value: 'duplex', label: 'Duplex' },
+        { value: 'triplex', label: 'Triplex' },
+        { value: 'riad', label: 'Riad' },
+        { value: 'chalet', label: 'Chalet' },
+        { value: 'bungalow', label: 'Bungalow' },
+        { value: 'ferme', label: 'Ferme' },
+        { value: 'residence', label: 'Résidence' },
+        
+        // Immobilier d'entreprise
+        { value: 'bureau', label: 'Bureau' },
+        { value: 'local_commercial', label: 'Local commercial' },
+        { value: 'commerce', label: 'Commerce' },
+        { value: 'cafe', label: 'Café' },
+        { value: 'magasin', label: 'Magasin' },
+        { value: 'entrepot', label: 'Entrepôt' },
+        { value: 'usine', label: 'Usine' },
+        
+        // Autres
+        { value: 'terrain', label: 'Terrain' },
+        { value: 'immeuble', label: 'Immeuble' },
+        { value: 'garage', label: 'Garage' }
+    ];
     
     // Mettre à jour le filtre des types
     const typeFilter = document.getElementById('realestateTypeFilter');
@@ -304,7 +335,11 @@ const allPossibleTypes = getAllPropertyTypes ? getAllPropertyTypes() : [
     
     // Mettre à jour le filtre des villes
     initializeRealEstateCitiesFilter();
+    
+    // Initialiser les événements de filtres
+    initializeRealEstateFilterEvents();
 }
+
 async function filterRealEstate() {
     console.log('🔍 Filtrage immobilier...');
     
@@ -314,12 +349,20 @@ async function filterRealEstate() {
         const priceRange = document.getElementById('realestatePriceFilter')?.value;
         const sort = document.getElementById('realestateSort')?.value;
         
-        const properties = await btpDB.get('realestate_posts');
+        const properties = await btpDB.get('realestate_posts') || [];
         let filteredProperties = properties.filter(property => {
+            // Filtre statut
+            if (!(property.status === 'approuve' || property.status === 'approved' || !property.status)) {
+                return false;
+            }
+            
+            // Filtre par type
             if (type && property.type !== type) return false;
+            
+            // Filtre par ville
             if (city && property.city !== city) return false;
             
-            // Filtrage par prix
+            // Filtre par prix
             if (priceRange && property.price) {
                 const price = property.price;
                 switch(priceRange) {
@@ -338,8 +381,10 @@ async function filterRealEstate() {
                 }
             }
             
-            return property.status === 'approuve' || property.status === 'approved' || !property.status;
+            return true;
         });
+        
+        console.log(`📊 Résultats filtrés: ${filteredProperties.length}/${properties.length}`);
         
         // Trier les résultats
         if (sort === 'price_asc') {
@@ -347,9 +392,13 @@ async function filterRealEstate() {
         } else if (sort === 'price_desc') {
             filteredProperties.sort((a, b) => (b.price || 0) - (a.price || 0));
         } else if (sort === 'premium') {
-            filteredProperties.sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+            filteredProperties.sort((a, b) => {
+                if (b.isPremium && !a.isPremium) return 1;
+                if (a.isPremium && !b.isPremium) return -1;
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            });
         } else {
-            // Plus récent d'abord
+            // Plus récent d'abord (par défaut)
             filteredProperties.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         }
         
@@ -366,8 +415,6 @@ async function filterRealEstate() {
         console.error('❌ Erreur filtrage immobilier:', error);
         if (typeof showAlert === 'function') {
             showAlert('❌ Erreur lors du filtrage', 'error');
-        } else {
-            console.error('Erreur filtrage:', error);
         }
     }
 }
@@ -471,7 +518,7 @@ function deleteAnnounce(propertyId, type) {
         btpDB.set('realestate_posts', updatedProperties).then(() => {
             showAlert('✅ Annonce supprimée avec succès', 'success');
             // Recharger les annonces
-            setTimeout(() => {
+                setTimeout(() => {
                 if (typeof loadRealEstateAnnounces === 'function') {
                     loadRealEstateAnnounces();
                 }
@@ -491,12 +538,18 @@ function initializeDisplayFunctions() {
     if (document.getElementById('realestateCityFilter')) {
         initializeRealEstateCitiesFilter();
     }
+    
+    // Initialiser les événements des filtres
+    if (document.getElementById('realestateTypeFilter')) {
+        initializeRealEstateFilterEvents();
+    }
 }
 
 // Export des fonctions
 window.displayRealEstatePosts = displayRealEstatePosts;
 window.initializeRealEstateFilters = initializeRealEstateFilters;
 window.initializeRealEstateCitiesFilter = initializeRealEstateCitiesFilter;
+window.initializeRealEstateFilterEvents = initializeRealEstateFilterEvents;
 window.filterRealEstate = filterRealEstate;
 window.clearRealEstateFilters = clearRealEstateFilters;
 window.showFilterResults = showFilterResults;

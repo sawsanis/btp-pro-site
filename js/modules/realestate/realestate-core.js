@@ -45,6 +45,13 @@ function goToSection(section) {
     if (activeLink) {
         activeLink.classList.add('active');
     }
+    
+    // Si on navigue vers immobilier, charger les annonces
+    if (section === 'realestate') {
+        setTimeout(() => {
+            loadRealEstateAnnounces();
+        }, 100);
+    }
 }
 
 function showPublishForm(formType) {
@@ -251,7 +258,7 @@ function showPublishRealEstate() {
     
     // S'assurer que le formulaire immobilier est visible
     setTimeout(() => {
-        showPublishForm('realestate');
+        showPublishForm('immobilier');
         
         // Initialiser les types de biens si disponible
         if (window.initializeRealEstateFormTypes) {
@@ -261,11 +268,6 @@ function showPublishRealEstate() {
         // Initialiser les villes si disponible
         if (window.initializeRealEstateCities) {
             window.initializeRealEstateCities();
-        }
-        
-        // Initialiser la prévisualisation des photos si disponible
-        if (window.setupPhotoPreview) {
-            window.setupPhotoPreview();
         }
     }, 100);
 }
@@ -309,6 +311,30 @@ function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
+}
+
+// ========== FONCTION D'AFFICHAGE BASIQUE (fallback) ==========
+function displayBasicRealEstatePosts(properties) {
+    const container = document.getElementById('realestate-container');
+    if (!container) return;
+    
+    let html = '';
+    properties.forEach(property => {
+        html += `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${property.title || 'Bien sans titre'}</h5>
+                    <p class="card-text">${property.description ? truncateText(property.description, 100) : ''}</p>
+                    <p><strong>Type:</strong> ${getPropertyTypeLabel(property.type)}</p>
+                    <p><strong>Prix:</strong> ${formatPrice(property.price)}</p>
+                    <p><strong>Ville:</strong> ${property.city || 'Non spécifiée'}</p>
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    container.innerHTML = html;
 }
 
 // ========== INITIALISATION DU MODULE ==========
@@ -396,8 +422,6 @@ function checkRealEstateSystemHealth() {
 window.loadRealEstateAnnounces = loadRealEstateAnnounces;
 window.showPublishRealEstate = showPublishRealEstate;
 window.initializeRealEstateModule = initializeRealEstateModule;
-window.filterRealEstate = filterRealEstate;
-window.clearRealEstateFilters = clearRealEstateFilters;
 window.checkAuthForPublish = checkAuthForPublish;
 window.showAlert = showAlert;
 window.showLoading = showLoading;
