@@ -187,7 +187,6 @@
                     </div>
                 </div>
             </div>
-</div>
         </div>
     </div>
 
@@ -705,7 +704,6 @@
                 </div>
             </div>
         </section>
-
         <!-- SECTION FREELANCERS -->
         <section id="freelancers-section" class="section-content">
             <div class="container my-5 py-5">
@@ -758,7 +756,8 @@
                     <!-- Pagination générée dynamiquement -->
                 </div>
             </div>
-</section>
+        </section>
+
         <!-- SECTION PROFESSIONNELS -->
         <section id="professionals-section" class="section-content">
             <div class="container my-5 py-5">
@@ -1127,56 +1126,25 @@
                             </div>
                         </div>
 
-                        <!-- Formulaire Immobilier -->
+                        <!-- Formulaire Immobilier CORRIGÉ -->
                         <div id="immobilier-form" class="publish-form" style="display: none;">
                             <div class="card">
                                 <div class="card-header bg-success text-white">
                                     <h5 class="mb-0"><i class="fas fa-home me-2"></i>Nouvelle annonce Immobilier</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form onsubmit="handlePublishRealEstate(event)">
+                                    <form id="immobilierForm" onsubmit="handlePublishRealEstate(event)">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Titre de l'annonce *</label>
-                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Villa Moderne 220m² - Marrakech">
+                                                <input type="text" class="form-control" name="title" required 
+                                                       placeholder="Ex: Villa Moderne 220m² - Marrakech" id="realEstateTitle">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Type de bien *</label>
-                                                <select class="form-select" name="type" required>
+                                                <select class="form-select" name="type" required id="realEstateType">
                                                     <option value="">Choisir un type</option>
-                                                    
-                                                    <!-- Habitations -->
-                                                    <optgroup label="Habitations">
-                                                        <option value="villa">Villa</option>
-                                                        <option value="appartement">Appartement</option>
-                                                        <option value="maison">Maison</option>
-                                                        <option value="studio">Studio</option>
-                                                        <option value="duplex">Duplex</option>
-                                                        <option value="triplex">Triplex</option>
-                                                        <option value="riad">Riad</option>
-                                                        <option value="chalet">Chalet</option>
-                                                        <option value="bungalow">Bungalow</option>
-                                                        <option value="ferme">Ferme</option>
-                                                        <option value="residence">Résidence</option>
-                                                    </optgroup>
-                                                    
-                                                    <!-- Immobilier d'entreprise -->
-                                                    <optgroup label="Immobilier d'entreprise">
-                                                        <option value="bureau">Bureau</option>
-                                                        <option value="local_commercial">Local commercial</option>
-                                                        <option value="commerce">Commerce</option>
-                                                        <option value="cafe">Café</option>
-                                                        <option value="magasin">Magasin</option>
-                                                        <option value="entrepot">Entrepôt</option>
-                                                        <option value="usine">Usine</option>
-                                                    </optgroup>
-                                                    
-                                                    <!-- Autres -->
-                                                    <optgroup label="Autres">
-                                                        <option value="terrain">Terrain</option>
-                                                        <option value="immeuble">Immeuble</option>
-                                                        <option value="garage">Garage</option>
-                                                    </optgroup>
+                                                    <!-- Types chargés dynamiquement par JavaScript -->
                                                 </select>
                                             </div>
                                         </div>
@@ -1184,39 +1152,76 @@
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Prix (MAD) *</label>
-                                                <input type="number" class="form-control" name="price" required placeholder="Ex: 2800000">
+                                                <input type="number" class="form-control" name="price" required 
+                                                       placeholder="Ex: 2800000" min="0" id="realEstatePrice">
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Surface (m²)</label>
-                                                <input type="number" class="form-control" name="surface" placeholder="Ex: 220">
+                                                <input type="number" class="form-control" name="surface" 
+                                                       placeholder="Ex: 220" min="0" id="realEstateSurface">
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Nombre de pièces</label>
-                                                <input type="number" class="form-control" name="rooms" placeholder="Ex: 4">
+                                                <input type="number" class="form-control" name="rooms" 
+                                                       placeholder="Ex: 4" min="0" id="realEstateRooms">
                                             </div>
                                         </div>
                                         
-                                        <div class="mb-3">
-                                            <label class="form-label">Adresse *</label>
-                                            <input type="text" class="form-control" name="address" required placeholder="Ex: Gueliz, Marrakech">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Ville *</label>
+                                                <select class="form-select" name="city" required id="realEstateCity">
+                                                    <option value="">Choisir une ville</option>
+                                                    <!-- Villes marocaines chargées dynamiquement -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Adresse *</label>
+                                                <input type="text" class="form-control" name="address" required 
+                                                       placeholder="Ex: Quartier Gueliz, Marrakech" id="realEstateAddress">
+                                            </div>
                                         </div>
                                         
                                         <div class="mb-3">
                                             <label class="form-label">Description détaillée *</label>
-                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez votre bien..."></textarea>
+                                            <textarea class="form-control" name="description" rows="4" required 
+                                                      placeholder="Décrivez votre bien en détail... (caractéristiques, équipements, environnement, etc.)"
+                                                      id="realEstateDescription"></textarea>
+                                            <small class="text-muted">Minimum 50 caractères</small>
                                         </div>
                                         
-                                        <div class="mb-3">
-                                            <label class="form-label">Votre téléphone *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Votre téléphone *</label>
+                                                <input type="tel" class="form-control" name="phone" required 
+                                                       placeholder="+212 XX XX XX XX" id="realEstatePhone">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Email (optionnel)</label>
+                                                <input type="email" class="form-control" name="email" 
+                                                       placeholder="votre@email.com" id="realEstateEmail">
+                                            </div>
                                         </div>
                                         
-                                        <!-- NOUVEAU SYSTÈME D'UPLOAD PHOTO (10 photos) -->
-                                        <div id="immobilier-form-photos-container"></div>
+                                        <!-- Système d'upload photo corrigé (10 photos max) -->
+                                        <div id="immobilier-form-photos-container">
+                                            <!-- Le système d'upload sera injecté ici par JavaScript -->
+                                        </div>
                                         
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
-                                        </button>
+                                        <div class="d-flex gap-2 mt-4">
+                                            <button type="submit" class="btn btn-success flex-grow-1" id="publishRealEstateBtn">
+                                                <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="resetRealEstateForm()">
+                                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="alert alert-info mt-3 small">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Important :</strong> Votre annonce sera soumise à modération avant publication. 
+                                            Les annonces avec photos sont 5 fois plus consultées.
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -1275,7 +1280,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Formulaire Freelance -->
                         <div id="freelance-form" class="publish-form" style="display: none;">
                             <div class="card">
@@ -1842,9 +1846,103 @@
 <!-- Assistant IA -->
 <script src="js/ai-assistant.js"></script>
 
-<!-- Diagnostic filtres (optionnel) -->
+<!-- Script d'initialisation du formulaire immobilier -->
 <script>
-// Script de vérification simple
+// Fonction pour réinitialiser le formulaire
+function resetRealEstateForm() {
+    if (confirm('Voulez-vous réinitialiser le formulaire ? Toutes les données seront perdues.')) {
+        const form = document.getElementById('immobilierForm');
+        if (form) {
+            form.reset();
+            // Réinitialiser aussi les photos
+            if (typeof window.resetPhotoUpload === 'function') {
+                window.resetPhotoUpload('immobilier-form');
+            }
+            showAlert('Formulaire réinitialisé', 'info');
+        }
+    }
+}
+
+// Initialisation automatique lorsque le formulaire devient visible
+document.addEventListener('DOMContentLoaded', function() {
+    // Observer les changements de visibilité du formulaire
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const immobilierForm = document.getElementById('immobilier-form');
+                if (immobilierForm && immobilierForm.style.display !== 'none') {
+                    console.log('🏠 Formulaire immobilier devenu visible - Initialisation...');
+                    
+                    // Initialiser après un court délai
+                    setTimeout(function() {
+                        // Initialiser le système d'upload photo
+                        if (typeof window.initializePhotoUpload === 'function') {
+                            window.initializePhotoUpload('immobilier-form');
+                            console.log('✅ Système d\'upload photo initialisé');
+                        } else {
+                            console.warn('⚠️ Fonction initializePhotoUpload non disponible');
+                        }
+                        
+                        // Initialiser les types et villes
+                        if (typeof window.initializeRealEstateForm === 'function') {
+                            window.initializeRealEstateForm();
+                            console.log('✅ Types et villes initialisés');
+                        } else {
+                            console.warn('⚠️ Fonction initializeRealEstateForm non disponible');
+                        }
+                    }, 300);
+                }
+            }
+        });
+    });
+    
+    const immobilierForm = document.getElementById('immobilier-form');
+    if (immobilierForm) {
+        observer.observe(immobilierForm, { attributes: true });
+        console.log('👁️ Observateur configuré pour le formulaire immobilier');
+    }
+    
+    // Initialisation immédiate si le formulaire est déjà visible
+    if (immobilierForm && immobilierForm.style.display !== 'none') {
+        console.log('🏠 Formulaire immobilier déjà visible - Initialisation immédiate');
+        setTimeout(function() {
+            if (typeof window.initializePhotoUpload === 'function') {
+                window.initializePhotoUpload('immobilier-form');
+            }
+            if (typeof window.initializeRealEstateForm === 'function') {
+                window.initializeRealEstateForm();
+            }
+        }, 500);
+    }
+});
+
+// Fonction pour afficher le formulaire immobilier
+function showRealEstateForm() {
+    console.log('📋 Affichage du formulaire immobilier');
+    
+    // Masquer tous les formulaires
+    document.querySelectorAll('.publish-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Afficher le formulaire immobilier
+    const immobilierForm = document.getElementById('immobilier-form');
+    if (immobilierForm) {
+        immobilierForm.style.display = 'block';
+        
+        // Initialiser après un court délai
+        setTimeout(() => {
+            if (typeof window.initializePhotoUpload === 'function') {
+                window.initializePhotoUpload('immobilier-form');
+            }
+            if (typeof window.initializeRealEstateForm === 'function') {
+                window.initializeRealEstateForm();
+            }
+        }, 100);
+    }
+}
+
+// Diagnostic filtres (optionnel)
 console.log('=== VÉRIFICATION REALESTATE ===');
 console.log('1. filterRealEstate disponible:', typeof filterRealEstate);
 console.log('2. displayRealEstatePosts disponible:', typeof displayRealEstatePosts);
@@ -1862,5 +1960,5 @@ window.testRealEstate = function() {
 };
 </script>
 
-</body>
+</body> 
 </html>
