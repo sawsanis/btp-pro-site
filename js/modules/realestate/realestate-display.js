@@ -23,14 +23,23 @@ function initializeRealEstateCitiesFilter() {
         cityFilter.removeChild(cityFilter.lastChild);
     }
     
-    // Liste des 30+ principales villes marocaines pour les filtres
+    // Liste complète des villes marocaines
     const moroccanCities = [
-        'Casablanca', 'Rabat', 'Fès', 'Marrakech', 'Tanger', 'Agadir',
-        'Meknès', 'Oujda', 'Kénitra', 'Tétouan', 'Safi', 'Mohammédia',
-        'El Jadida', 'Berkane', 'Nador', 'Taza', 'Settat', 'Larache',
-        'Khouribga', 'Béni Mellal', 'Errachidia', 'Tiznit', 'Essaouira',
-        'Chefchaouen', 'Ouarzazate', 'Figuig', 'Al Hoceïma', 'Asilah',
-        'Midelt', 'Taroudant', 'Sidi Ifni', 'Dakhla', 'Laâyoune', 'Smara', 'Guelmim'
+        'Agadir', 'Aïn Harrouda', 'Al Hoceïma', 'Asilah', 'Assa',
+        'Azilal', 'Azrou', 'Ben Guerir', 'Berkane', 'Béni Mellal',
+        'Bouizakarne', 'Boujdour', 'Bouskoura', 'Casablanca',
+        'Chefchaouen', 'Dakhla', 'Dar Bouazza', 'El Hajeb',
+        'El Jadida', 'El Kelaa des Sraghna', 'Errachidia', 'Es-Semara',
+        'Essaouira', 'Fam El Hisn', 'Fès', 'Figuig', 'Fnideq',
+        'Foum Zguid', 'Guelmim', 'Guelta Zemmour', 'Ifrane', 'Jrada',
+        'Kénitra', 'Khouribga', 'Laâyoune', 'Larache', 'Marrakech',
+        'Martil', 'Meknès', 'Midelt', 'Mohammédia', 'Moulay Abdallah',
+        'Nador', 'Ouarzazate', 'Oued Zem', 'Oujda', 'Oulad Teima',
+        'Rabat', 'Safi', 'Salé', 'Sefrou', 'Settat', 'Sidi Bennour',
+        'Sidi Ifni', 'Sidi Kacem', 'Sidi Slimane', 'Sidi Yahya Zaer',
+        'Smara', 'Tafraout', 'Tanger', 'Tan-Tan', 'Taourirt',
+        'Taroudant', 'Tarfaya', 'Tata', 'Taza', 'Témara', 'Tétouan',
+        'Tiflet', 'Tiznit', 'Youssoufia', 'Zagora', 'Autres'
     ];
     
     // Trier les villes par ordre alphabétique
