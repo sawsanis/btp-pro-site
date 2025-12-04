@@ -1,4 +1,4 @@
-// export-import.js - Gestion de l'import/export Excel AVEC MOTS DE PASSE
+// export-import.js - Gestion de l'import/export Excel
 class ExportImportManager {
     constructor() {
         this.importedData = null;
@@ -22,22 +22,6 @@ class ExportImportManager {
             if (importBtn) {
                 importBtn.addEventListener('click', () => {
                     this.showImportModal();
-                });
-            }
-
-            // 🔥 NOUVEAU: Bouton de sauvegarde complète avec mots de passe
-            const backupBtn = document.getElementById('backupDataBtn');
-            if (backupBtn) {
-                backupBtn.addEventListener('click', () => {
-                    this.exportCompleteBackup();
-                });
-            }
-
-            // 🔥 NOUVEAU: Bouton de migration serveur
-            const migrateBtn = document.getElementById('migrateServerBtn');
-            if (migrateBtn) {
-                migrateBtn.addEventListener('click', () => {
-                    this.migrateToNewServer();
                 });
             }
         });
@@ -67,9 +51,6 @@ class ExportImportManager {
                 case 'professionals':
                     await this.exportProfessionals();
                     break;
-                case 'complete-backup':
-                    await this.exportCompleteBackup();
-                    break;
                 default:
                     await this.exportSubscribers();
             }
@@ -79,211 +60,32 @@ class ExportImportManager {
         }
     }
 
-    // 🔥 NOUVELLE FONCTION: Export de sauvegarde complète avec mots de passe
-    async exportCompleteBackup() {
-        try {
-            if (!checkAdminAccess()) return;
-
-            this.showAlert('🔄 Préparation de la sauvegarde complète...', 'info');
-
-            // Utiliser la fonction de database.js qui inclut les mots de passe
-            const backupData = await btpDB.exportCompleteData();
-
-            if (!backupData || Object.keys(backupData).length === 0) {
-                throw new Error('Aucune donnée à sauvegarder');
-            }
-
-            // 🔥 VÉRIFICATION DES MOTS DE PASSE
-            let passwordStats = { total: 0, withPassword: 0, withoutPassword: 0 };
-            if (backupData.users && backupData.users.length > 0) {
-                passwordStats.total = backupData.users.length;
-                passwordStats.withPassword = backupData.users.filter(user => user.password).length;
-                passwordStats.withoutPassword = backupData.users.filter(user => !user.password).length;
-                
-                console.log('🔐 Statistiques mots de passe:', passwordStats);
-            }
-
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `btp-pro-sauvegarde-complete-${timestamp}.json`;
-
-            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            // Afficher le résumé avec statistiques des mots de passe
-            this.showBackupSummary(backupData, fileName, passwordStats);
-
-            console.log('✅ Sauvegarde complète terminée:', fileName);
-
-        } catch (error) {
-            console.error('❌ Erreur sauvegarde complète:', error);
-            this.showAlert('❌ Erreur lors de la sauvegarde: ' + error.message, 'error');
-        }
-    }
-
-    // 🔥 NOUVELLE FONCTION: Afficher le résumé de sauvegarde
-    showBackupSummary(backupData, fileName, passwordStats) {
-        const stats = this.calculateBackupStats(backupData);
-        
-        const summaryHTML = `
-            <div class="alert alert-success">
-                <h5><i class="fas fa-shield-check me-2"></i>Sauvegarde complète réussie !</h5>
-                <p><strong>Fichier:</strong> ${fileName}</p>
-                
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h6>📊 Données sauvegardées:</h6>
-                        <ul class="list-unstyled">
-                            <li>👥 Utilisateurs: <strong>${stats.users}</strong></li>
-                            <li>🛒 Marketplace: <strong>${stats.marketplace}</strong></li>
-                            <li>🏠 Immobilier: <strong>${stats.realestate}</strong></li>
-                            <li>💼 Emplois: <strong>${stats.jobs}</strong></li>
-                            <li>🎨 Freelance: <strong>${stats.freelancers}</strong></li>
-                            <li>👷 Professionnels: <strong>${stats.professionals}</strong></li>
-                            <li>💬 Forum: <strong>${stats.forum_topics + stats.forum_replies} messages</strong></li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>🔐 État des mots de passe:</h6>
-                        <ul class="list-unstyled">
-                            <li>✅ Avec mot de passe: <strong>${passwordStats.withPassword}</strong></li>
-                            <li>⚠️ Sans mot de passe: <strong>${passwordStats.withoutPassword}</strong></li>
-                            <li>📈 Couverture: <strong>${passwordStats.total > 0 ? Math.round((passwordStats.withPassword / passwordStats.total) * 100) : 0}%</strong></li>
-                        </ul>
-                        ${passwordStats.withoutPassword > 0 ? 
-                            '<div class="alert alert-warning mt-2"><small><i class="fas fa-exclamation-triangle me-1"></i>Certains utilisateurs n\'ont pas de mot de passe.</small></div>' : 
-                            '<div class="alert alert-success mt-2"><small><i class="fas fa-shield-check me-1"></i>Tous les utilisateurs ont un mot de passe.</small></div>'
-                        }
-                    </div>
-                </div>
-                
-                <div class="mt-3">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Cette sauvegarde inclut <strong>TOUS les mots de passe utilisateur</strong> pour permettre une migration complète.
-                    </small>
-                </div>
-            </div>
-        `;
-
-        this.showAlert(summaryHTML, 'success', 10000);
-    }
-
-    // 🔥 NOUVELLE FONCTION: Calculer les statistiques de sauvegarde
-    calculateBackupStats(backupData) {
-        return {
-            users: backupData.users?.length || 0,
-            marketplace: backupData.marketplace_posts?.length || 0,
-            realestate: backupData.realestate_posts?.length || 0,
-            jobs: backupData.job_posts?.length || 0,
-            freelancers: backupData.freelancers?.length || 0,
-            professionals: backupData.professionals?.length || 0,
-            forum_topics: backupData.forum_topics?.length || 0,
-            forum_replies: backupData.forum_replies?.length || 0
-        };
-    }
-
-    // 🔥 NOUVELLE FONCTION: Migration vers nouveau serveur
-    async migrateToNewServer() {
-        try {
-            if (!checkAdminAccess()) return;
-
-            this.showAlert('🚀 Préparation de la migration...', 'info');
-
-            const migrationResult = await btpDB.migrateToNewServer();
-
-            if (migrationResult) {
-                this.showMigrationSummary(migrationResult);
-            }
-
-        } catch (error) {
-            console.error('❌ Erreur migration:', error);
-            this.showAlert('❌ Erreur lors de la migration: ' + error.message, 'error');
-        }
-    }
-
-    // 🔥 NOUVELLE FONCTION: Afficher le résumé de migration
-    showMigrationSummary(migrationResult) {
-        const { fileName, stats, passwordStatus } = migrationResult;
-
-        const summaryHTML = `
-            <div class="alert alert-success">
-                <h5><i class="fas fa-server me-2"></i>Fichier de migration généré !</h5>
-                <p><strong>Fichier:</strong> ${fileName}</p>
-                
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h6>📦 Données exportées:</h6>
-                        <ul class="list-unstyled">
-                            <li>👥 Utilisateurs: <strong>${stats.users}</strong></li>
-                            <li>🛒 Marketplace: <strong>${stats.marketplace}</strong></li>
-                            <li>🏠 Immobilier: <strong>${stats.realestate}</strong></li>
-                            <li>💼 Emplois: <strong>${stats.jobs}</strong></li>
-                            <li>🎨 Freelance: <strong>${stats.freelancers}</strong></li>
-                            <li>👷 Professionnels: <strong>${stats.professionals}</strong></li>
-                            <li>💬 Forum: <strong>${stats.forum_topics + stats.forum_replies} messages</strong></li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>🔐 Prêt pour migration:</h6>
-                        <ul class="list-unstyled">
-                            <li>✅ Utilisateurs avec mot de passe: <strong>${passwordStatus.usersWithPasswords}</strong></li>
-                            <li>⚠️ Utilisateurs sans mot de passe: <strong>${passwordStatus.usersWithoutPasswords}</strong></li>
-                            <li>📈 Taux de réussite: <strong>${Math.round((passwordStatus.usersWithPasswords / passwordStatus.totalUsers) * 100)}%</strong></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="mt-3">
-                    <h6>📋 Instructions de migration:</h6>
-                    <ol class="small">
-                        <li>Téléchargez le fichier <strong>${fileName}</strong></li>
-                        <li>Sur le nouveau serveur, allez dans l'administration</li>
-                        <li>Utilisez la fonction "Importer des données"</li>
-                        <li>Sélectionnez ce fichier de migration</li>
-                        <li>Confirmez l'import</li>
-                    </ol>
-                </div>
-
-                <div class="alert alert-info mt-2">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Les mots de passe sont inclus</strong> - Les utilisateurs pourront se connecter immédiatement sur le nouveau serveur.
-                </div>
-            </div>
-        `;
-
-        this.showAlert(summaryHTML, 'success', 15000);
-    }
-
-    // EXporter les abonnés vers Excel - CORRIGÉ POUR INCLURE MOTS DE PASSE
+    // EXporter les abonnés vers Excel - CORRIGÉ
     async exportSubscribers() {
         try {
             console.log('Début export abonnés...');
             
-            // Utiliser la base de données locale qui contient les mots de passe
-            const users = await btpDB.get('users');
+            const usersSnapshot = await firebase.firestore()
+                .collection('users')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            console.log('Nombre d\'utilisateurs trouvés:', users.length);
+            console.log('Nombre d\'utilisateurs trouvés:', usersSnapshot.size);
 
-            if (users.length === 0) {
+            if (usersSnapshot.empty) {
                 this.showAlert('Aucun abonné à exporter', 'warning');
                 return;
             }
 
             const subscribers = [];
 
-            users.forEach(user => {
+            usersSnapshot.forEach(doc => {
                 try {
+                    const user = doc.data();
                     console.log('Utilisateur trouvé:', user.email);
                     
                     const userData = {
-                        'ID': user.id,
+                        'ID': doc.id,
                         'Prénom': user.prenom || user.firstName || '',
                         'Nom': user.nom || user.lastName || '',
                         'Email': user.email || '',
@@ -292,18 +94,16 @@ class ExportImportManager {
                         'Entreprise': user.entreprise || user.company || '',
                         'Métier': user.metier || user.job || user.profession || '',
                         'Date d\'inscription': user.createdAt ? this.formatDate(user.createdAt) : '',
-                        'Dernière connexion': user.lastVisit ? this.formatDate(user.lastVisit) : '',
-                        'Statut Premium': user.hasPremium ? 'Oui' : 'Non',
-                        'Email vérifié': user.isVerified ? 'Oui' : 'Non',
+                        'Dernière connexion': user.lastLogin ? this.formatDate(user.lastLogin) : '',
+                        'Statut Premium': user.isPremium ? 'Oui' : 'Non',
+                        'Email vérifié': user.emailVerified ? 'Oui' : 'Non',
                         'Statut': user.status || 'active',
-                        'Source': user.source || 'inscription',
-                        // 🔥 CORRECTION: INCLURE LE MOT DE PASSE
-                        'Mot de passe': user.password || ''
+                        'Source': user.source || 'inscription'
                     };
                     
                     subscribers.push(userData);
                 } catch (userError) {
-                    console.error('Erreur traitement utilisateur:', user.id, userError);
+                    console.error('Erreur traitement utilisateur:', doc.id, userError);
                 }
             });
 
@@ -315,11 +115,7 @@ class ExportImportManager {
             }
 
             await this.downloadCSV(subscribers, `abonnes_btp_pro_${this.getTimestamp()}.csv`);
-            
-            // 🔥 AFFICHER LES STATISTIQUES DES MOTS DE PASSE
-            const usersWithPasswords = subscribers.filter(user => user['Mot de passe']).length;
-            const statsMessage = `${subscribers.length} abonnés exportés avec succès (${usersWithPasswords} avec mot de passe)`;
-            this.showAlert(statsMessage, 'success');
+            this.showAlert(`${subscribers.length} abonnés exportés avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export abonnés:', error);
@@ -330,30 +126,34 @@ class ExportImportManager {
     // Exporter les produits
     async exportProducts() {
         try {
-            const products = await btpDB.get('marketplace_posts');
+            const productsSnapshot = await firebase.firestore()
+                .collection('products')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            const exportData = [];
+            const products = [];
 
-            products.forEach(product => {
-                exportData.push({
-                    'ID': product.id,
+            productsSnapshot.forEach(doc => {
+                const product = doc.data();
+                products.push({
+                    'ID': doc.id,
                     'Titre': product.title || '',
                     'Description': product.description || '',
                     'Prix': product.price || '',
                     'Catégorie': product.category || '',
                     'Sous-catégorie': product.subcategory || '',
                     'Ville': product.city || product.location || '',
-                    'Vendeur': product.userName || product.vendor || '',
-                    'Email vendeur': product.userEmail || product.vendorEmail || '',
-                    'Téléphone vendeur': product.phone || product.vendorPhone || '',
+                    'Vendeur': product.sellerName || product.vendor || '',
+                    'Email vendeur': product.sellerEmail || product.vendorEmail || '',
+                    'Téléphone vendeur': product.sellerPhone || product.vendorPhone || '',
                     'Date publication': product.createdAt ? this.formatDate(product.createdAt) : '',
                     'Statut': product.status || 'active',
                     'Type': product.type || 'vente'
                 });
             });
 
-            await this.downloadCSV(exportData, `produits_btp_pro_${this.getTimestamp()}.csv`);
-            this.showAlert(`${exportData.length} produits exportés avec succès`, 'success');
+            await this.downloadCSV(products, `produits_btp_pro_${this.getTimestamp()}.csv`);
+            this.showAlert(`${products.length} produits exportés avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export produits:', error);
@@ -364,30 +164,34 @@ class ExportImportManager {
     // Exporter les biens immobiliers
     async exportRealEstate() {
         try {
-            const properties = await btpDB.get('realestate_posts');
+            const realEstateSnapshot = await firebase.firestore()
+                .collection('realestate')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            const exportData = [];
+            const properties = [];
 
-            properties.forEach(property => {
-                exportData.push({
-                    'ID': property.id,
+            realEstateSnapshot.forEach(doc => {
+                const property = doc.data();
+                properties.push({
+                    'ID': doc.id,
                     'Titre': property.title || '',
                     'Type': property.type || '',
                     'Prix': property.price || '',
                     'Surface': property.surface || '',
                     'Ville': property.city || property.location || '',
                     'Région': property.region || '',
-                    'Chambres': property.rooms || property.bedrooms || '',
+                    'Chambres': property.bedrooms || '',
                     'Salles de bain': property.bathrooms || '',
                     'Description': property.description || '',
                     'Date publication': property.createdAt ? this.formatDate(property.createdAt) : '',
                     'Statut': property.status || 'active',
-                    'Transaction': property.transaction || 'vente'
+                    'Transaction': property.transactionType || 'vente'
                 });
             });
 
-            await this.downloadCSV(exportData, `immobilier_btp_pro_${this.getTimestamp()}.csv`);
-            this.showAlert(`${exportData.length} biens immobiliers exportés avec succès`, 'success');
+            await this.downloadCSV(properties, `immobilier_btp_pro_${this.getTimestamp()}.csv`);
+            this.showAlert(`${properties.length} biens immobiliers exportés avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export immobilier:', error);
@@ -398,30 +202,34 @@ class ExportImportManager {
     // Exporter les offres d'emploi
     async exportJobs() {
         try {
-            const jobs = await btpDB.get('job_posts');
+            const jobsSnapshot = await firebase.firestore()
+                .collection('jobs')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            const exportData = [];
+            const jobs = [];
 
-            jobs.forEach(job => {
-                exportData.push({
-                    'ID': job.id,
-                    'Titre': job.poste || job.title || '',
+            jobsSnapshot.forEach(doc => {
+                const job = doc.data();
+                jobs.push({
+                    'ID': doc.id,
+                    'Titre': job.title || '',
                     'Entreprise': job.company || job.entreprise || '',
-                    'Type': job.contrat || job.type || job.contractType || '',
-                    'Salaire': job.salaire || job.salary || '',
-                    'Ville': job.ville || job.location || job.city || '',
+                    'Type': job.type || job.contractType || '',
+                    'Salaire': job.salary || job.salaire || '',
+                    'Ville': job.location || job.city || '',
                     'Région': job.region || '',
                     'Description': job.description || '',
-                    'Email contact': job.userEmail || job.contactEmail || job.email || '',
-                    'Téléphone contact': job.phone || job.contactPhone || '',
+                    'Email contact': job.contactEmail || job.email || '',
+                    'Téléphone contact': job.contactPhone || job.phone || '',
                     'Date publication': job.createdAt ? this.formatDate(job.createdAt) : '',
                     'Date expiration': job.expiryDate ? this.formatDate(job.expiryDate) : '',
                     'Statut': job.status || 'active'
                 });
             });
 
-            await this.downloadCSV(exportData, `emplois_btp_pro_${this.getTimestamp()}.csv`);
-            this.showAlert(`${exportData.length} offres d\'emploi exportées avec succès`, 'success');
+            await this.downloadCSV(jobs, `emplois_btp_pro_${this.getTimestamp()}.csv`);
+            this.showAlert(`${jobs.length} offres d\'emploi exportées avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export emplois:', error);
@@ -432,22 +240,26 @@ class ExportImportManager {
     // Exporter les freelancers
     async exportFreelancers() {
         try {
-            const freelancers = await btpDB.get('freelancers');
+            const freelancersSnapshot = await firebase.firestore()
+                .collection('freelancers')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            const exportData = [];
+            const freelancers = [];
 
-            freelancers.forEach(freelancer => {
-                exportData.push({
-                    'ID': freelancer.id,
+            freelancersSnapshot.forEach(doc => {
+                const freelancer = doc.data();
+                freelancers.push({
+                    'ID': doc.id,
                     'Prénom': freelancer.prenom || freelancer.firstName || '',
                     'Nom': freelancer.nom || freelancer.lastName || '',
-                    'Email': freelancer.userEmail || freelancer.email || '',
+                    'Email': freelancer.email || '',
                     'Téléphone': freelancer.telephone || freelancer.phone || '',
-                    'Ville': freelancer.ville || freelancer.city || freelancer.location || '',
+                    'Ville': freelancer.city || freelancer.location || '',
                     'Métier': freelancer.metier || freelancer.job || '',
                     'Spécialité': freelancer.specialty || freelancer.specialite || '',
                     'Expérience': freelancer.experience || '',
-                    'Taux journalier': freelancer.tarif || freelancer.dailyRate || '',
+                    'Taux journalier': freelancer.dailyRate || '',
                     'Description': freelancer.description || '',
                     'Compétences': freelancer.skills ? freelancer.skills.join(', ') : '',
                     'Date inscription': freelancer.createdAt ? this.formatDate(freelancer.createdAt) : '',
@@ -455,8 +267,8 @@ class ExportImportManager {
                 });
             });
 
-            await this.downloadCSV(exportData, `freelancers_btp_pro_${this.getTimestamp()}.csv`);
-            this.showAlert(`${exportData.length} freelancers exportés avec succès`, 'success');
+            await this.downloadCSV(freelancers, `freelancers_btp_pro_${this.getTimestamp()}.csv`);
+            this.showAlert(`${freelancers.length} freelancers exportés avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export freelancers:', error);
@@ -467,14 +279,18 @@ class ExportImportManager {
     // Exporter les professionnels
     async exportProfessionals() {
         try {
-            const professionals = await btpDB.get('professionals');
+            const professionalsSnapshot = await firebase.firestore()
+                .collection('professionals')
+                .orderBy('createdAt', 'desc')
+                .get();
 
-            const exportData = [];
+            const professionals = [];
 
-            professionals.forEach(professional => {
-                exportData.push({
-                    'ID': professional.id,
-                    'Nom entreprise': professional.company || professional.entreprise || '',
+            professionalsSnapshot.forEach(doc => {
+                const professional = doc.data();
+                professionals.push({
+                    'ID': doc.id,
+                    'Nom entreprise': professional.companyName || professional.entreprise || '',
                     'SIRET': professional.siret || '',
                     'Email': professional.email || '',
                     'Téléphone': professional.phone || professional.telephone || '',
@@ -490,8 +306,8 @@ class ExportImportManager {
                 });
             });
 
-            await this.downloadCSV(exportData, `professionnels_btp_pro_${this.getTimestamp()}.csv`);
-            this.showAlert(`${exportData.length} professionnels exportés avec succès`, 'success');
+            await this.downloadCSV(professionals, `professionnels_btp_pro_${this.getTimestamp()}.csv`);
+            this.showAlert(`${professionals.length} professionnels exportés avec succès`, 'success');
 
         } catch (error) {
             console.error('Erreur export professionnels:', error);
@@ -621,8 +437,6 @@ class ExportImportManager {
                                             <option value="products">Produits</option>
                                             <option value="realestate">Immobilier</option>
                                             <option value="jobs">Offres d'emploi</option>
-                                            <!-- 🔥 NOUVEAU: Import de sauvegarde complète -->
-                                            <option value="complete-backup">Sauvegarde complète</option>
                                         </select>
                                     </div>
                                 </div>
@@ -640,18 +454,14 @@ class ExportImportManager {
 
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <span id="importInstructions">
-                                    Format attendu: CSV avec séparateur point-virgule (;)
-                                </span>
+                                Format attendu: CSV avec séparateur point-virgule (;)
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Fichier à importer *</label>
-                                <input type="file" class="form-control" id="importFile" accept=".csv,.json" required>
+                                <input type="file" class="form-control" id="importFile" accept=".csv" required>
                                 <div class="form-text">
-                                    <span id="fileFormats">
-                                        Formats acceptés: CSV (.csv) - Max 1000 lignes
-                                    </span>
+                                    Format accepté: CSV (.csv) - Max 1000 lignes
                                 </div>
                             </div>
 
@@ -697,43 +507,14 @@ class ExportImportManager {
         document.getElementById('importPreview').classList.add('d-none');
         document.getElementById('confirmImportBtn').disabled = true;
         
-        // Écouter le changement de type d'import
-        document.getElementById('importType').addEventListener('change', (e) => {
-            this.updateImportInstructions(e.target.value);
-        });
-        
         document.getElementById('importFile').addEventListener('change', (event) => {
             this.handleFileImport(event);
         });
-
-        // Initialiser les instructions
-        this.updateImportInstructions('subscribers');
-    }
-
-    // 🔥 NOUVELLE FONCTION: Mettre à jour les instructions d'import
-    updateImportInstructions(importType) {
-        const instructions = document.getElementById('importInstructions');
-        const fileFormats = document.getElementById('fileFormats');
-        
-        if (importType === 'complete-backup') {
-            instructions.innerHTML = 'Format attendu: Fichier JSON de sauvegarde BTP Pro (inclut les mots de passe)';
-            fileFormats.innerHTML = 'Format accepté: JSON (.json) - Fichier de sauvegarde complète';
-        } else {
-            instructions.innerHTML = 'Format attendu: CSV avec séparateur point-virgule (;)';
-            fileFormats.innerHTML = 'Formats acceptés: CSV (.csv) - Max 1000 lignes';
-        }
     }
 
     // Télécharger le modèle Excel
     downloadTemplate() {
         const importType = document.getElementById('importType')?.value || 'subscribers';
-        
-        // Si c'est une sauvegarde complète, on ne peut pas fournir de modèle
-        if (importType === 'complete-backup') {
-            this.showAlert('Pour la sauvegarde complète, utilisez la fonction "Sauvegarde complète" pour générer un fichier.', 'info');
-            return;
-        }
-
         let templateData = [];
 
         switch(importType) {
@@ -746,8 +527,7 @@ class ExportImportManager {
                         'Téléphone': '+212612345678',
                         'Ville': 'Casablanca',
                         'Entreprise': 'BTP Maroc',
-                        'Métier': 'Architecte',
-                        'Mot de passe': 'motdepasse123' // 🔥 INCLURE LE MOT DE PASSE DANS LE MODÈLE
+                        'Métier': 'Architecte'
                     }
                 ];
                 break;
@@ -799,133 +579,25 @@ class ExportImportManager {
         try {
             this.showAlert('Lecture du fichier en cours...', 'info');
             
-            const importType = document.getElementById('importType').value;
+            const data = await this.readFile(file);
+            this.importedData = this.parseCSV(data);
             
-            if (importType === 'complete-backup') {
-                await this.handleBackupImport(file);
-            } else {
-                await this.handleCSVImport(file);
+            if (this.importedData.length === 0) {
+                throw new Error('Aucune donnée valide trouvée dans le fichier');
             }
+
+            if (this.importedData.length > 1000) {
+                this.showAlert('Limite de 1000 lignes dépassée. Seules les 1000 premières lignes seront importées.', 'warning');
+                this.importedData = this.importedData.slice(0, 1000);
+            }
+
+            this.showImportPreview(this.importedData);
+            document.getElementById('confirmImportBtn').disabled = false;
 
         } catch (error) {
             console.error('Erreur import:', error);
             this.showAlert('Erreur lors de la lecture du fichier: ' + error.message, 'error');
         }
-    }
-
-    // 🔥 NOUVELLE FONCTION: Gérer l'import de sauvegarde complète
-    async handleBackupImport(file) {
-        const data = await this.readFile(file);
-        const backupData = JSON.parse(data);
-        
-        // Valider la structure de la sauvegarde
-        if (!this.validateBackupData(backupData)) {
-            throw new Error('Format de sauvegarde invalide');
-        }
-
-        this.importedData = backupData;
-        this.showBackupImportPreview(backupData);
-        document.getElementById('confirmImportBtn').disabled = false;
-    }
-
-    // 🔥 NOUVELLE FONCTION: Valider les données de sauvegarde
-    validateBackupData(backupData) {
-        if (!backupData || typeof backupData !== 'object') {
-            return false;
-        }
-
-        // Vérifier la présence des collections essentielles
-        if (!backupData.users || !Array.isArray(backupData.users)) {
-            return false;
-        }
-
-        // Vérifier les mots de passe
-        console.log('🔐 Validation sauvegarde - Utilisateurs avec mots de passe:',
-            backupData.users.filter(user => user.password).length
-        );
-
-        return true;
-    }
-
-    // 🔥 NOUVELLE FONCTION: Afficher l'aperçu de sauvegarde
-    showBackupImportPreview(backupData) {
-        const preview = document.getElementById('importPreview');
-        const headerContainer = document.getElementById('importPreviewHeader');
-        const bodyContainer = document.getElementById('importPreviewBody');
-        const statsContainer = document.getElementById('importStats');
-
-        const stats = this.calculateBackupStats(backupData);
-        const usersWithPasswords = backupData.users ? backupData.users.filter(user => user.password).length : 0;
-
-        // Headers pour l'aperçu de sauvegarde
-        headerContainer.innerHTML = `
-            <tr>
-                <th>Collection</th>
-                <th>Nombre</th>
-                <th>Détails</th>
-            </tr>
-        `;
-
-        // Body
-        bodyContainer.innerHTML = `
-            <tr>
-                <td><strong>Utilisateurs</strong></td>
-                <td>${stats.users}</td>
-                <td>${usersWithPasswords} avec mot de passe</td>
-            </tr>
-            <tr>
-                <td>Marketplace</td>
-                <td>${stats.marketplace}</td>
-                <td>Annonces produits</td>
-            </tr>
-            <tr>
-                <td>Immobilier</td>
-                <td>${stats.realestate}</td>
-                <td>Biens immobiliers</td>
-            </tr>
-            <tr>
-                <td>Emplois</td>
-                <td>${stats.jobs}</td>
-                <td>Offres d'emploi</td>
-            </tr>
-            <tr>
-                <td>Freelance</td>
-                <td>${stats.freelancers}</td>
-                <td>Profils freelancers</td>
-            </tr>
-            <tr>
-                <td>Professionnels</td>
-                <td>${stats.professionals}</td>
-                <td>Entreprises</td>
-            </tr>
-        `;
-
-        // Stats
-        statsContainer.innerHTML = `
-            ${stats.users} utilisateurs • 
-            ${usersWithPasswords} avec mots de passe •
-            Total: ${Object.values(stats).reduce((sum, val) => sum + val, 0)} enregistrements
-        `;
-
-        preview.classList.remove('d-none');
-    }
-
-    // Gérer l'import CSV standard
-    async handleCSVImport(file) {
-        const data = await this.readFile(file);
-        this.importedData = this.parseCSV(data);
-        
-        if (this.importedData.length === 0) {
-            throw new Error('Aucune donnée valide trouvée dans le fichier');
-        }
-
-        if (this.importedData.length > 1000) {
-            this.showAlert('Limite de 1000 lignes dépassée. Seules les 1000 premières lignes seront importées.', 'warning');
-            this.importedData = this.importedData.slice(0, 1000);
-        }
-
-        this.showImportPreview(this.importedData);
-        document.getElementById('confirmImportBtn').disabled = false;
     }
 
     // Lire le fichier
@@ -1046,54 +718,35 @@ class ExportImportManager {
 
     // Confirmer l'import
     async confirmImport() {
-        if (!this.importedData) {
+        if (!this.importedData || this.importedData.length === 0) {
             this.showAlert('Aucune donnée à importer', 'error');
             return;
         }
 
         const importBtn = document.getElementById('confirmImportBtn');
         const originalText = importBtn.innerHTML;
+        importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Import en cours...';
         importBtn.disabled = true;
 
         try {
             const importType = document.getElementById('importType').value;
             let results;
 
-            if (importType === 'complete-backup') {
-                // 🔥 IMPORT DE SAUVEGARDE COMPLÈTE
-                importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sauvegarde en cours...';
-                
-                if (!confirm('⚠️ IMPORTANT: Cette opération va ÉCRASER toutes les données existantes. Une sauvegarde automatique sera créée. Continuer ?')) {
-                    return;
-                }
-
-                await btpDB.importCompleteData(this.importedData);
-                results = { 
-                    importedCount: Object.values(this.calculateBackupStats(this.importedData)).reduce((sum, val) => sum + val, 0),
-                    updatedCount: 0,
-                    errorCount: 0,
-                    errors: []
-                };
-            } else {
-                // Import CSV standard
-                importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Import en cours...';
-                
-                switch(importType) {
-                    case 'subscribers':
-                        results = await this.importSubscribers();
-                        break;
-                    case 'products':
-                        results = await this.importProducts();
-                        break;
-                    case 'realestate':
-                        results = await this.importRealEstate();
-                        break;
-                    case 'jobs':
-                        results = await this.importJobs();
-                        break;
-                    default:
-                        results = await this.importSubscribers();
-                }
+            switch(importType) {
+                case 'subscribers':
+                    results = await this.importSubscribers();
+                    break;
+                case 'products':
+                    results = await this.importProducts();
+                    break;
+                case 'realestate':
+                    results = await this.importRealEstate();
+                    break;
+                case 'jobs':
+                    results = await this.importJobs();
+                    break;
+                default:
+                    results = await this.importSubscribers();
             }
 
             this.showImportResults(results);
@@ -1101,14 +754,14 @@ class ExportImportManager {
 
         } catch (error) {
             console.error('Erreur import général:', error);
-            this.showAlert('❌ Erreur lors de l\'import: ' + error.message, 'error');
+            this.showAlert('Erreur lors de l\'import: ' + error.message, 'error');
         } finally {
             importBtn.innerHTML = originalText;
             importBtn.disabled = false;
         }
     }
 
-    // Importer les abonnés - CORRIGÉ POUR GÉRER LES MOTS DE PASSE
+    // Importer les abonnés - CORRIGÉ
     async importSubscribers() {
         let importedCount = 0;
         let updatedCount = 0;
@@ -1179,7 +832,7 @@ class ExportImportManager {
                     updatedAt: new Date()
                 };
 
-                await btpDB.post('marketplace_posts', productData);
+                await firebase.firestore().collection('products').add(productData);
                 importedCount++;
 
             } catch (error) {
@@ -1212,14 +865,14 @@ class ExportImportManager {
                     price: parseFloat(row['Prix']) || 0,
                     surface: parseInt(row['Surface']) || 0,
                     city: row['Ville'] || '',
-                    rooms: parseInt(row['Chambres']) || 0,
+                    bedrooms: parseInt(row['Chambres']) || 0,
                     description: row['Description'] || '',
                     status: 'active',
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
 
-                await btpDB.post('realestate_posts', propertyData);
+                await firebase.firestore().collection('realestate').add(propertyData);
                 importedCount++;
 
             } catch (error) {
@@ -1247,18 +900,19 @@ class ExportImportManager {
                 }
 
                 const jobData = {
-                    poste: row['Titre'],
+                    title: row['Titre'],
                     company: row['Entreprise'],
-                    contrat: row['Type'] || 'CDI',
-                    salaire: row['Salaire'] || '',
-                    ville: row['Ville'] || '',
+                    type: row['Type'] || 'CDI',
+                    salary: row['Salaire'] || '',
+                    location: row['Ville'] || '',
                     description: row['Description'] || '',
+                    contactEmail: row['Email contact'] || '',
                     status: 'active',
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
 
-                await btpDB.post('job_posts', jobData);
+                await firebase.firestore().collection('jobs').add(jobData);
                 importedCount++;
 
             } catch (error) {
@@ -1299,18 +953,28 @@ class ExportImportManager {
         return emailRegex.test(email);
     }
 
-    // Trouver un utilisateur par email - CORRIGÉ POUR BASE LOCALE
+    // Trouver un utilisateur par email - CORRIGÉ
     async findUserByEmail(email) {
         try {
-            const users = await btpDB.get('users');
-            return users.find(user => user.email.toLowerCase() === email.toLowerCase()) || null;
+            const snapshot = await firebase.firestore()
+                .collection('users')
+                .where('email', '==', email.toLowerCase())
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) return null;
+
+            return {
+                id: snapshot.docs[0].id,
+                ...snapshot.docs[0].data()
+            };
         } catch (error) {
             console.error('Erreur recherche utilisateur:', error);
             return null;
         }
     }
 
-    // Mettre à jour un utilisateur existant - CORRIGÉ POUR BASE LOCALE
+    // Mettre à jour un utilisateur existant - CORRIGÉ
     async updateUser(userId, data) {
         const updateData = {
             prenom: data['Prénom'] || '',
@@ -1319,9 +983,7 @@ class ExportImportManager {
             ville: data['Ville'] || '',
             entreprise: data['Entreprise'] || '',
             metier: data['Métier'] || '',
-            // 🔥 CORRECTION: Mettre à jour le mot de passe si fourni
-            ...(data['Mot de passe'] && { password: data['Mot de passe'] }),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date()
         };
 
         // Nettoyer les données (supprimer les champs vides)
@@ -1331,31 +993,34 @@ class ExportImportManager {
             }
         });
 
-        await btpDB.put('users', userId, updateData);
+        await firebase.firestore()
+            .collection('users')
+            .doc(userId)
+            .update(updateData);
     }
 
-    // Créer un nouvel utilisateur - CORRIGÉ POUR BASE LOCALE
+    // Créer un nouvel utilisateur - CORRIGÉ
     async createUser(data) {
         const userData = {
             prenom: data['Prénom'] || '',
             nom: data['Nom'] || '',
             email: data['Email'].toLowerCase(),
-            // 🔥 CORRECTION: INCLURE LE MOT DE PASSE
-            password: data['Mot de passe'] || 'btp123', // Mot de passe par défaut
             telephone: data['Téléphone'] || '',
             ville: data['Ville'] || '',
             entreprise: data['Entreprise'] || '',
             metier: data['Métier'] || '',
-            hasPremium: false,
-            isVerified: false,
+            isPremium: false,
+            emailVerified: false,
             status: 'active',
             source: 'import_csv',
-            createdAt: new Date().toISOString(),
-            lastVisit: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            updatedAt: new Date()
         };
 
-        await btpDB.post('users', userData);
+        await firebase.firestore()
+            .collection('users')
+            .add(userData);
     }
 
     // Afficher une alerte
@@ -1384,23 +1049,16 @@ class ExportImportManager {
         
         document.body.insertAdjacentHTML('beforeend', alertHTML);
         
-        // Auto-fermeture après 5 secondes (sauf pour les succès importants)
-        const duration = type === 'success' && message.includes('Sauvegarde') ? 10000 : 5000;
+        // Auto-fermeture après 5 secondes
         setTimeout(() => {
             const alert = document.querySelector('.alert.position-fixed');
             if (alert) {
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             }
-        }, duration);
+        }, 5000);
     }
 }
 
 // Initialiser le manager d'import/export
 const exportImportManager = new ExportImportManager();
-
-// 🔥 EXPORTER LES FONCTIONS POUR L'ADMINISTRATION
-window.exportCompleteBackup = () => exportImportManager.exportCompleteBackup();
-window.migrateToNewServer = () => exportImportManager.migrateToNewServer();
-
-console.log('✅ export-import.js CORRIGÉ - Sauvegarde avec mots de passe activée');

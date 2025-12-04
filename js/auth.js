@@ -816,7 +816,7 @@ function loadProfileData() {
     console.log(`📊 Statistiques profil auth.js: ${emptyFields} champs vides sur ${Object.keys(fieldMappings).length}`);
 }
 
-// 🔥 FONCTION changePassword CORRIGÉE
+// 🔥 FONCTION changePassword CORRIGÉE - Gère les deux formulaires
 async function changePassword(event) {
     if (event) event.preventDefault();
     
@@ -825,9 +825,36 @@ async function changePassword(event) {
         return;
     }
     
-    const currentPassword = document.getElementById('currentPassword')?.value;
-    const newPassword = document.getElementById('newPassword')?.value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword')?.value;
+    // 🔥 CORRECTION : Chercher les DEUX formulaires possibles
+    let currentPassword, newPassword, confirmNewPassword;
+    let formFound = false;
+    
+    // Essayer le premier formulaire (modal profil)
+    const form1 = document.getElementById('changePasswordForm');
+    if (form1) {
+        currentPassword = document.getElementById('currentPassword')?.value;
+        newPassword = document.getElementById('newPassword')?.value;
+        confirmNewPassword = document.getElementById('confirmNewPassword')?.value;
+        formFound = true;
+    }
+    
+    // Si non trouvé, essayer le deuxième formulaire (section mon compte)
+    if (!formFound) {
+        const form2 = document.getElementById('changePasswordForm2');
+        if (form2) {
+            currentPassword = document.getElementById('currentPassword2')?.value;
+            newPassword = document.getElementById('newPassword2')?.value;
+            confirmNewPassword = document.getElementById('confirmNewPassword2')?.value;
+            formFound = true;
+        }
+    }
+    
+    // Si aucun formulaire trouvé
+    if (!formFound) {
+        console.error('❌ Formulaire changement mot de passe non trouvé');
+        showAlert('❌ Erreur: Formulaire non trouvé', 'error');
+        return;
+    }
     
     // Validation renforcée
     if (!currentPassword || !newPassword || !confirmNewPassword) {
@@ -853,40 +880,46 @@ async function changePassword(event) {
         
         showAlert('✅ Mot de passe changé avec succès', 'success');
         
-        // Réinitialiser le formulaire
-        document.getElementById('changePasswordForm')?.reset();
+        // 🔥 CORRECTION : Réinitialiser les DEUX formulaires
+        if (form1) {
+            form1.reset();
+        }
         
-        // Fermer le modal
-        setTimeout(() => {
-            const passwordModal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
-            if (passwordModal) {
-                passwordModal.hide();
-            }
-        }, 1000);
+        const form2 = document.getElementById('changePasswordForm2');
+        if (form2) {
+            form2.reset();
+        }
+        
+        // Fermer le modal si ouvert
+        const passwordModal = bootstrap.Modal.getInstance(document.getElementById('passwordModal'));
+        if (passwordModal) {
+            passwordModal.hide();
+        }
         
     } catch (error) {
         console.error('❌ Erreur changement mot de passe:', error);
-        showAlert('❌ Erreur lors du changement de mot de passe: ' + error.message, 'error');
+        showAlert(`❌ Erreur: ${error.message || 'Impossible de changer le mot de passe'}`, 'error');
     } finally {
         showLoading(false);
     }
 }
 
-// Fonction pour afficher le modal de changement de mot de passe
+// 🔥 CORRECTION : Fonction pour afficher le modal de changement de mot de passe
 function showChangePasswordModal() {
-    if (!checkAuth()) {
-        showAlert('🔐 Connectez-vous pour changer votre mot de passe', 'warning');
-        showLoginModal();
+    // Essayer les deux modals possibles
+    const modal1 = document.getElementById('passwordModal');
+    const modal2 = document.getElementById('passwordModal2');
+    
+    const modalToShow = modal1 || modal2;
+    
+    if (!modalToShow) {
+        console.error('❌ Modal changement mot de passe non trouvé');
+        showAlert('❌ Erreur: Modal non trouvé', 'error');
         return;
     }
     
-    const passwordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
-    
-    // Réinitialiser le formulaire
-    const form = document.getElementById('changePasswordForm');
-    if (form) form.reset();
-    
-    passwordModal.show();
+    const modal = new bootstrap.Modal(modalToShow);
+    modal.show();
 }
 
 // ========== INITIALISATION RENFORCÉE ==========

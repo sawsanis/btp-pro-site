@@ -1,5 +1,5 @@
 // ========== SYSTÈME UPLOAD PHOTO SIMPLIFIÉ POUR IMMOBILIER ==========
-console.log('📸 photo-upload.js - Version simplifiée');
+console.log('📸 photo-upload.js - Version corrigée');
 
 class PhotoUploadSystem {
     constructor() {
@@ -29,8 +29,11 @@ class PhotoUploadSystem {
         // Créer l'interface
         this.createInterface(container);
         
+        // Désactiver la soumission automatique du formulaire par le input file
+        this.preventFormSubmitOnFileSelect(formId);
+        
         this.initializedForms.add(formId);
-        console.log(`✅ ${formId} initialisé`);
+        console.log(`✅ ${formId} initialisé - Soumission automatique désactivée`);
     }
 
     createContainer(formId) {
@@ -69,6 +72,7 @@ class PhotoUploadSystem {
                         <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
                         <p class="mb-1">Cliquez pour sélectionner des photos</p>
                         <button class="btn btn-sm btn-outline-primary mt-2" 
+                                type="button"
                                 id="${this.currentFormId}-select-btn">
                             <i class="fas fa-plus me-1"></i>Sélectionner
                         </button>
@@ -90,20 +94,45 @@ class PhotoUploadSystem {
         this.updateDisplay();
     }
 
+    // NOUVELLE FONCTION : Empêcher la soumission automatique
+    preventFormSubmitOnFileSelect(formId) {
+        const fileInput = document.getElementById(`${formId}-file-input`);
+        if (!fileInput) return;
+        
+        // Empêcher l'événement change de propager au formulaire
+        fileInput.addEventListener('change', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            this.handleFileSelect(e);
+        });
+        
+        // Empêcher le clic sur le bouton de propager
+        const selectBtn = document.getElementById(`${formId}-select-btn`);
+        if (selectBtn) {
+            selectBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput.click();
+            });
+        }
+    }
+
     setupEvents() {
         const formId = this.currentFormId;
         const selectBtn = document.getElementById(`${formId}-select-btn`);
         const fileInput = document.getElementById(`${formId}-file-input`);
         
         if (selectBtn && fileInput) {
-            selectBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+            // NE PAS déclencher le clic ici - déjà fait dans preventFormSubmitOnFileSelect
+            console.log('✅ Événements configurés sans soumission automatique');
         }
     }
 
     handleFileSelect(event) {
         const files = Array.from(event.target.files);
         const currentCount = this.getPhotos(this.currentFormId).length;
+        
+        console.log(`📁 ${files.length} fichier(s) sélectionné(s)`);
         
         if (files.length + currentCount > this.maxFiles) {
             showAlert(`Maximum ${this.maxFiles} photos autorisées`, 'error');
@@ -131,9 +160,13 @@ class PhotoUploadSystem {
                     formId: this.currentFormId
                 });
                 this.updateDisplay();
+                showAlert(`✅ ${file.name} ajoutée`, 'success');
             };
             reader.readAsDataURL(file);
         });
+        
+        // Réinitialiser l'input file pour permettre la sélection des mêmes fichiers
+        event.target.value = '';
     }
 
     addPhoto(photo) {
@@ -164,16 +197,22 @@ class PhotoUploadSystem {
             grid.innerHTML = '';
             photos.forEach(photo => {
                 const col = document.createElement('div');
-                col.className = 'col-3';
+                col.className = 'col-4 col-md-3 col-lg-2';
                 col.innerHTML = `
-                    <div class="position-relative">
+                    <div class="position-relative mb-2">
                         <img src="${photo.dataUrl}" class="img-fluid rounded" 
-                             style="height: 80px; width: 100%; object-fit: cover;">
+                             style="height: 80px; width: 100%; object-fit: cover;"
+                             alt="Photo ${photo.name}">
                         <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
                                 onclick="window.photoUploadSystemInstance.removePhoto('${photo.id}')"
+                                type="button"
                                 style="padding: 0.1rem 0.3rem; font-size: 0.7rem;">
                             <i class="fas fa-times"></i>
                         </button>
+                        <div class="position-absolute bottom-0 start-0 w-100 text-white text-center" 
+                             style="background: rgba(0,0,0,0.5); font-size: 0.6rem; padding: 2px;">
+                            ${Math.round(photo.size / 1024)} KB
+                        </div>
                     </div>
                 `;
                 grid.appendChild(col);
@@ -190,4 +229,4 @@ window.PhotoUploadSystem = PhotoUploadSystem;
 window.photoUploadSystemInstance = photoUploadSystemInstance;
 window.initializePhotoUpload = (formId) => photoUploadSystemInstance.initialize(formId);
 
-console.log('✅ photo-upload.js - Prêt');
+console.log('✅ photo-upload.js corrigé - Prêt');
