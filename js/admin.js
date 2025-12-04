@@ -182,6 +182,10 @@ async function loadUsersTable() {
                             <button class="btn btn-outline-warning" onclick="viewUserDetails('${user.id}')" title="Détails">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            <!-- BOUTON DE SUPPRESSION AJOUTÉ -->
+                            <button class="btn btn-outline-danger" onclick="showDeleteUserModal('${user.id}')" title="Supprimer définitivement">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>`;
@@ -208,6 +212,357 @@ async function loadUsersTable() {
                 </tr>`;
         }
     }
+}
+
+// ========== SUPPRESSION D'UTILISATEUR ==========
+async function deleteUser(userId) {
+    if (!checkAdminAccess()) return;
+    
+    // Empêcher la suppression de soi-même
+    if (userId === authState.currentUser.id) {
+        showAlert('❌ Vous ne pouvez pas supprimer votre propre compte', 'error');
+        return;
+    }
+    
+    // Demander confirmation
+    if (!confirm('⚠️ ÊTES-VOUS ABSOLUMENT SÛR DE VOULOIR SUPPRIMER CET UTILISATEUR ?\n\n' +
+                 'Cette action est IRREVERSIBLE et supprimera :\n' +
+                 '• Toutes les annonces de l\'utilisateur\n' +
+                 '• Toutes ses candidatures\n' +
+                 '• Son compte définitivement\n\n' +
+                 'Veuillez confirmer cette suppression définitive.')) {
+        return;
+    }
+    
+    console.log(`🗑️ Suppression utilisateur ${userId} demandée`);
+    
+    showLoading(true);
+    
+    try {
+        // 1. Récupérer les informations de l'utilisateur pour les logs
+        const users = await btpDB.get('users');
+        const userToDelete = users.find(u => u.id == userId);
+        
+        if (!userToDelete) {
+            showAlert('❌ Utilisateur non trouvé', 'error');
+            return;
+        }
+        
+        const userName = `${userToDelete.prenom || ''} ${userToDelete.nom || ''}`.trim() || 'Utilisateur inconnu';
+        
+        // 2. Demander un mot de passe de confirmation pour sécurité supplémentaire
+        const adminPassword = prompt(`Veuillez saisir votre mot de passe ADMINISTRATEUR pour confirmer la suppression de "${userName}" :\n(Cette action ne peut pas être annulée)`);
+        
+        if (!adminPassword) {
+            showAlert('❌ Suppression annulée - Mot de passe requis', 'warning');
+            return;
+        }
+        
+        // Vérifier le mot de passe admin
+        const isPasswordValid = await verifyAdminPassword(adminPassword);
+        if (!isPasswordValid) {
+            showAlert('❌ Mot de passe administrateur incorrect', 'error');
+            return;
+        }
+        
+        console.log(`🗑️ Suppression de l'utilisateur ${userName} (ID: ${userId})`);
+        
+        // 3. Supprimer toutes les données de l'utilisateur
+        await deleteAllUserData(userId);
+        
+        // 4. Supprimer l'utilisateur de la base
+        const success = await btpDB.delete('users', userId);
+        
+        if (success) {
+            // 5. Journaliser l'action
+            await logUserDeletion(userToDelete, authState.currentUser);
+            
+            showAlert(`✅ Utilisateur "${userName}" supprimé définitivement`, 'success');
+            
+            // 6. Recharger le tableau
+            setTimeout(() => {
+                loadUsersTable();
+                loadAdminStats();
+            }, 1000);
+            
+        } else {
+            showAlert('❌ Erreur lors de la suppression de l\'utilisateur', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur suppression utilisateur:', error);
+        showAlert('❌ Erreur lors de la suppression de l\'utilisateur', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Fonction pour vérifier le mot de passe admin
+async function verifyAdminPassword(password) {
+    try {
+        const users = await btpDB.get('users');
+        const currentAdmin = users.find(u => u.id == authState.currentUser.id);
+        
+        if (currentAdmin && currentAdmin.password === password) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Erreur vérification mot de passe:', error);
+        return false;
+    }
+}
+
+// Supprimer toutes les données associées à un utilisateur
+async function deleteAllUserData(userId) {
+    try {
+        console.log(`🗑️ Nettoyage des données utilisateur ${userId}...`);
+        
+        // Liste de toutes les collections où l'utilisateur peut avoir des données
+        const collections = [
+            'marketplace_posts',
+            'realestate_posts', 
+            'job_posts',
+            'freelancers',
+            'professionals',
+            'job_applications',
+            'forum_topics',
+            'forum_replies',
+            'forum_messages',
+            'notifications',
+            'user_favorites',
+            'user_searches'
+        ];
+        
+        let totalDeleted = 0;
+        
+        for (const collection of collections) {
+            try {
+                const items = await btpDB.get(collection);
+                if (items && items.length > 0) {
+                    // Trouver les items de cet utilisateur
+                    const userItems = items.filter(item => item.userId === userId);
+                    
+                    // Supprimer chaque item
+                    for (const item of userItems) {
+                        await btpDB.delete(collection, item.id);
+                        totalDeleted++;
+                    }
+                    
+                    if (userItems.length > 0) {
+                        console.log(`🗑️ Supprimé ${userItems.length} éléments de ${collection}`);
+                    }
+                }
+            } catch (error) {
+                console.warn(`⚠️ Erreur nettoyage ${collection}:`, error.message);
+            }
+        }
+        
+        console.log(`✅ Nettoyage terminé: ${totalDeleted} éléments supprimés`);
+        return totalDeleted;
+        
+    } catch (error) {
+        console.error('❌ Erreur nettoyage données utilisateur:', error);
+        throw error;
+    }
+}
+
+// Journaliser la suppression
+async function logUserDeletion(deletedUser, adminUser) {
+    try {
+        const deletionLog = {
+            id: `deletion_${Date.now()}`,
+            deletedUserId: deletedUser.id,
+            deletedUserName: `${deletedUser.prenom || ''} ${deletedUser.nom || ''}`.trim() || 'Utilisateur inconnu',
+            deletedUserEmail: deletedUser.email || '',
+            adminUserId: adminUser.id,
+            adminUserName: `${adminUser.prenom || ''} ${adminUser.nom || ''}`.trim(),
+            reason: 'Suppression manuelle par administrateur',
+            timestamp: new Date().toISOString(),
+            deletedData: {
+                premium: deletedUser.hasPremium || false,
+                role: deletedUser.role || 'user',
+                registeredDate: deletedUser.createdAt || 'Date inconnue',
+                lastLogin: deletedUser.lastLogin || 'Jamais'
+            }
+        };
+        
+        // Enregistrer dans une collection spécifique
+        await btpDB.post('admin_deletion_logs', deletionLog);
+        console.log('📝 Suppression journalisée:', deletionLog);
+        
+    } catch (error) {
+        console.warn('⚠️ Erreur journalisation suppression:', error);
+    }
+}
+
+// Fonction pour afficher le modal de confirmation de suppression
+async function showDeleteUserModal(userId) {
+    if (!checkAdminAccess()) return;
+    
+    try {
+        const users = await btpDB.get('users');
+        const user = users.find(u => u.id == userId);
+        
+        if (!user) {
+            showAlert('❌ Utilisateur non trouvé', 'error');
+            return;
+        }
+        
+        // Empêcher la suppression de soi-même
+        if (userId === authState.currentUser.id) {
+            showAlert('❌ Vous ne pouvez pas supprimer votre propre compte', 'error');
+            return;
+        }
+        
+        const userName = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Utilisateur inconnu';
+        const userEmail = user.email || 'Email inconnu';
+        const registrationDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
+        
+        // Récupérer les statistiques pour affichage
+        const [userPosts, userApplications] = await Promise.all([
+            getUserPostsCount(userId),
+            getUserApplicationsCount(userId)
+        ]);
+        
+        const modalHTML = `
+            <div class="modal fade" id="deleteUserModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Suppression d'utilisateur
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <i class="fas fa-radiation me-2"></i>
+                                <strong>ATTENTION : ACTION IRREVERSIBLE</strong>
+                                <p class="mb-0 mt-2">Cette action supprimera définitivement l'utilisateur et toutes ses données.</p>
+                            </div>
+                            
+                            <div class="card mb-3 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user me-2"></i>
+                                        Utilisateur à supprimer
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Nom :</strong> ${userName}
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Email :</strong> ${userEmail}
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Inscrit depuis :</strong> ${registrationDate}
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Rôle :</strong> 
+                                        <span class="badge ${user.role === 'admin' ? 'bg-primary' : 'bg-secondary'}">
+                                            ${user.role === 'admin' ? '👑 ADMIN' : '👤 UTILISATEUR'}
+                                        </span>
+                                    </div>
+                                    ${user.hasPremium ? '<div class="mb-2"><strong>Abonnement :</strong> <span class="badge bg-warning">⭐ PREMIUM</span></div>' : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        Données qui seront supprimées
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="p-2 bg-light rounded">
+                                                <div class="h5 text-danger mb-0">${userPosts.total}</div>
+                                                <small class="text-muted">Annonces</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="p-2 bg-light rounded">
+                                                <div class="h5 text-danger mb-0">${userApplications.total}</div>
+                                                <small class="text-muted">Candidatures</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="p-2 bg-light rounded">
+                                                <div class="h5 text-danger mb-0">1</div>
+                                                <small class="text-muted">Compte</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">Total: ${userPosts.total + userApplications.total + 1} éléments seront supprimés</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="confirmDeleteCheckbox">
+                                <label class="form-check-label" for="confirmDeleteCheckbox">
+                                    Je comprends que cette action est irréversible et que toutes les données seront perdues définitivement.
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="deleteReason" class="form-label">Raison de la suppression (facultatif)</label>
+                                <textarea class="form-control" id="deleteReason" rows="2" placeholder="Ex: Compte inactif, violation des CGU..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDeleteUser('${userId}')" disabled>
+                                <i class="fas fa-trash me-2"></i>Supprimer définitivement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Supprimer le modal existant
+        const existingModal = document.getElementById('deleteUserModal');
+        if (existingModal) existingModal.remove();
+
+        // Ajouter le nouveau modal
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Afficher le modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+        modal.show();
+        
+        // Activer/désactiver le bouton selon la checkbox
+        document.getElementById('confirmDeleteCheckbox').addEventListener('change', function() {
+            document.getElementById('confirmDeleteBtn').disabled = !this.checked;
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement modal suppression:', error);
+        showAlert('❌ Erreur lors de la préparation de la suppression', 'error');
+    }
+}
+
+// Fonction de confirmation finale
+async function confirmDeleteUser(userId) {
+    const reason = document.getElementById('deleteReason')?.value || 'Suppression manuelle par administrateur';
+    
+    // Fermer le modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+    if (modal) modal.hide();
+    
+    // Lancer la suppression après un délai
+    setTimeout(() => {
+        deleteUser(userId, reason);
+    }, 300);
 }
 
 // ========== FONCTIONS DÉTAILS UTILISATEUR CORRIGÉES ==========
@@ -746,7 +1101,7 @@ function showEditUserModal(user) {
                             
                             <div class="mb-3">
                                 <label for="editCompany" class="form-label">Entreprise</label>
-                                <input type="text" class="form-control" id="editCompany" value="${company}">
+                                        <input type="text" class="form-control" id="editCompany" value="${company}">
                             </div>
                             
                             <div class="row">
@@ -1880,6 +2235,32 @@ function refreshAdminData() {
     });
 }
 
+// ========== FONCTION DE SYNCHRONISATION FORCÉE ==========
+async function forceSyncData() {
+    if (!checkAdminAccess()) return;
+    
+    if (!confirm('⚠️ Voulez-vous forcer la synchronisation des données locales vers Firebase ?\n\nCette opération peut prendre quelques minutes.')) {
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const success = await btpDB.forceSyncToFirebase();
+        
+        if (success) {
+            showAlert('✅ Synchronisation forcée vers Firebase réussie !', 'success');
+        } else {
+            showAlert('⚠️ Synchronisation partielle, vérifiez la console', 'warning');
+        }
+    } catch (error) {
+        console.error('❌ Erreur synchronisation forcée:', error);
+        showAlert('❌ Erreur lors de la synchronisation', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
 // ========== INITIALISATION DE L'ADMIN ==========
 document.addEventListener('DOMContentLoaded', function() {
     console.log('👑 Initialisation du module admin...');
@@ -1905,6 +2286,7 @@ window.editUser = editUser;
 window.viewUserDetails = viewUserDetails;
 window.refreshAdminData = refreshAdminData;
 window.checkAdminAccess = checkAdminAccess;
+window.forceSyncData = forceSyncData;
 
 // Nouvelles fonctions de modération détaillée
 window.approveAdFromModal = approveAdFromModal;
@@ -1914,4 +2296,9 @@ window.deleteAnnounceFromModal = deleteAnnounceFromModal;
 // Nouvelles fonctions pour la gestion des utilisateurs
 window.saveUserChanges = saveUserChanges;
 
-console.log('✅ admin.js CORRIGÉ - Compatible avec la structure modulaire realestate');
+// Nouvelles fonctions de suppression
+window.deleteUser = deleteUser;
+window.showDeleteUserModal = showDeleteUserModal;
+window.confirmDeleteUser = confirmDeleteUser;
+
+console.log('✅ admin.js CORRIGÉ - Fonction de synchronisation forcée ajoutée');

@@ -497,11 +497,15 @@ class BTPDatabase {
 
         console.log(`✅ ${collection} créé localement:`, item.id);
 
-        // Synchroniser avec Firebase en arrière-plan
+        // 🔥 CORRECTION : SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
         if (this.firebaseInitialized) {
-            this.syncToFirebase(collection, item).catch(error => {
-                console.warn(`⚠️ Sync Firebase ${collection} échouée:`, error.message);
-            });
+            try {
+                await this.syncToFirebase(collection, item);
+                console.log(`☁️ ${collection} synchronisé vers Firebase:`, item.id);
+            } catch (error) {
+                console.warn(`⚠️ Erreur sync Firebase ${collection}:`, error.message);
+                // Conserver localement malgré l'erreur Firebase
+            }
         }
 
         return item;
@@ -521,6 +525,7 @@ class BTPDatabase {
             console.log(`☁️ ${collection} synchronisé vers Firebase:`, item.id);
         } catch (error) {
             console.warn(`⚠️ Erreur sync vers Firebase ${collection}:`, error.message);
+            throw error;
         }
     }
 
@@ -534,22 +539,27 @@ class BTPDatabase {
         const index = localData[collection].findIndex(item => item.id == id);
         
         if (index !== -1) {
-            localData[collection][index] = { 
+            const updatedItem = { 
                 ...localData[collection][index], 
                 ...data,
                 updatedAt: new Date().toISOString()
             };
+            localData[collection][index] = updatedItem;
             this.saveLocalData(localData);
+            
             console.log(`✅ ${collection} mis à jour localement:`, id);
 
-            // Synchroniser avec Firebase
+            // 🔥 CORRECTION : SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
             if (this.firebaseInitialized) {
-                this.updateInFirebase(collection, id, data).catch(error => {
+                try {
+                    await this.updateInFirebase(collection, id, data);
+                    console.log(`☁️ ${collection} mis à jour dans Firebase:`, id);
+                } catch (error) {
                     console.warn(`⚠️ Update Firebase ${collection} échouée:`, error.message);
-                });
+                }
             }
 
-            return localData[collection][index];
+            return updatedItem;
         }
         
         console.warn(`❌ ${collection} non trouvé:`, id);
@@ -564,6 +574,7 @@ class BTPDatabase {
             console.log(`☁️ ${collection} mis à jour dans Firebase:`, id);
         } catch (error) {
             console.warn(`⚠️ Erreur update Firebase ${collection}:`, error.message);
+            throw error;
         }
     }
 
@@ -788,50 +799,9 @@ class BTPDatabase {
             throw new Error('Cet email est déjà utilisé');
         }
 
-        if (this.firebaseInitialized) {
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(
-                    userData.email, 
-                    userData.password
-                );
-                
-                const user = userCredential.user;
-                
-                const newUser = {
-                    ...userData,
-                    id: user.uid,
-                    role: 'user',
-                    isVerified: false,
-                    isBlocked: false,
-                    hasPremium: false,
-                    visitCount: 0,
-                    lastVisit: new Date().toISOString(),
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    company: userData.company || '',
-                    address: userData.address || '',
-                    city: userData.city || '',
-                    postalCode: userData.postalCode || '',
-                    website: userData.website || '',
-                    description: userData.description || '',
-                    metier: userData.metier || '',
-                    source: userData.source || 'site web',
-                    status: userData.status || 'actif'
-                };
-                
-                await firestore.collection('users').doc(user.uid).set(newUser);
-                localStorage.setItem('currentUser', JSON.stringify(newUser));
-                return newUser;
-                
-            } catch (error) {
-                console.warn('⚠️ Erreur Firebase register, fallback localStorage:', error.message);
-            }
-        }
-
-        // Fallback localStorage
         const newUser = {
-            id: Date.now().toString(),
             ...userData,
+            id: Date.now().toString(),
             role: 'user',
             isVerified: false,
             isBlocked: false,
@@ -851,9 +821,36 @@ class BTPDatabase {
             status: userData.status || 'actif'
         };
 
+        // 🔥 CORRECTION : SAUVEGARDER D'ABORD LOCALEMENT
         const localData = this.getLocalData();
+        localData.users = localData.users || [];
         localData.users.push(newUser);
         this.saveLocalData(localData);
+
+        console.log(`✅ Nouvel utilisateur créé localement:`, newUser.email);
+
+        // 🔥 CORRECTION : ENSUITE SYNCHRONISER AVEC FIREBASE
+        if (this.firebaseInitialized) {
+            try {
+                // Tenter la création Firebase d'abord
+                const userCredential = await auth.createUserWithEmailAndPassword(
+                    userData.email, 
+                    userData.password
+                );
+                
+                const firebaseUser = userCredential.user;
+                
+                // Mettre à jour l'ID avec celui de Firebase
+                newUser.id = firebaseUser.uid;
+                
+                // Sauvegarder dans Firestore
+                await firestore.collection('users').doc(firebaseUser.uid).set(newUser);
+                console.log(`☁️ Utilisateur créé dans Firebase:`, newUser.email);
+                
+            } catch (error) {
+                console.warn('⚠️ Erreur création Firebase, mais utilisateur sauvegardé localement:', error.message);
+            }
+        }
 
         localStorage.setItem('currentUser', JSON.stringify(newUser));
         return newUser;
@@ -1318,6 +1315,7 @@ class BTPDatabase {
                     };
 
                     if (existingUser && overwriteExisting) {
+                        // 🔥 CORRECTION : Mettre à jour l'utilisateur existant
                         await this.put('users', existingUser.id, completeUserData);
                         importResults.details.push({
                             index: index + 1,
@@ -1326,7 +1324,8 @@ class BTPDatabase {
                             message: 'Utilisateur mis à jour'
                         });
                     } else {
-                        await this.registerUser(completeUserData);
+                        // 🔥 CORRECTION : Créer un nouvel utilisateur
+                        await this.post('users', completeUserData);
                         importResults.details.push({
                             index: index + 1,
                             email: userData.email,
@@ -1578,6 +1577,52 @@ class BTPDatabase {
             return [];
         }
     }
+
+    // ========== FORCER LA SYNCHRONISATION ==========
+    async forceSyncToFirebase() {
+        if (!this.firebaseInitialized) {
+            console.warn('⚠️ Firebase non disponible, impossible de synchroniser');
+            return false;
+        }
+        
+        console.log('🔄 Forçage de la synchronisation vers Firebase...');
+        
+        try {
+            const localData = this.getLocalData();
+            const collections = Object.keys(localData);
+            
+            let totalSynced = 0;
+            
+            for (const collection of collections) {
+                const items = localData[collection] || [];
+                
+                for (const item of items) {
+                    try {
+                        // Nettoyer les données sensibles
+                        const cleanItem = { ...item };
+                        if (cleanItem.password && cleanItem.password !== '********') {
+                            cleanItem.password = '********';
+                        }
+                        
+                        // Synchroniser chaque élément
+                        await firestore.collection(collection).doc(item.id.toString()).set(cleanItem);
+                        totalSynced++;
+                    } catch (error) {
+                        console.warn(`⚠️ Erreur synchro ${collection}.${item.id}:`, error.message);
+                    }
+                }
+                
+                console.log(`✅ ${collection}: ${items.length} éléments synchronisés`);
+            }
+            
+            console.log(`🎉 Synchronisation terminée: ${totalSynced} éléments envoyés à Firebase`);
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erreur synchronisation forcée:', error);
+            return false;
+        }
+    }
 }
 
 // ========== INITIALISATION ==========
@@ -1593,7 +1638,7 @@ setTimeout(() => {
     });
 }, 2000);
 
-console.log('✅ database.js COMPLET CORRIGÉ - Système upload photo intégré et gestion d\'erreurs Firebase améliorée');
+console.log('✅ database.js CORRIGÉ - Persistance Firebase activée');
 
 // ========== EXPORT DES FONCTIONS ==========
 window.exportCompleteData = () => btpDB.exportCompleteData();
@@ -1602,6 +1647,7 @@ window.importUsersFromExcel = (data, options) => btpDB.importUsersFromExcel(data
 window.exportUsersForExcel = () => btpDB.exportUsersForExcel();
 window.migrateToNewServer = (data) => btpDB.migrateToNewServer(data);
 window.generateBackupFile = () => btpDB.migrateToNewServer();
+window.forceSyncToFirebase = () => btpDB.forceSyncToFirebase();
 
 // Fonctions upload photo accessibles globalement
 window.uploadPhoto = (file, formId) => {
