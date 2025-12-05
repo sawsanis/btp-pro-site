@@ -27,7 +27,17 @@ if (typeof firebase !== 'undefined') {
         
         firestore = firebase.firestore();
         auth = firebase.auth();
-        storage = firebase.storage();
+        
+        // CORRECTION CRITIQUE : Vérifier que firebase.storage existe
+        if (typeof firebase.storage !== 'undefined') {
+            storage = firebase.storage();
+            console.log('✅ Firebase Storage initialisé');
+        } else {
+            console.warn('⚠️ firebase.storage() non disponible - SDK Storage non chargé');
+            console.warn('ℹ️ Assurez-vous que le SDK Storage est inclus: https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js');
+            storage = null;
+        }
+        
         firebaseOnline = true;
         
         // Configurer la persistance des données
@@ -36,7 +46,7 @@ if (typeof firebase !== 'undefined') {
             .catch(err => console.warn('⚠️ Persistance Firebase non disponible:', err));
             
     } catch (error) {
-        console.warn('❌ Firebase non disponible, utilisation du localStorage:', error);
+        console.warn('❌ Erreur Firebase, utilisation du localStorage:', error);
         firebaseOnline = false;
     }
 } else {
@@ -497,7 +507,7 @@ class BTPDatabase {
 
         console.log(`✅ ${collection} créé localement:`, item.id);
 
-        // 🔥 CORRECTION : SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
+        // SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
         if (this.firebaseInitialized) {
             try {
                 await this.syncToFirebase(collection, item);
@@ -549,7 +559,7 @@ class BTPDatabase {
             
             console.log(`✅ ${collection} mis à jour localement:`, id);
 
-            // 🔥 CORRECTION : SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
+            // SYNCHRONISER IMMÉDIATEMENT AVEC FIREBASE
             if (this.firebaseInitialized) {
                 try {
                     await this.updateInFirebase(collection, id, data);
@@ -638,7 +648,7 @@ class BTPDatabase {
             
             console.log(`✅ Photo sauvegardée localement: ${fileName}`);
             
-            // 2. Tenter l'upload Firebase en arrière-plan
+            // 2. Tenter l'upload Firebase en arrière-plan si storage est disponible
             if (this.firebaseInitialized && storage) {
                 this.uploadToFirebaseStorage(file, fileName, photoId, formId, userId)
                     .catch(error => {
@@ -663,7 +673,11 @@ class BTPDatabase {
     }
     
     async uploadToFirebaseStorage(file, fileName, photoId, formId, userId) {
-        if (!this.firebaseInitialized || !storage) return;
+        // CORRECTION : Vérifier explicitement que storage existe
+        if (!this.firebaseInitialized || !storage) {
+            console.log('ℹ️ Storage non disponible, photo sauvegardée localement uniquement');
+            return null;
+        }
         
         try {
             // Créer une référence dans le storage
@@ -695,7 +709,8 @@ class BTPDatabase {
             
         } catch (error) {
             console.warn('⚠️ Erreur upload Firebase Storage:', error.message);
-            throw error;
+            // Ne pas propager l'erreur pour ne pas bloquer l'application
+            return null;
         }
     }
     
@@ -821,7 +836,7 @@ class BTPDatabase {
             status: userData.status || 'actif'
         };
 
-        // 🔥 CORRECTION : SAUVEGARDER D'ABORD LOCALEMENT
+        // SAUVEGARDER D'ABORD LOCALEMENT
         const localData = this.getLocalData();
         localData.users = localData.users || [];
         localData.users.push(newUser);
@@ -829,7 +844,7 @@ class BTPDatabase {
 
         console.log(`✅ Nouvel utilisateur créé localement:`, newUser.email);
 
-        // 🔥 CORRECTION : ENSUITE SYNCHRONISER AVEC FIREBASE
+        // ENSUITE SYNCHRONISER AVEC FIREBASE
         if (this.firebaseInitialized) {
             try {
                 // Tenter la création Firebase d'abord
@@ -1315,7 +1330,7 @@ class BTPDatabase {
                     };
 
                     if (existingUser && overwriteExisting) {
-                        // 🔥 CORRECTION : Mettre à jour l'utilisateur existant
+                        // Mettre à jour l'utilisateur existant
                         await this.put('users', existingUser.id, completeUserData);
                         importResults.details.push({
                             index: index + 1,
@@ -1324,7 +1339,7 @@ class BTPDatabase {
                             message: 'Utilisateur mis à jour'
                         });
                     } else {
-                        // 🔥 CORRECTION : Créer un nouvel utilisateur
+                        // Créer un nouvel utilisateur
                         await this.post('users', completeUserData);
                         importResults.details.push({
                             index: index + 1,
