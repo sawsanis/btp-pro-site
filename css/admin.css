@@ -111,32 +111,70 @@
     transform: scale(1.05);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .admin-table-container {
-        font-size: 0.875rem;
-    }
-    
-    .photo-upload-container {
-        padding: 1rem;
-    }
-    
-    .premium-card {
-        transform: none;
-        margin-bottom: 1rem;
-    }
+/* ========== STYLES POUR LA SUPPRESSION D'UTILISATEURS ========== */
+
+/* Styles pour la suppression d'utilisateurs */
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
 }
 
-/* Animation pour les chargements */
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+#confirmDeleteBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.loading-pulse {
-    animation: pulse 2s infinite;
+/* Animation pour la suppression */
+@keyframes pulse-danger {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
+
+.btn-danger.pulse {
+    animation: pulse-danger 1.5s infinite;
+}
+
+/* Style pour le modal de suppression */
+.modal-danger .modal-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.modal-danger .modal-title {
+    font-weight: bold;
+}
+
+/* Style pour les cartes d'avertissement dans les modales de suppression */
+.alert-danger i.fa-radiation {
+    color: #dc3545;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Style pour la liste des données à supprimer */
+.delete-stats-card {
+    border: 2px solid #dc3545 !important;
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.delete-stats-card .card-header {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    color: white;
+    border-bottom: none;
+}
+
+/* Style pour les badges de suppression */
+.badge-delete {
+    background: #dc3545;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+}
+
 /* ========== CORRECTION SUPERPOSITION BOUTONS ADMIN/FAVORIS ========== */
 
 /* Container principal des actions sur les cartes */
@@ -239,33 +277,6 @@
     z-index: 90;
 }
 
-/* Responsive pour petits écrans */
-@media (max-width: 768px) {
-    .card-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    
-    .admin-controls {
-        order: 1;
-        justify-content: center;
-    }
-    
-    .user-actions {
-        order: 2;
-        margin-left: 0;
-        justify-content: center;
-    }
-    
-    .admin-controls .btn,
-    .user-actions .btn {
-        flex: 1;
-        min-width: 60px;
-        text-align: center;
-    }
-}
-
 /* Style spécifique pour le tableau de modération */
 #moderation-table-body .btn-group {
     display: flex;
@@ -323,4 +334,455 @@
 .user-actions-priority {
     position: relative;
     z-index: 900 !important;
+}
+
+/* Styles pour les boutons du tableau utilisateur */
+#users-table-body .btn-group {
+    min-width: 200px;
+}
+
+#users-table-body .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+/* Responsive pour petits écrans */
+@media (max-width: 768px) {
+    .card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .admin-controls {
+        order: 1;
+        justify-content: center;
+    }
+    
+    .user-actions {
+        order: 2;
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    .admin-controls .btn,
+    .user-actions .btn {
+        flex: 1;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    #users-table-body .btn-group {
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    
+    #users-table-body .btn {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+        flex: 1;
+    }
+}
+
+/* Animation pour les chargements */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Styles pour les modals d'administration */
+.modal-xl {
+    max-width: 1200px;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+/* Style pour les formulaires admin */
+.admin-form .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.admin-form .form-control {
+    border: 1px solid #ced4da;
+    transition: all 0.3s;
+}
+
+.admin-form .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Style pour les alertes admin */
+.admin-alert {
+    border-left: 4px solid;
+    border-radius: 4px;
+}
+
+.admin-alert-info {
+    border-left-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.admin-alert-warning {
+    border-left-color: #ffc107;
+    background: #fff3cd;
+}
+
+.admin-alert-danger {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.admin-alert-success {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+/* Style pour les statistiques admin */
+.stat-card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.stat-card .card-body {
+    padding: 1.5rem;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Style pour les badges de statut */
+.badge-status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-status-blocked {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Style pour les icônes admin */
+.admin-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.admin-icon-primary {
+    background: #0d6efd;
+    color: white;
+}
+
+.admin-icon-success {
+    background: #28a745;
+    color: white;
+}
+
+.admin-icon-warning {
+    background: #ffc107;
+    color: black;
+}
+
+.admin-icon-danger {
+    background: #dc3545;
+    color: white;
+}
+
+/* Style pour les onglets admin */
+.admin-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.admin-tabs .nav-link:hover {
+    color: #0d6efd;
+}
+
+.admin-tabs .nav-link.active {
+    background: #0d6efd;
+    color: white;
+    border-radius: 8px;
+}
+
+/* Style pour les tableaux admin */
+.admin-table {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.admin-table thead {
+    background: #f8f9fa;
+}
+
+.admin-table th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+}
+
+.admin-table td {
+    vertical-align: middle;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Style pour les boutons d'action admin */
+.btn-action {
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.btn-action-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+}
+
+/* Style pour les avatars utilisateur */
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d6efd;
+    color: white;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+.user-avatar-medium {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d6efd;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.user-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d6efd;
+    color: white;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-table-container {
+        font-size: 0.875rem;
+    }
+    
+    .photo-upload-container {
+        padding: 1rem;
+    }
+    
+    .premium-card {
+        transform: none;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .admin-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
+/* Animation pour les notifications */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+.alert-animate {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.alert-animate-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+/* Style pour les tooltips admin */
+.admin-tooltip {
+    position: relative;
+}
+
+.admin-tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Style pour les séparateurs */
+.admin-separator {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #dee2e6, transparent);
+    margin: 1.5rem 0;
+}
+
+/* Style pour les cartes de détails */
+.details-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.details-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem;
+}
+
+.details-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Style pour les listes de détails */
+.details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.details-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.details-list li:last-child {
+    border-bottom: none;
+}
+
+.details-list .label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.details-list .value {
+    color: #6c757d;
+}
+
+/* Style pour les badges de rôle */
+.badge-role {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-role-admin {
+    background: linear-gradient(45deg, #6f42c1, #8e44ad);
+    color: white;
+}
+
+.badge-role-user {
+    background: linear-gradient(45deg, #17a2b8, #20c997);
+    color: white;
+}
+
+.badge-role-moderator {
+    background: linear-gradient(45deg, #fd7e14, #ffc107);
+    color: black;
+}
+
+/* Style pour les compteurs */
+.counter {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+/* Style pour les zones de texte de code */
+.code-block {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 1rem;
+    overflow-x: auto;
 }
