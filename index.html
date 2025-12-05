@@ -9,10 +9,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - AJOUTÉ le SDK Storage manquant -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <!-- CSS personnalisé -->
     <link rel="stylesheet" href="css/style.css">
@@ -317,7 +318,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal de Profil Utilisateur -->
     <div class="modal fade" id="profileModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -410,6 +410,7 @@
             </div>
         </div>
     </div>
+    
     <!-- Contenu principal -->
     <main class="container main-content">
         
@@ -1033,7 +1034,6 @@
                 </div>
             </div>
         </section>
-
         <!-- SECTION PUBLICATION -->
         <section id="publish-section" class="section-content">
             <div class="container my-5 py-5">
@@ -1675,7 +1675,7 @@
             </div>
         </section>
 
-        <!-- SECTION MON COMPTE -->
+        <!-- SECTION MON COMPTE - CORRIGÉE POUR LES IDs DUPLIQUÉS -->
         <section id="my_account-section" class="section-content">
             <div class="container my-5 py-5">
                 <div class="row">
@@ -1835,7 +1835,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Section Paramètres -->
+                            <!-- Section Paramètres - CORRIGÉ POUR LES IDs DUPLIQUÉS -->
                             <div id="account-settings" class="account-section">
                                 <h3 class="mb-4">
                                     <i class="fas fa-cog me-2"></i>Paramètres du Compte
@@ -1846,15 +1846,18 @@
                                         <form id="changePasswordForm2" onsubmit="changePassword(event)">
                                             <div class="mb-3">
                                                 <label class="form-label">Mot de passe actuel</label>
-                                                <input type="password" class="form-control" id="currentPassword" required>
+                                                <!-- CORRIGÉ: IDs uniques pour éviter la duplication -->
+                                                <input type="password" class="form-control" id="currentPassword2" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Nouveau mot de passe</label>
-                                                <input type="password" class="form-control" id="newPassword" required minlength="6">
+                                                <!-- CORRIGÉ: IDs uniques pour éviter la duplication -->
+                                                <input type="password" class="form-control" id="newPassword2" required minlength="6">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Confirmer le nouveau mot de passe</label>
-                                                <input type="password" class="form-control" id="confirmNewPassword" required>
+                                                <!-- CORRIGÉ: IDs uniques pour éviter la duplication -->
+                                                <input type="password" class="form-control" id="confirmNewPassword2" required>
                                             </div>
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-key me-2"></i>Changer le mot de passe
