@@ -1116,7 +1116,9 @@
                                         </div>
                                         
                                         <!-- NOUVEAU SYSTÈME D'UPLOAD PHOTO (10 photos) -->
-                                        <div id="marketplace-form-photos-container"></div>
+                                        <div id="marketplace-form-photos-container">
+                                            <!-- Système injecté par JavaScript -->
+                                        </div>
                                         
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
@@ -1133,7 +1135,7 @@
                                     <h5 class="mb-0"><i class="fas fa-home me-2"></i>Nouvelle annonce Immobilier</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form id="immobilierForm" onsubmit="handlePublishRealEstate(event)">
+                                    <form id="immobilierForm">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Titre de l'annonce *</label>
@@ -1203,13 +1205,34 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- Système d'upload photo corrigé (10 photos max) -->
+                                        <!-- CORRECTION CRITIQUE : Système d'upload photo SÉCURISÉ -->
                                         <div id="immobilier-form-photos-container">
-                                            <!-- Le système d'upload sera injecté ici par JavaScript -->
+                                            <!-- Zone d'upload avec onclick sécurisé -->
+                                            <div class="border rounded p-3 text-center mb-3" 
+                                                 style="border-style: dashed !important; cursor: pointer;"
+                                                 id="immobilier-form-drop-area"
+                                                 onclick="openPhotoUploadSelector('immobilier-form')">
+                                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                                <p class="mb-1">Cliquez pour sélectionner des photos</p>
+                                                <button class="btn btn-sm btn-outline-primary mt-2" 
+                                                        type="button"
+                                                        id="immobilier-form-select-btn"
+                                                        onclick="openPhotoUploadSelector('immobilier-form')">
+                                                    <i class="fas fa-plus me-1"></i>Sélectionner
+                                                </button>
+                                                <input type="file" class="d-none" id="immobilier-form-file-input" 
+                                                       multiple accept="image/*">
+                                                <p class="text-muted small mt-2">Formats: JPG, PNG, WebP - Max 10 photos</p>
+                                            </div>
+                                            
+                                            <!-- Prévisualisation des photos -->
+                                            <div class="photo-preview-container" id="immobilier-form-photo-preview">
+                                                <!-- Les photos sélectionnées apparaîtront ici -->
+                                            </div>
                                         </div>
-                                        
                                         <div class="d-flex gap-2 mt-4">
-                                            <button type="submit" class="btn btn-success flex-grow-1" id="publishRealEstateBtn">
+                                            <button type="button" class="btn btn-success flex-grow-1" id="publishRealEstateBtn"
+                                                    onclick="handlePublishRealEstateFromButton()">
                                                 <i class="fas fa-paper-plane me-2"></i>Publier l'annonce
                                             </button>
                                             <button type="button" class="btn btn-outline-secondary" onclick="resetRealEstateForm()">
@@ -1227,117 +1250,204 @@
                             </div>
                         </div>
 
-                        <!-- Formulaire Emploi -->
-                        <div id="emploi-form" class="publish-form" style="display: none;">
-                            <div class="card">
-                                <div class="card-header bg-warning text-white">
-                                    <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>Nouvelle offre d'emploi</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form onsubmit="handlePublishJob(event)">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Poste *</label>
-                                                <input type="text" class="form-control" name="poste" required placeholder="Ex: Chef de Chantier BTP">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Type de contrat *</label>
-                                                <select class="form-select" name="contrat" required>
-                                                    <option value="">Choisir un contrat</option>
-                                                    <option value="cdi">CDI</option>
-                                                    <option value="cdd">CDD</option>
-                                                    <option value="freelance">Freelance</option>
-                                                    <option value="stage">Stage</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Salaire *</label>
-                                                <input type="text" class="form-control" name="salaire" required placeholder="Ex: 15 000 - 18 000 MAD/mois">
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Ville *</label>
-                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Expérience requise</label>
-                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 5+ ans">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Description du poste *</label>
-                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez le poste et les missions..."></textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Votre téléphone *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
-                                        </div>
-                                        <button type="submit" class="btn btn-warning">
-                                            <i class="fas fa-paper-plane me-2"></i>Publier l'offre
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Formulaire Freelance -->
-                        <div id="freelance-form" class="publish-form" style="display: none;">
-                            <div class="card">
-                                <div class="card-header bg-info text-white">
-                                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Nouveau service Freelance</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form onsubmit="handlePublishFreelance(event)">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Titre du service *</label>
-                                                <input type="text" class="form-control" name="title" required placeholder="Ex: Infographiste 3D BTP">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Spécialité *</label>
-                                                <select class="form-select" name="specialty" required>
-                                                    <option value="">Choisir une spécialité</option>
-                                                    <option value="infographie">Infographie 3D</option>
-                                                    <option value="photographie">Photographie</option>
-                                                    <option value="dessin">Dessin technique</option>
-                                                    <option value="conception">Conception</option>
-                                                    <option value="architecture">Architecture</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Tarif (MAD)</label>
-                                                <input type="text" class="form-control" name="tarif" placeholder="Ex: 500-1000 MAD/jour">
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Ville *</label>
-                                                <input type="text" class="form-control" name="ville" required placeholder="Ex: Casablanca">
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label">Expérience</label>
-                                                <input type="text" class="form-control" name="experience" placeholder="Ex: 3+ ans">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Description du service *</label>
-                                            <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez vos compétences et services..."></textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Portfolio/Lien</label>
-                                            <input type="url" class="form-control" name="portfolio" placeholder="Ex: https://votre-portfolio.com">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Votre téléphone *</label>
-                                            <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
-                                        </div>
-                                        <button type="submit" class="btn btn-info">
-                                            <i class="fas fa-paper-plane me-2"></i>Publier le service
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                      <!-- Formulaire Emploi CORRIGÉ -->
+<div id="emploi-form" class="publish-form" style="display: none;">
+    <div class="card">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>Nouvelle offre d'emploi</h5>
+        </div>
+        <div class="card-body">
+            <!-- SUPPRIMÉ: onsubmit -->
+            <form id="emploiForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Poste *</label>
+                        <input type="text" class="form-control" name="poste" required placeholder="Ex: Chef de Chantier BTP">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Type de contrat *</label>
+                        <select class="form-select" name="contrat" required>
+                            <option value="">Choisir un contrat</option>
+                            <option value="cdi">CDI</option>
+                            <option value="cdd">CDD</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="stage">Stage</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Salaire *</label>
+                        <input type="text" class="form-control" name="salaire" required placeholder="Ex: 15 000 - 18 000 MAD/mois">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Ville *</label>
+                        <select class="form-select" name="ville" required>
+                            <option value="">Choisir une ville</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Expérience requise</label>
+                        <input type="text" class="form-control" name="experience" placeholder="Ex: 5+ ans">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description du poste *</label>
+                    <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez le poste et les missions..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Votre téléphone *</label>
+                    <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                </div>
+                
+                <!-- Système d'upload photo SÉCURISÉ -->
+                <div id="emploi-form-photos-container">
+                    <!-- Zone d'upload avec onclick sécurisé -->
+                    <div class="border rounded p-3 text-center mb-3" 
+                         style="border-style: dashed !important; cursor: pointer;"
+                         id="emploi-form-drop-area"
+                         onclick="openPhotoUploadSelector('emploi-form')">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                        <p class="mb-1">Cliquez pour ajouter des images (contrat, lieu de travail...)</p>
+                        <button class="btn btn-sm btn-outline-warning mt-2" 
+                                type="button"
+                                id="emploi-form-select-btn"
+                                onclick="openPhotoUploadSelector('emploi-form')">
+                            <i class="fas fa-plus me-1"></i>Sélectionner
+                        </button>
+                        <input type="file" class="d-none" id="emploi-form-file-input" 
+                               multiple accept="image/*">
+                        <p class="text-muted small mt-2">Formats: JPG, PNG, WebP</p>
+                    </div>
+                    
+                    <!-- Prévisualisation des photos -->
+                    <div class="photo-preview-container" id="emploi-form-photo-preview">
+                        <!-- Les photos sélectionnées apparaîtront ici -->
+                    </div>
+                </div>
+                
+                <!-- CHANGÉ: type="button" -->
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-warning flex-grow-1" onclick="handlePublishJobFromButton()">
+                        <i class="fas fa-paper-plane me-2"></i>Publier l'offre
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetEmploiForm()">
+                        <i class="fas fa-redo me-2"></i>Réinitialiser
+                    </button>
+                </div>
+                
+                <div class="alert alert-info mt-3 small">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Important :</strong> Votre offre sera soumise à modération avant publication. 
+                    Les offres détaillées avec critères précis reçoivent plus de candidatures.
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                       <!-- Formulaire Freelance CORRIGÉ -->
+<div id="freelance-form" class="publish-form" style="display: none;">
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Nouveau service Freelance</h5>
+        </div>
+        <div class="card-body">
+            <!-- SUPPRIMÉ: onsubmit -->
+            <form id="freelanceForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Titre du service *</label>
+                        <input type="text" class="form-control" name="title" required placeholder="Ex: Infographiste 3D BTP">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Spécialité *</label>
+                        <select class="form-select" name="specialty" required>
+                            <option value="">Choisir une spécialité</option>
+                            <option value="infographie">Infographie 3D</option>
+                            <option value="photographie">Photographie</option>
+                            <option value="dessin">Dessin technique</option>
+                            <option value="conception">Conception</option>
+                            <option value="architecture">Architecture</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Tarif (MAD)</label>
+                        <input type="text" class="form-control" name="tarif" placeholder="Ex: 500-1000 MAD/jour">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Ville *</label>
+                        <select class="form-select" name="ville" required>
+                            <option value="">Choisir une ville</option>
+                            <!-- Villes chargées dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Expérience</label>
+                        <input type="text" class="form-control" name="experience" placeholder="Ex: 3+ ans">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description du service *</label>
+                    <textarea class="form-control" name="description" rows="4" required placeholder="Décrivez vos compétences et services..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Portfolio/Lien</label>
+                    <input type="url" class="form-control" name="portfolio" placeholder="Ex: https://votre-portfolio.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Votre téléphone *</label>
+                    <input type="tel" class="form-control" name="phone" required placeholder="+212 XX XX XX XX">
+                </div>
+                
+                <!-- Système d'upload photo SÉCURISÉ -->
+                <div id="freelance-form-photos-container">
+                    <!-- Zone d'upload avec onclick sécurisé -->
+                    <div class="border rounded p-3 text-center mb-3" 
+                         style="border-style: dashed !important; cursor: pointer;"
+                         id="freelance-form-drop-area"
+                         onclick="openPhotoUploadSelector('freelance-form')">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                        <p class="mb-1">Cliquez pour ajouter des exemples de travaux</p>
+                        <button class="btn btn-sm btn-outline-info mt-2" 
+                                type="button"
+                                id="freelance-form-select-btn"
+                                onclick="openPhotoUploadSelector('freelance-form')">
+                            <i class="fas fa-plus me-1"></i>Sélectionner
+                        </button>
+                        <input type="file" class="d-none" id="freelance-form-file-input" 
+                               multiple accept="image/*">
+                        <p class="text-muted small mt-2">Formats: JPG, PNG, WebP - Portfolio recommandé</p>
+                    </div>
+                    
+                    <!-- Prévisualisation des photos -->
+                    <div class="photo-preview-container" id="freelance-form-photo-preview">
+                        <!-- Les photos sélectionnées apparaîtront ici -->
+                    </div>
+                </div>
+                
+                <!-- CHANGÉ: type="button" -->
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-info flex-grow-1" onclick="handlePublishFreelanceFromButton()">
+                        <i class="fas fa-paper-plane me-2"></i>Publier le service
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetFreelanceForm()">
+                        <i class="fas fa-redo me-2"></i>Réinitialiser
+                    </button>
+                </div>
+                
+                <div class="alert alert-info mt-3 small">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Conseil :</strong> Ajoutez des exemples de vos réalisations pour augmenter votre crédibilité 
+                    et recevoir plus de demandes.
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                     </div>
                 </div>
             </div>
@@ -1959,6 +2069,202 @@ window.testRealEstate = function() {
     }
 };
 </script>
+<script>
+// ========== FONCTIONS DE SOUMISSION SÉCURISÉES ==========
 
+function handlePublishRealEstateFromButton() {
+    console.log('🎯 Début publication immobilier depuis bouton');
+    
+    // Vérifier l'authentification
+    if (!checkAuthForPublish()) {
+        showAlert('🔐 Vous devez être connecté pour publier une annonce', 'warning');
+        return;
+    }
+    
+    const form = document.getElementById('immobilierForm');
+    if (!form) {
+        console.error('❌ Formulaire immobilier non trouvé');
+        showAlert('Erreur: formulaire non trouvé', 'error');
+        return;
+    }
+    
+    // Créer un événement sécurisé
+    const event = {
+        target: form,
+        preventDefault: function() { console.log('🔒 Prévention par défaut'); },
+        stopPropagation: function() { console.log('🔒 Arrêt propagation'); },
+        submitter: document.getElementById('publishRealEstateBtn')
+    };
+    
+    if (typeof handlePublishRealEstate === 'function') {
+        handlePublishRealEstate(event);
+    } else {
+        console.error('❌ handlePublishRealEstate non disponible');
+        showAlert('Erreur: fonction de publication non disponible', 'error');
+    }
+}
+
+function handlePublishJobFromButton() {
+    console.log('🎯 Début publication emploi depuis bouton');
+    
+    if (!checkAuthForPublish()) {
+        showAlert('🔐 Vous devez être connecté pour publier une offre', 'warning');
+        return;
+    }
+    
+    const form = document.getElementById('emploiForm');
+    if (!form) {
+        console.error('❌ Formulaire emploi non trouvé');
+        showAlert('Erreur: formulaire non trouvé', 'error');
+        return;
+    }
+    
+    const event = {
+        target: form,
+        preventDefault: function() { console.log('🔒 Prévention par défaut'); },
+        stopPropagation: function() { console.log('🔒 Arrêt propagation'); },
+        submitter: document.querySelector('#emploiForm button[type="button"]')
+    };
+    
+    if (typeof JobsForms !== 'undefined' && typeof JobsForms.handlePublishJob === 'function') {
+        JobsForms.handlePublishJob(event);
+    } else if (typeof handlePublishJob === 'function') {
+        handlePublishJob(event);
+    } else {
+        console.error('❌ Fonction publication emploi non disponible');
+        showAlert('Erreur: fonction de publication non disponible', 'error');
+    }
+}
+
+function handlePublishFreelanceFromButton() {
+    console.log('🎯 Début publication freelance depuis bouton');
+    
+    if (!checkAuthForPublish()) {
+        showAlert('🔐 Vous devez être connecté pour publier un service', 'warning');
+        return;
+    }
+    
+    const form = document.getElementById('freelanceForm');
+    if (!form) {
+        console.error('❌ Formulaire freelance non trouvé');
+        showAlert('Erreur: formulaire non trouvé', 'error');
+        return;
+    }
+    
+    const event = {
+        target: form,
+        preventDefault: function() { console.log('🔒 Prévention par défaut'); },
+        stopPropagation: function() { console.log('🔒 Arrêt propagation'); },
+        submitter: document.querySelector('#freelanceForm button[type="button"]')
+    };
+    
+    if (typeof handlePublishFreelance === 'function') {
+        handlePublishFreelance(event);
+    } else {
+        console.error('❌ Fonction publication freelance non disponible');
+        showAlert('Erreur: fonction de publication non disponible', 'error');
+    }
+}
+
+// ========== FONCTIONS DE RÉINITIALISATION ==========
+
+function resetEmploiForm() {
+    const form = document.getElementById('emploiForm');
+    if (form && confirm('Voulez-vous réinitialiser le formulaire emploi ?')) {
+        form.reset();
+        // Réinitialiser aussi les photos
+        if (typeof window.resetPhotoUpload === 'function') {
+            window.resetPhotoUpload('emploi-form');
+        }
+        showAlert('Formulaire emploi réinitialisé', 'info');
+    }
+}
+
+function resetFreelanceForm() {
+    const form = document.getElementById('freelanceForm');
+    if (form && confirm('Voulez-vous réinitialiser le formulaire freelance ?')) {
+        form.reset();
+        // Réinitialiser aussi les photos
+        if (typeof window.resetPhotoUpload === 'function') {
+            window.resetPhotoUpload('freelance-form');
+        }
+        showAlert('Formulaire freelance réinitialisé', 'info');
+    }
+}
+
+// ========== DIAGNOSTIC FINAL ==========
+
+window.verifyAllForms = function() {
+    console.log('🔍 VÉRIFICATION FINALE DES FORMULAIRES:');
+    console.log('=======================================');
+    
+    const forms = [
+        { id: 'immobilierForm', name: 'Immobilier' },
+        { id: 'emploiForm', name: 'Emploi' },
+        { id: 'freelanceForm', name: 'Freelance' }
+    ];
+    
+    let secureCount = 0;
+    
+    forms.forEach(formInfo => {
+        const form = document.getElementById(formInfo.id);
+        
+        console.log(`\n📋 ${formInfo.name}:`);
+        
+        if (!form) {
+            console.log('  ❌ Formulaire non trouvé');
+            return;
+        }
+        
+        const issues = [];
+        
+        // Vérifier boutons submit dangereux
+        const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+        if (submitButtons.length > 0) {
+            issues.push(`${submitButtons.length} bouton(s) submit`);
+        }
+        
+        // Vérifier attribut onsubmit
+        if (form.hasAttribute('onsubmit')) {
+            issues.push('attribut onsubmit présent');
+        }
+        
+        // Vérifier boutons button sécurisés
+        const buttonButtons = form.querySelectorAll('button[type="button"]');
+        
+        if (issues.length === 0) {
+            console.log('  ✅ SÉCURISÉ');
+            console.log(`     ${buttonButtons.length} bouton(s) button avec onclick`);
+            secureCount++;
+        } else {
+            console.log('  🔴 NON SÉCURISÉ:', issues.join(', '));
+        }
+    });
+    
+    console.log('\n📊 RÉSUMÉ:');
+    console.log(`   ${secureCount}/${forms.length} formulaires sécurisés`);
+    
+    if (secureCount === forms.length) {
+        console.log('🎉 TOUT EST CORRECT !');
+        console.log('✅ Le bug de soumission automatique devrait être RÉSOLU');
+        console.log('\n🧪 TEST FINAL :');
+        console.log('   1. Allez dans "Publier une annonce"');
+        console.log('   2. Sélectionnez "Immobilier"');
+        console.log('   3. Cliquez sur "Sélectionner des photos"');
+        console.log('   4. Le formulaire NE DOIT PAS se soumettre automatiquement');
+    } else {
+        console.log('⚠️ Des corrections sont encore nécessaires');
+    }
+    
+    return secureCount === forms.length;
+};
+
+// Démarrer la vérification au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        window.verifyAllForms();
+    }, 1000);
+});
+</script>
 </body> 
 </html>
