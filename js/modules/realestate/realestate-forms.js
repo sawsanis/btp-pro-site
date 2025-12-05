@@ -156,10 +156,22 @@ function initializeRealEstateFormTypes() {
     return true;
 }
 
-// ========== FONCTION PRINCIPALE POUR LA SOUMISSION ==========
+// ========== FONCTION PRINCIPALE POUR LA SOUMISSION (CORRIGÉE) ==========
 async function handlePublishRealEstate(event) {
-    event.preventDefault();
     console.log('📝 Début de la publication immobilier...');
+    
+    // CRITIQUE : Toujours prévenir le comportement par défaut
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Vérifier que c'est bien une soumission légitime
+    const submitter = event.submitter;
+    if (!submitter || (!submitter.type === 'submit' && !submitter.getAttribute('type') === 'submit')) {
+        console.log('🚫 Soumission non légitime détectée - annulation');
+        return;
+    }
+    
+    console.log('✅ Soumission légitime via bouton submit');
     
     // 1. Vérifier l'authentification
     if (!checkAuthForPublish()) {
@@ -212,14 +224,17 @@ async function handlePublishRealEstate(event) {
         
         // 5. Récupérer les photos du nouveau système d'upload
         let photos = [];
-        if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance) {
-            const formPhotos = photoUploadSystemInstance.getPhotos('immobilier-form');
-            console.log('📸 Photos récupérées:', formPhotos.length);
-            
-            // Convertir les photos en base64 pour le stockage
-            for (const photo of formPhotos) {
-                if (photo.dataUrl) {
-                    photos.push(photo.dataUrl);
+        if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance && photoUploadSystemInstance.get) {
+            const instance = photoUploadSystemInstance.get();
+            if (instance) {
+                const formPhotos = instance.getPhotos('immobilier-form');
+                console.log('📸 Photos récupérées:', formPhotos.length);
+                
+                // Convertir les photos en base64 pour le stockage
+                for (const photo of formPhotos) {
+                    if (photo.dataUrl) {
+                        photos.push(photo.dataUrl);
+                    }
                 }
             }
         }
@@ -255,11 +270,11 @@ async function handlePublishRealEstate(event) {
         console.log('✅ Bien immobilier sauvegardé:', result);
         
         // 8. Vider les photos du formulaire
-        if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance) {
-            photoUploadSystemInstance.photos = photoUploadSystemInstance.photos.filter(
-                photo => photo.formId !== 'immobilier-form'
-            );
-            photoUploadSystemInstance.updateDisplay();
+        if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance && photoUploadSystemInstance.get) {
+            const instance = photoUploadSystemInstance.get();
+            if (instance) {
+                instance.clearPhotos('immobilier-form');
+            }
         }
         
         // 9. Afficher le succès
@@ -268,15 +283,26 @@ async function handlePublishRealEstate(event) {
         // 10. Réinitialiser le formulaire
         form.reset();
         
-        // 11. Rediriger après 2 secondes
+        // 11. Réinitialiser les selects
+        if (form.querySelector('[name="type"]')) {
+            form.querySelector('[name="type"]').selectedIndex = 0;
+        }
+        if (form.querySelector('[name="city"]')) {
+            form.querySelector('[name="city"]').selectedIndex = 0;
+        }
+        
+        // 12. Rediriger après 2 secondes
         setTimeout(() => {
             goToSection('realestate');
             
-            // Réinitialiser le système d'upload
-            if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance) {
-                setTimeout(() => {
-                    photoUploadSystemInstance.initialize('immobilier-form');
-                }, 1000);
+            // Réinitialiser le système d'upload après redirection
+            if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance && photoUploadSystemInstance.get) {
+                const instance = photoUploadSystemInstance.get();
+                if (instance) {
+                    setTimeout(() => {
+                        instance.clearPhotos('immobilier-form');
+                    }, 1000);
+                }
             }
         }, 2000);
         
@@ -322,7 +348,7 @@ function getRealEstateTypeLabel(type) {
     return types[type] || type;
 }
 
-// ========== INITIALISATION COMPLÈTE DU FORMULAIRE ==========
+// ========== INITIALISATION COMPLÈTE DU FORMULAIRE (CORRIGÉE) ==========
 function initializeRealEstateForm() {
     console.log('🏗️ Initialisation complète du formulaire immobilier...');
     
@@ -337,23 +363,127 @@ function initializeRealEstateForm() {
     if (immobilierForm) {
         const form = immobilierForm.querySelector('form');
         if (form) {
-            // Supprimer l'ancien gestionnaire si existant
+            console.log('🔧 Configuration événements formulaire immobilier...');
+            
+            // Supprimer TOUS les anciens gestionnaires d'événements
             form.removeEventListener('submit', handleRealEstateSubmit);
-            form.onsubmit = handlePublishRealEstate;
+            form.removeEventListener('submit', handlePublishRealEstate);
+            form.onsubmit = null;
+            
+            // CRITIQUE : Ajouter le gestionnaire avec addEventListener
+            form.addEventListener('submit', handlePublishRealEstate, { capture: false });
+            
+            // S'assurer que les clics sur les boutons de type "button" ne soumettent pas le formulaire
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(button => {
+                if (button.type !== 'submit') {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                }
+            });
+            
+            // Prévenir la soumission via Enter sur les champs qui ne sont pas des boutons
+            form.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    const target = e.target;
+                    if (target.type !== 'submit' && !target.closest('button')) {
+                        e.preventDefault();
+                    }
+                }
+            });
         }
     }
     
     // 4. Initialiser le système d'upload photo APRÈS un délai
     setTimeout(() => {
-        if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance) {
+        if (typeof initializePhotoUpload === 'function') {
             console.log('📸 Initialisation du système d\'upload photo pour immobilier...');
-            photoUploadSystemInstance.initialize('immobilier-form');
+            initializePhotoUpload('immobilier-form');
+        } else if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance && photoUploadSystemInstance.get) {
+            const instance = photoUploadSystemInstance.get();
+            if (instance) {
+                instance.initialize('immobilier-form');
+            }
         } else {
             console.warn('⚠️ Système d\'upload photo non disponible');
         }
-    }, 1000);
+    }, 1500);
     
-    console.log('✅ Formulaire immobilier initialisé avec nouveau système de soumission');
+    console.log('✅ Formulaire immobilier initialisé avec sécurité renforcée');
+}
+
+// ========== FONCTION POUR RÉINITIALISER LE FORMULAIRE ==========
+function resetRealEstateForm() {
+    console.log('🔄 Réinitialisation formulaire immobilier...');
+    
+    const immobilierForm = document.getElementById('immobilier-form');
+    if (immobilierForm) {
+        const form = immobilierForm.querySelector('form');
+        if (form) {
+            form.reset();
+            
+            // Réinitialiser les selects
+            const selects = form.querySelectorAll('select');
+            selects.forEach(select => {
+                select.selectedIndex = 0;
+            });
+            
+            // Vider les photos
+            if (typeof photoUploadSystemInstance !== 'undefined' && photoUploadSystemInstance && photoUploadSystemInstance.get) {
+                const instance = photoUploadSystemInstance.get();
+                if (instance) {
+                    instance.clearPhotos('immobilier-form');
+                }
+            }
+            
+            console.log('✅ Formulaire réinitialisé');
+        }
+    }
+}
+
+// ========== DIAGNOSTIC DU FORMULAIRE ==========
+function diagnoseRealEstateForm() {
+    console.log('🔍 Diagnostic formulaire immobilier...');
+    
+    const immobilierForm = document.getElementById('immobilier-form');
+    if (!immobilierForm) {
+        console.log('❌ Formulaire immobilier-form non trouvé');
+        return;
+    }
+    
+    const form = immobilierForm.querySelector('form');
+    if (!form) {
+        console.log('❌ Aucun formulaire HTML trouvé dans immobilier-form');
+        return;
+    }
+    
+    console.log('📋 Éléments du formulaire:');
+    
+    // Vérifier les boutons
+    const buttons = form.querySelectorAll('button, input[type="button"], input[type="submit"]');
+    buttons.forEach((btn, index) => {
+        console.log(`  ${index + 1}. ${btn.tagName} type="${btn.type}" id="${btn.id}" class="${btn.className}" text="${btn.textContent || btn.value}"`);
+    });
+    
+    // Vérifier les inputs file
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    console.log(`📁 ${fileInputs.length} input(s) file trouvé(s)`);
+    fileInputs.forEach((input, index) => {
+        console.log(`  ${index + 1}. id="${input.id}" name="${input.name}"`);
+    });
+    
+    // Vérifier les événements
+    const events = getEventListeners ? getEventListeners(form) : null;
+    console.log('🎯 Événements sur le formulaire:', events ? Object.keys(events).length : 'getEventListeners non disponible');
+    
+    return {
+        formExists: !!form,
+        buttonCount: buttons.length,
+        fileInputCount: fileInputs.length,
+        hasSubmitHandler: !!form.onsubmit
+    };
 }
 
 // ========== EXPORT DES FONCTIONS ==========
@@ -362,5 +492,20 @@ window.initializeRealEstateCities = initializeRealEstateCities;
 window.initializeRealEstateFormTypes = initializeRealEstateFormTypes;
 window.handlePublishRealEstate = handlePublishRealEstate;
 window.getRealEstateTypeLabel = getRealEstateTypeLabel;
+window.resetRealEstateForm = resetRealEstateForm;
+window.diagnoseRealEstateForm = diagnoseRealEstateForm;
 
-console.log('✅ realestate-forms.js - Chargé et prêt');
+// Auto-initialisation au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM chargé - Planification initialisation formulaire immobilier...');
+    
+    // Attendre que tout soit chargé
+    setTimeout(() => {
+        // Si on est déjà dans la section publication, initialiser immédiatement
+        if (document.getElementById('publish-section')?.classList.contains('active')) {
+            initializeRealEstateForm();
+        }
+    }, 2000);
+});
+
+console.log('✅ realestate-forms.js CORRIGÉ - Sécurité soumission renforcée');

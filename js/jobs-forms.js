@@ -1,30 +1,54 @@
 // ========== JOBS-FORMS.JS - GESTION DES FORMULAIRES EMPLOI ==========
-// 🔥 CORRECTION : Ajout des fonctions d'initialisation des formulaires
+// 🔥 CORRECTION : Isolation des fonctions d'initialisation
 
 console.log('📝 Chargement du module Forms Init dans jobs-forms.js...');
 
-// ========== INITIALISATION DES FORMULAIRES (AJOUT) ==========
-function initializeFormSelects() {
-    console.log('🔄 Initialisation des sélecteurs de formulaire...');
+// ========== INITIALISATION DES FORMULAIRES (CORRIGÉ) ==========
+
+// Fonction principale - NE PAS appeler automatiquement
+function initializeFormSelects(formType = 'all') {
+    console.log(`🔄 Initialisation des sélecteurs pour: ${formType}`);
     
-    // Initialiser les types de biens immobiliers
-    initializeRealEstateTypes();
+    // Initialiser uniquement si spécifié
+    if (formType === 'all' || formType === 'realestate') {
+        initializeRealEstateTypes();
+    }
     
-    // Initialiser les villes
-    initializeCitySelects();
+    if (formType === 'all' || formType === 'city') {
+        initializeCitySelects();
+    }
     
-    // Initialiser les catégories marketplace
-    initializeMarketplaceCategories();
+    if (formType === 'all' || formType === 'marketplace') {
+        initializeMarketplaceCategories();
+    }
 }
 
+// Version sécurisée pour le formulaire immobilier uniquement
 function initializeRealEstateTypes() {
-    const typeSelect = document.getElementById('realestateType');
-    if (!typeSelect) {
-        console.warn('❌ Select realestateType non trouvé');
+    console.log('🏠 Vérification initialisation types de biens...');
+    
+    // VÉRIFIER si nous sommes dans le formulaire immobilier
+    const immobilierForm = document.getElementById('immobilier-form');
+    if (!immobilierForm) {
+        console.log('⚠️ Pas dans le formulaire immobilier, initialisation annulée');
         return;
     }
     
-    console.log('🏠 Initialisation des types de biens...');
+    const typeSelect = document.getElementById('realestateType') || 
+                      immobilierForm.querySelector('select[name="type"]');
+    
+    if (!typeSelect) {
+        console.warn('❌ Select type non trouvé dans le formulaire immobilier');
+        return;
+    }
+    
+    console.log('✅ Initialisation des types de biens pour formulaire immobilier');
+    
+    // Vérifier si déjà initialisé
+    if (typeSelect.options.length > 15) {
+        console.log('✅ Types déjà initialisés');
+        return;
+    }
     
     // Vider les options existantes sauf la première
     while (typeSelect.children.length > 1) {
@@ -57,7 +81,7 @@ function initializeRealEstateTypes() {
         typeSelect.appendChild(option);
     });
     
-    console.log(`✅ ${propertyTypes.length} types de biens initialisés`);
+    console.log(`✅ ${propertyTypes.length} types de biens initialisés pour immobilier`);
 }
 
 function initializeCitySelects() {
@@ -79,11 +103,17 @@ function initializeCitySelects() {
         'Tiflet', 'Tiznit', 'Youssoufia', 'Zagora', 'Autres'
     ];
     
-    // Mettre à jour tous les sélecteurs de ville
-    const citySelects = document.querySelectorAll('select[name="city"], #realestateCity');
-    console.log(`🏙️ Initialisation de ${citySelects.length} sélecteurs de ville...`);
+    // Mettre à jour uniquement les sélecteurs qui n'ont pas de villes
+    const citySelects = document.querySelectorAll('select[name="city"]:not([data-initialized]), select[id*="City"]:not([data-initialized])');
+    console.log(`🏙️ Initialisation de ${citySelects.length} sélecteurs de ville non initialisés...`);
     
     citySelects.forEach(select => {
+        // Vérifier si déjà des villes
+        if (select.options.length > 20) {
+            select.setAttribute('data-initialized', 'true');
+            return;
+        }
+        
         // Garder seulement l'option par défaut
         while (select.children.length > 1) {
             select.removeChild(select.lastChild);
@@ -96,9 +126,11 @@ function initializeCitySelects() {
             option.textContent = city;
             select.appendChild(option);
         });
+        
+        select.setAttribute('data-initialized', 'true');
     });
     
-    console.log(`✅ ${cities.length} villes initialisées dans ${citySelects.length} sélecteurs`);
+    console.log(`✅ ${citySelects.length} sélecteurs de ville initialisés`);
 }
 
 function initializeMarketplaceCategories() {
@@ -123,6 +155,12 @@ function initializeMarketplaceCategories() {
 
     console.log('🛒 Initialisation des catégories marketplace...');
 
+    // Vérifier si déjà initialisé
+    if (select.options.length > 5) {
+        console.log('✅ Catégories marketplace déjà initialisées');
+        return;
+    }
+
     // Vider les options existantes sauf la première
     while (select.children.length > 1) {
         select.removeChild(select.lastChild);
@@ -140,8 +178,9 @@ function initializeMarketplaceCategories() {
 
 // Fonction pour initialiser les types de biens dans le formulaire (compatibilité)
 function initializeRealEstateFormTypes() {
-    console.log('🏠 Initialisation des types de biens dans le formulaire...');
-    initializeRealEstateTypes();
+    console.log('🏠 Appel à initializeRealEstateFormTypes depuis jobs-forms.js');
+    // NE PAS appeler automatiquement, laisser le formulaire immobilier gérer
+    return false; // Retourne false pour indiquer qu'on ne fait rien
 }
 
 // ========== GESTION DES FORMULAIRES EMPLOI (ORIGINAL) ==========
@@ -151,6 +190,7 @@ const JobsForms = {
     
     async handlePublishJob(event) {
         event.preventDefault();
+        event.stopPropagation(); // AJOUT: Empêcher la propagation
         
         if (!checkAuthForPublish()) return;
         
@@ -278,7 +318,7 @@ const JobsForms = {
                                     
                                     <div class="mb-3">
                                         <label class="form-label">CV (PDF, DOC, DOCX) - Optionnel</label>
-                                        <div class="cv-upload-area" id="cvUploadArea" onclick="document.getElementById('cvFile').click()">
+                                        <div class="cv-upload-area" id="cvUploadArea" onclick="event.preventDefault(); event.stopPropagation(); document.getElementById('cvFile').click()">
                                             <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
                                             <h5>Cliquez pour télécharger votre CV</h5>
                                             <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
@@ -350,6 +390,7 @@ const JobsForms = {
 
     async submitJobApplication(event, jobId) {
         event.preventDefault();
+        event.stopPropagation(); // AJOUT
         
         const form = event.target;
         const formData = new FormData(form);
@@ -591,4 +632,5 @@ window.initializeRealEstateFormTypes = initializeRealEstateFormTypes;
 window.initializeCitySelects = initializeCitySelects;
 window.initializeMarketplaceCategories = initializeMarketplaceCategories;
 
-console.log('✅ jobs-forms.js CHARGÉ - Module formulaires emploi ET initialisation des formulaires initialisé');
+// NE PAS initialiser automatiquement au chargement
+console.log('✅ jobs-forms.js CORRIGÉ - Module formulaires emploi isolé');

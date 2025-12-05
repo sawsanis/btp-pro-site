@@ -622,6 +622,7 @@ class BTPApp {
         }
     }
 
+    // CORRECTION CRITIQUE - Méthode showPublishForm modifiée
     showPublishForm(formType) {
         console.log('📝 Affichage formulaire:', formType);
         
@@ -632,26 +633,39 @@ class BTPApp {
             }
         }
         
+        // Masquer tous les formulaires
         document.querySelectorAll('.publish-form').forEach(form => {
             form.style.display = 'none';
         });
         
+        // Afficher le formulaire cible
         const targetForm = document.getElementById(formId);
         if (targetForm) {
             targetForm.style.display = 'block';
             console.log('✅ Formulaire affiché:', formId);
             
-            // Réinitialiser l'upload photo seulement pour le nouveau système
-            setTimeout(() => {
-                if (typeof PhotoUploadSystem !== 'undefined' && window.photoUploadSystemInstance) {
-                    window.photoUploadSystemInstance.initialize(formId);
-                }
-            }, 100);
-            
+            // CORRECTION IMPORTANTE : NE PAS initialiser le système d'upload immédiatement
+            // pour éviter les conflits d'événements
             if (formType === 'realestate') {
                 setTimeout(() => {
                     this.triggerRealEstateFormInitialization();
+                    
+                    // Initialiser le système d'upload photo après un délai
+                    if (typeof PhotoUploadSystem !== 'undefined' && window.photoUploadSystemInstance) {
+                        setTimeout(() => {
+                            console.log('⏱️ Initialisation différée du système d\'upload pour:', formId);
+                            window.photoUploadSystemInstance.initialize(formId);
+                        }, 500);
+                    }
                 }, 100);
+            } else {
+                // Pour les autres formulaires, aussi différer l'initialisation
+                if (typeof PhotoUploadSystem !== 'undefined' && window.photoUploadSystemInstance) {
+                    setTimeout(() => {
+                        console.log('⏱️ Initialisation différée du système d\'upload pour:', formId);
+                        window.photoUploadSystemInstance.initialize(formId);
+                    }, 300);
+                }
             }
         } else {
             console.warn('❌ Formulaire non trouvé:', formId);
@@ -725,13 +739,21 @@ class BTPApp {
                 }
             }
             
+            // CORRECTION : Utiliser addEventListener avec preventDefault
+            const originalOnClick = item.onclick;
+            item.onclick = null;
             item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const onclick = this.getAttribute('onclick');
                 if (onclick && onclick.includes('showPublishForm')) {
                     const match = onclick.match(/showPublishForm\('([^']+)'\)/);
                     if (match && match[1]) {
                         btpApp.showPublishForm(match[1]);
                     }
+                } else if (originalOnClick) {
+                    originalOnClick.call(this, e);
                 }
             });
         });
@@ -853,6 +875,7 @@ window.showPublishForm = function(formType) {
     if (btpApp && btpApp.showPublishForm) {
         btpApp.showPublishForm(formType);
     } else {
+        // Fallback sécurisé
         document.querySelectorAll('.publish-form').forEach(form => {
             form.style.display = 'none';
         });
@@ -865,12 +888,20 @@ window.showPublishForm = function(formType) {
         const targetForm = document.getElementById(formId);
         if (targetForm) {
             targetForm.style.display = 'block';
+            
+            // Sécurité : vérifier qu'aucun événement submit n'est déclenché
+            const forms = targetForm.querySelectorAll('form');
+            forms.forEach(form => {
+                if (form.onsubmit) {
+                    console.log('✅ Formulaire a un gestionnaire onsubmit');
+                }
+            });
         }
         
         document.querySelectorAll('.publish-nav .list-group-item').forEach(item => {
             item.classList.remove('active');
         });
-        const activeNavItem = document.querySelector(`[onclick*="showPublishForm('${formType}')"]`);
+        const activeNavItem = document.querySelector(`[onclick*="showPublishForm('${formType}")]`);
         if (activeNavItem) {
             activeNavItem.classList.add('active');
         }
@@ -894,7 +925,7 @@ window.showAccountTab = function(tabName) {
             targetTab.style.display = 'block';
         }
         
-        const activeNavLink = document.querySelector(`[onclick*="showAccountTab('${tabName}')"]`);
+        const activeNavLink = document.querySelector(`[onclick*="showAccountTab('${tabName}")]`);
         if (activeNavLink) {
             activeNavLink.classList.add('active');
         }
